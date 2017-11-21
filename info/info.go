@@ -71,7 +71,7 @@ const (
 	// TimeInvalid flags that the elapsed time was incorrectly acquired.
 	// This attribute is only valid for events of protection equipment.
 	// See companion standard 101, subclause 7.2.6.4.
-	TimeInalid
+	TimeInvalid
 
 	// Blocked flags that the value is blocked for transmission; the
 	// value remains in the state that was acquired before it was blocked.
@@ -87,7 +87,7 @@ const (
 	// Invalid flags that the value was incorrectly acquired.
 	Invalid
 
-	// No flags, no problems.
+	// OK means no flags, no problems.
 	OK = 0
 )
 
@@ -139,6 +139,7 @@ func NewSingleCmd(state SinglePoint, qual int, exec bool) SingleCmd {
 	return SingleCmd{Cmd(state) | newCmd(qual, exec)}
 }
 
+// State returns the command's value.
 func (c SingleCmd) State() SinglePoint { return SinglePoint(c.Cmd & 1) }
 
 // DoubleCmd is a double command.
@@ -164,7 +165,7 @@ func NewStepCmd(higher DoublePoint, qual int, exec bool) StepCmd {
 	return StepCmd{Cmd(higher) | newCmd(qual, exec)}
 }
 
-// State returns wheather the next step is higher (or lower).
+// Higher returns wheather the next step is higher (or lower).
 func (c StepCmd) Higher() DoublePoint { return DoublePoint(c.Cmd & 3) }
 
 // QualParam is the qualifier of parameter of measured values.
@@ -187,10 +188,10 @@ const (
 	LowLimit
 	HighLimit
 
-	// Flags local parameter change.
+	// Change flags local parameter change.
 	Change QualParam = 64
 
-	// Flags parameter operation.
+	// InOperation flags parameter operation.
 	InOperation QualParam = 128
 )
 
