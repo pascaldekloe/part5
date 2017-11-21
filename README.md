@@ -9,7 +9,7 @@ This is free and unencumbered software released into the
 [public domain](http://creativecommons.org/publicdomain/zero/1.0).
 
 
-# Definitions
+## Definitions
 
 At its essence, part 5 formalizes reliable means to deliver data and commands.
 
@@ -35,6 +35,12 @@ To get started please see the API documentation of
 [Dial](http://godoc.org/github.com/pascaldekloe/part5#Dial) [serial],
 [DialTCP](http://godoc.org/github.com/pascaldekloe/part5#DialTCP) or
 [ListenTCP](http://godoc.org/github.com/pascaldekloe/part5#ListenTCP).
+
+
+## TODO
+
+* file transfer
+* complete ASDU encoding types
 
 
 ## iechbin
