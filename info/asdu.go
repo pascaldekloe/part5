@@ -9,9 +9,9 @@ import (
 
 var (
 	// Narrow is the smalles configuration.
-	Narrow = Params{CauseSize: 1, CommonAddrSize: 1, ObjAddrSize: 1, TimeZone: time.UTC}
+	Narrow = &Params{CauseSize: 1, CommonAddrSize: 1, ObjAddrSize: 1, TimeZone: time.UTC}
 	// Wide is the largest configuration.
-	Wide = Params{CauseSize: 2, CommonAddrSize: 2, ObjAddrSize: 3, TimeZone: time.UTC}
+	Wide = &Params{CauseSize: 2, CommonAddrSize: 2, ObjAddrSize: 3, TimeZone: time.UTC}
 )
 
 // Params defines network-specific fixed system parameters.
@@ -61,33 +61,43 @@ var (
 	errObjFit     = errors.New("part5: information object index exceeds range (0, 127)")
 )
 
-// ID is the data unit identifier.
+// ID identifies the application data.
 type ID struct {
 	Addr  CommonAddr // station address
 	Type  TypeID     // information content
 	Cause Cause      // submission category
-
-	// Originator Address (1, 255) or 0 for the default.
-	// The precense is controlled by Params.CommonAddrSize.
-	Orig uint8
 }
 
-// ASDU (Application Service Data Unit) is an application layer message
-// composed of a DUI (Data Unit Identifier) and information objects.
+// ASDU (Application Service Data Unit) is an application message.
 type ASDU struct {
 	*Params
 	ID
 
-	InfoSeq bool   // marks Info as a sequence
-	Info    []byte // information object serial
+	// Originator Address (1, 255) or 0 for the default.
+	// The precense is controlled by Params.CauseSize.
+	Orig uint8
+
+	InfoSeq bool // marks Info as a sequence
+
+	bootstrap [17]byte // common case
+	Info      []byte   // information object serial
 }
 
-// NewASDU returns a new ASDU with the provided prameters.
-func (p *Params) NewASDU(id TypeID, cause Cause, addr CommonAddr) *ASDU {
-	return &ASDU{
+// NewASDU returns a new ASDU with the provided parameters.
+func NewASDU(p *Params, addr CommonAddr, t TypeID, c Cause) *ASDU {
+	u := ASDU{
 		Params: p,
-		ID:     ID{Type: id, Cause: cause, Addr: addr},
+		ID:     ID{Addr: addr, Type: t, Cause: c},
 	}
+	u.Info = u.bootstrap[:0]
+	return &u
+}
+
+// Reply returns a new ASDU which addresses u.
+func (u *ASDU) Reply(t TypeID, c Cause) *ASDU {
+	r := NewASDU(u.Params, u.Addr, t, c)
+	r.Orig = u.Orig
+	return r
 }
 
 // String returns a compact description.

@@ -12,12 +12,12 @@ func TestParseASDU(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got := Narrow.NewASDU(0, 0, 0)
+	got := NewASDU(Narrow, 0, 0, 0)
 	if err := got.UnmarshalBinary(serial); err != nil {
 		t.Fatal("unmarshal:", err)
 	}
 
-	want := Narrow.NewASDU(M_ME_NC_1, Spont|NegFlag|TestFlag, 3)
+	want := NewASDU(Narrow, 3, M_ME_NC_1, Spont|NegFlag|TestFlag)
 	want.Info = serial[4:]
 
 	if !reflect.DeepEqual(got, want) {
