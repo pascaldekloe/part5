@@ -18,7 +18,7 @@ const GlobalAddr CommonAddr = 65535
 // ObjAddr is the information object address.
 // The width is controlled by Params.ObjAddrSize.
 // See companion standard 101, subclause 7.2.5.
-type ObjAddr uint32
+type ObjAddr uint
 
 // Zero means that the address is irrelevant.
 const IrrelevantAddr ObjAddr = 0
@@ -26,7 +26,7 @@ const IrrelevantAddr ObjAddr = 0
 // SinglePoint is a measured value of a switch including quality
 // descriptor flags Blocked, Substituted, NotTopical and Invalid.
 // See companion standard 101, subclause 7.2.6.1.
-type SinglePoint uint8
+type SinglePoint uint
 
 // Two states with OK quality descriptor.
 const (
@@ -35,16 +35,15 @@ const (
 )
 
 // Split returns the state and the quality descriptor flags separated.
-func (p SinglePoint) Split() (state SinglePoint, flags uint8) {
-	return p & 1, uint8(p & 0xf0)
+func (p SinglePoint) Split() (SinglePoint, QualDesc) {
+	return p & 1, QualDesc(p & 0xf0)
 }
 
-// DoublePoint is a measured value of a determination aware switch
-// including quality descriptor flags Blocked, Substituted, NotTopical
-// and Invalid.
+// DoublePoint is a measured value of a determination aware switch including
+// quality descriptor flags Blocked, Substituted, NotTopical and Invalid.
 // See companion standard 101, subclause 7.2.6.2.
 // See http://blog.iec61850.com/2009/04/why-do-we-need-single-point-and-double.html
-type DoublePoint uint8
+type DoublePoint uint
 
 // Four states with OK quality descriptor.
 const (
@@ -55,12 +54,14 @@ const (
 )
 
 // Split returns the state and the quality descriptor flags separated.
-func (p DoublePoint) Split() (state DoublePoint, flags uint8) {
-	return p & 3, uint8(p & 0xf0)
+func (p DoublePoint) Split() (DoublePoint, QualDesc) {
+	return p & 3, QualDesc(p & 0xf0)
 }
 
 // Quality descriptor flags attribute measured values.
 // See companion standard 101, subclause 7.2.6.3.
+type QualDesc uint
+
 const (
 	// Overflow marks whether the value is beyond a predefined range.
 	Overflow = 1 << iota
@@ -91,24 +92,24 @@ const (
 	OK = 0
 )
 
-// StepPos is a value with transient state indication.
+// StepPos is a value with transient state indication including quality descriptor.
 // See companion standard 101, subclause 7.2.6.5.
-type StepPos uint16
+type StepPos uint
 
 // NewStepPos returns a new step position.
 // Values out of range (-64, 63) oveflow silently.
-func NewStepPos(value int, transient bool, qualDesc uint) StepPos {
+func NewStepPos(value int, transient bool, q QualDesc) StepPos {
 	p := StepPos(value & 0x7f)
 	if transient {
 		p |= 0x80
 	}
-	p |= StepPos(qualDesc << 8)
+	p |= StepPos(q << 8)
 	return p
 }
 
 // Split returns the value in the range of (-64, 63) including wheather
 // the equipment is transient state and the quality descriptor flags.
-func (p StepPos) Split() (value int, transient bool, qualDesc uint) {
+func (p StepPos) Split() (value int, transient bool, q QualDesc) {
 	u := uint(p)
 	if u&0x40 == 0 {
 		// trim rest
@@ -118,7 +119,7 @@ func (p StepPos) Split() (value int, transient bool, qualDesc uint) {
 		value = int(u) | (-1 &^ 0x3f)
 	}
 	transient = u&0x80 != 0
-	qualDesc = u >> 8
+	q = QualDesc(u >> 8)
 	return
 }
 
@@ -135,7 +136,7 @@ type SingleCmd struct{ Cmd }
 
 // NewSingleCmd returns a new single command.
 // The function panics when the qualifier exceeds range (0, 31).
-func NewSingleCmd(state SinglePoint, qual int, exec bool) SingleCmd {
+func NewSingleCmd(state SinglePoint, qual uint, exec bool) SingleCmd {
 	return SingleCmd{Cmd(state) | newCmd(qual, exec)}
 }
 
@@ -148,7 +149,7 @@ type DoubleCmd struct{ Cmd }
 
 // NewDoubleCmd returns a new double command.
 // The function panics when the qualifier exceeds range (0, 31).
-func NewDoubleCmd(state DoublePoint, qual int, exec bool) DoubleCmd {
+func NewDoubleCmd(state DoublePoint, qual uint, exec bool) DoubleCmd {
 	return DoubleCmd{Cmd(state) | newCmd(qual, exec)}
 }
 
@@ -161,7 +162,7 @@ type StepCmd struct{ Cmd }
 
 // NewStepCmd returns a new regulating step command.
 // The function panics when the qualifier exceeds range (0, 31).
-func NewStepCmd(higher DoublePoint, qual int, exec bool) StepCmd {
+func NewStepCmd(higher DoublePoint, qual uint, exec bool) StepCmd {
 	return StepCmd{Cmd(higher) | newCmd(qual, exec)}
 }
 
@@ -179,7 +180,7 @@ func (c StepCmd) Higher() DoublePoint { return DoublePoint(c.Cmd & 3) }
 //	32‥63: reserved for special use (private range)
 //
 // See companion standard 101, subclause 7.2.6.24.
-type QualParam uint8
+type QualParam uint
 
 const (
 	// four standard kinds
@@ -195,12 +196,17 @@ const (
 	InOperation QualParam = 128
 )
 
+// Split returns the kind and the flags separated.
+func (p QualParam) Split() (kind QualParam, change, inOperation bool) {
+	return p & 63, p&Change != 0, p&InOperation != 0
+}
+
 // Cmd is a command including qualifier.
 // See companion standard 101, subclause 7.2.6.26.
-type Cmd uint8
+type Cmd uint
 
-func newCmd(qual int, exec bool) Cmd {
-	if qual&^31 != 0 {
+func newCmd(qual uint, exec bool) Cmd {
+	if qual > 31 {
 		panic("qualifier out of range")
 	}
 	if exec {
@@ -218,7 +224,7 @@ func newCmd(qual int, exec bool) Cmd {
 //	4‥8: reserved for standard definitions of this companion standard
 //	9‥15: reserved for the selection of other predefined functions
 //	16‥31: reserved for special use (private range)
-func (c Cmd) Qual() int { return int((c >> 2) & 31) }
+func (c Cmd) Qual() uint { return uint((c >> 2) & 31) }
 
 // Exec returns whether the command executes (or selects).
 // See section 5, subclause 6.8.
@@ -226,12 +232,12 @@ func (c Cmd) Exec() bool { return c&128 == 0 }
 
 // SetpointCmd is the qualifier of a set-point command.
 // See companion standard 101, subclause 7.2.6.39.
-type SetpointCmd uint8
+type SetpointCmd uint
 
 // NewSetpointCmd returns a new set-point command.
 // The function panics when the qualifier exceeds range (0, 127).
-func NewSetpointCmd(qual int, exec bool) SetpointCmd {
-	if qual&^127 != 0 {
+func NewSetpointCmd(qual uint, exec bool) SetpointCmd {
+	if qual > 127 {
 		panic("qualifier out of range")
 	}
 	if exec {
@@ -245,7 +251,7 @@ func NewSetpointCmd(qual int, exec bool) SetpointCmd {
 //	0: default
 //	0‥63: reserved for standard definitions of this companion standard (compatible range)
 //	64‥127: reserved for special use (private range)
-func (c SetpointCmd) Qual() int { return int(c & 127) }
+func (c SetpointCmd) Qual() uint { return uint(c & 127) }
 
 // Exec returns whether the command executes (or selects).
 // See section 5, subclause 6.8.
