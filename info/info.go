@@ -35,8 +35,8 @@ const (
 )
 
 // Split returns the state and the quality descriptor flags separated.
-func (p SinglePoint) Split() (SinglePoint, QualDesc) {
-	return p & 1, QualDesc(p & 0xf0)
+func (p SinglePoint) Split() (value SinglePoint, flags uint) {
+	return p & 1, uint(p & 0xf0)
 }
 
 // DoublePoint is a measured value of a determination aware switch including
@@ -54,14 +54,12 @@ const (
 )
 
 // Split returns the state and the quality descriptor flags separated.
-func (p DoublePoint) Split() (DoublePoint, QualDesc) {
-	return p & 3, QualDesc(p & 0xf0)
+func (p DoublePoint) Split() (value DoublePoint, flags uint) {
+	return p & 3, uint(p & 0xf0)
 }
 
 // Quality descriptor flags attribute measured values.
 // See companion standard 101, subclause 7.2.6.3.
-type QualDesc uint
-
 const (
 	// Overflow marks whether the value is beyond a predefined range.
 	Overflow = 1 << iota
@@ -92,24 +90,23 @@ const (
 	OK = 0
 )
 
-// StepPos is a value with transient state indication including quality descriptor.
+// StepPos is a value with transient state indication.
 // See companion standard 101, subclause 7.2.6.5.
 type StepPos uint
 
 // NewStepPos returns a new step position.
 // Values out of range (-64, 63) oveflow silently.
-func NewStepPos(value int, transient bool, q QualDesc) StepPos {
+func NewStepPos(value int, transient bool) StepPos {
 	p := StepPos(value & 0x7f)
 	if transient {
 		p |= 0x80
 	}
-	p |= StepPos(q << 8)
 	return p
 }
 
-// Split returns the value in the range of (-64, 63) including wheather
-// the equipment is transient state and the quality descriptor flags.
-func (p StepPos) Split() (value int, transient bool, q QualDesc) {
+// Pos returns the value in the range of (-64, 63)
+// including wheather the equipment is transient state.
+func (p StepPos) Pos() (value int, transient bool) {
 	u := uint(p)
 	if u&0x40 == 0 {
 		// trim rest
@@ -119,7 +116,6 @@ func (p StepPos) Split() (value int, transient bool, q QualDesc) {
 		value = int(u) | (-1 &^ 0x3f)
 	}
 	transient = u&0x80 != 0
-	q = QualDesc(u >> 8)
 	return
 }
 
@@ -140,8 +136,8 @@ func NewSingleCmd(state SinglePoint, qual uint, exec bool) SingleCmd {
 	return SingleCmd{Cmd(state) | newCmd(qual, exec)}
 }
 
-// State returns the command's value.
-func (c SingleCmd) State() SinglePoint { return SinglePoint(c.Cmd & 1) }
+// Point returns the command's destination.
+func (c SingleCmd) Point() SinglePoint { return SinglePoint(c.Cmd & 1) }
 
 // DoubleCmd is a double command.
 // See companion standard 101, subclause 7.2.6.16.
@@ -153,21 +149,21 @@ func NewDoubleCmd(state DoublePoint, qual uint, exec bool) DoubleCmd {
 	return DoubleCmd{Cmd(state) | newCmd(qual, exec)}
 }
 
-// State returns the command's value.
-func (c DoubleCmd) State() DoublePoint { return DoublePoint(c.Cmd & 3) }
+// Point returns the command's destination.
+func (c DoubleCmd) Point() DoublePoint { return DoublePoint(c.Cmd & 3) }
 
-// StepCmd is a regulating step command.
+// RegulCmd is a regulating step command.
 // See companion standard 101, subclause 7.2.6.17.
-type StepCmd struct{ Cmd }
+type RegulCmd struct{ Cmd }
 
-// NewStepCmd returns a new regulating step command.
+// NewRegulCmd returns a new regulating step command.
 // The function panics when the qualifier exceeds range (0, 31).
-func NewStepCmd(higher DoublePoint, qual uint, exec bool) StepCmd {
-	return StepCmd{Cmd(higher) | newCmd(qual, exec)}
+func NewRegulCmd(higher DoublePoint, qual uint, exec bool) RegulCmd {
+	return RegulCmd{Cmd(higher) | newCmd(qual, exec)}
 }
 
 // Higher returns wheather the next step is higher (or lower).
-func (c StepCmd) Higher() DoublePoint { return DoublePoint(c.Cmd & 3) }
+func (c RegulCmd) Higher() DoublePoint { return DoublePoint(c.Cmd & 3) }
 
 // QualParam is the qualifier of parameter of measured values.
 //

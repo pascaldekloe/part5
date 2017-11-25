@@ -1,4 +1,7 @@
-# part5 [![Build Status](https://travis-ci.org/pascaldekloe/part5.svg?branch=master)](https://travis-ci.org/pascaldekloe/part5)
+[![GoDoc](https://godoc.org/github.com/pascaldekloe/part5?status.svg)](https://godoc.org/github.com/pascaldekloe/part5)
+[![Build Status](https://travis-ci.org/pascaldekloe/part5.svg?branch=master)](https://travis-ci.org/pascaldekloe/part5)
+
+# part5
 
 The International Electrotechnical Commission standard 870 part 5 (IEC 870-5) is
 a set of transmission procedures intended for SCADA systems. Prefix 60 was added
@@ -11,7 +14,7 @@ This is free and unencumbered software released into the
 
 ## Definitions
 
-At its essence, part 5 formalizes reliable means to deliver data and commands.
+At its essence, part 5 formalizes reliable means to exchange data and commands.
 
 The initiating stations are called *primary* and the responding stations are
 *secondary*. With *unbalanced* transmission stations are either primary or
@@ -28,8 +31,14 @@ own predefined *information object address*. The set may be downloaded with an
 
 The standard provides commands that operate on data and they may trigger remote
 procceses by agreement. Again, each command is applied to a single information
-object address.
-
+object address. Secondaries either
+[confirm](http://godoc.org/github.com/pascaldekloe/part5/info#Actcon) or
+[reject](http://godoc.org/github.com/pascaldekloe/part5/info#NegFlag) execution.
+Optionaly the command may indicate completion with a *terminate*
+[message](http://godoc.org/github.com/pascaldekloe/part5/info#Actterm).
+Some commands can be preceded with a *select*
+[directive](http://godoc.org/github.com/pascaldekloe/part5/info#Cmd.Exec)
+which locks down the execution accaptance to one at a time.
 
 To get started please see the API documentation of
 [Dial](http://godoc.org/github.com/pascaldekloe/part5#Dial) [serial],
@@ -40,6 +49,7 @@ To get started please see the API documentation of
 ## TODO
 
 * file transfer
+* parameters
 * complete ASDU encoding types
 
 
