@@ -231,10 +231,10 @@ const (
 	Req                   // request or requested
 	Act                   // activation
 	Actcon                // activation confirmation
-	Actterm               // deactivation
-	Retrem                // deactivation confirmation
-	Deact                 // activation termination
-	Deactcon              // return information caused by a remote command
+	Deact                 // deactivation
+	Deactcon              // deactivation confirmation
+	Actterm               // activation termination
+	Retrem                // return information caused by a remote command
 	Retloc                // return information caused by a local command
 	File                  // file transfer
 	_                     // reserved for further compatible definitions
@@ -310,10 +310,10 @@ var causeLabels = [64]string{
 	"req",
 	"act",
 	"actcon",
-	"actterm",
-	"retrem",
 	"deact",
 	"deactcon",
+	"actterm",
+	"retrem",
 	"retloc",
 	"file",
 	"reserved14",
