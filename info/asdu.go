@@ -58,7 +58,7 @@ var (
 	errOrigFit    = errors.New("part5: originator address not allowed with cause size 1 system parameter")
 	errAddrFit    = errors.New("part5: common address exceeds size system parameter")
 	errObjAddrFit = errors.New("part5: information object address exceeds size system parameter")
-	errObjFit     = errors.New("part5: information object index exceeds range (0, 127)")
+	errObjFit     = errors.New("part5: information object index exceeds range (1, 127)")
 )
 
 // ID identifies the application data.
@@ -97,6 +97,7 @@ func NewASDU(p *Params, addr CommonAddr, t TypeID, c Cause) *ASDU {
 func (u *ASDU) Reply(t TypeID, c Cause) *ASDU {
 	r := NewASDU(u.Params, u.Addr, t, c)
 	r.Orig = u.Orig
+	r.Info = append(r.Info, u.Info...)
 	return r
 }
 
@@ -193,6 +194,7 @@ func (u *ASDU) UnmarshalBinary(data []byte) error {
 	if n > len(data) {
 		return io.EOF
 	}
+	u.Info = append(u.bootstrap[:0], data[n:]...)
 
 	u.Type = TypeID(data[0])
 
@@ -202,15 +204,26 @@ func (u *ASDU) UnmarshalBinary(data []byte) error {
 		return ErrType
 	}
 
+	var size int
 	// read the variable structure qualifier
 	if vsq := data[1]; vsq > 127 {
 		u.InfoSeq = true
 		objCount := int(vsq & 127)
-		u.Info = make([]byte, u.ObjAddrSize+(objCount*objSize))
+		size = u.ObjAddrSize + (objCount * objSize)
 	} else {
 		u.InfoSeq = false
 		objCount := int(vsq)
-		u.Info = make([]byte, objCount*(u.ObjAddrSize+objSize))
+		size = objCount * (u.ObjAddrSize + objSize)
+	}
+
+	switch {
+	case size == 0:
+		return errObjFit
+	case size > len(u.Info):
+		return io.EOF
+	case size < len(u.Info):
+		// not explicitly prohibited
+		u.Info = u.Info[:size]
 	}
 
 	u.Cause = Cause(data[2])
@@ -239,9 +252,6 @@ func (u *ASDU) UnmarshalBinary(data []byte) error {
 		u.Addr = CommonAddr(data[n-2]) | CommonAddr(data[n-1])<<8
 	}
 
-	if copy(u.Info, data[n:]) < len(u.Info) {
-		return io.EOF
-	}
 	return nil
 }
 
