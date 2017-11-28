@@ -21,7 +21,7 @@ func TestStepPos(t *testing.T) {
 
 func TestRegulCmd(t *testing.T) {
 	c := NewRegulCmd(DeterminedOn, 31, true)
-	if got := c.Higher(); got != DeterminedOn {
+	if got := c.Up(); got != DeterminedOn {
 		t.Errorf("got higher %v, want %v", got, DeterminedOn)
 	}
 	if got := c.Qual(); got != 31 {
@@ -32,7 +32,7 @@ func TestRegulCmd(t *testing.T) {
 	}
 
 	c = NewRegulCmd(DeterminedOff, 0, false)
-	if got := c.Higher(); got != DeterminedOff {
+	if got := c.Up(); got != DeterminedOff {
 		t.Errorf("got higher %v, want %v", got, DeterminedOff)
 	}
 	if got := c.Qual(); got != 0 {

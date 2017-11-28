@@ -23,8 +23,7 @@ type ObjAddr uint
 // Zero means that the address is irrelevant.
 const IrrelevantAddr ObjAddr = 0
 
-// SinglePoint is a measured value of a switch including quality
-// descriptor flags Blocked, Substituted, NotTopical and Invalid.
+// SinglePoint is a measured value of a switch.
 // See companion standard 101, subclause 7.2.6.1.
 type SinglePoint uint
 
@@ -34,29 +33,17 @@ const (
 	On
 )
 
-// Split returns the state and the quality descriptor flags separated.
-func (p SinglePoint) Split() (value SinglePoint, flags uint) {
-	return p & 1, uint(p & 0xf0)
-}
-
-// DoublePoint is a measured value of a determination aware switch including
-// quality descriptor flags Blocked, Substituted, NotTopical and Invalid.
+// DoublePoint is a measured value of a determination aware switch.
 // See companion standard 101, subclause 7.2.6.2.
 // See http://blog.iec61850.com/2009/04/why-do-we-need-single-point-and-double.html
 type DoublePoint uint
 
-// Four states with OK quality descriptor.
 const (
 	IndeterminateOrIntermediate DoublePoint = iota
 	DeterminedOff
 	DeterminedOn
 	Indeterminate
 )
-
-// Split returns the state and the quality descriptor flags separated.
-func (p DoublePoint) Split() (value DoublePoint, flags uint) {
-	return p & 3, uint(p & 0xf0)
-}
 
 // Quality descriptor flags attribute measured values.
 // See companion standard 101, subclause 7.2.6.3.
@@ -90,7 +77,7 @@ const (
 	OK = 0
 )
 
-// StepPos is a value with transient state indication.
+// StepPos is a measured value with transient state indication.
 // See companion standard 101, subclause 7.2.6.5.
 type StepPos uint
 
@@ -123,7 +110,7 @@ func (p StepPos) Pos() (value int, transient bool) {
 // See companion standard 101, subclause 7.2.6.6.
 type Normal int16
 
-// Float64 returns the actual value in the range of (-1, 1 − 2⁻¹⁵)
+// Float64 returns the value in the range of (-1, 1 − 2⁻¹⁵)
 func (n Normal) Float64() float64 { return float64(n) / 32768 }
 
 // SingleCmd is a singe command.
@@ -132,8 +119,8 @@ type SingleCmd struct{ Cmd }
 
 // NewSingleCmd returns a new single command.
 // The function panics when the qualifier exceeds range (0, 31).
-func NewSingleCmd(state SinglePoint, qual uint, exec bool) SingleCmd {
-	return SingleCmd{Cmd(state) | newCmd(qual, exec)}
+func NewSingleCmd(p SinglePoint, qual uint, exec bool) SingleCmd {
+	return SingleCmd{Cmd(p) | newCmd(qual, exec)}
 }
 
 // Point returns the command's destination.
@@ -145,8 +132,8 @@ type DoubleCmd struct{ Cmd }
 
 // NewDoubleCmd returns a new double command.
 // The function panics when the qualifier exceeds range (0, 31).
-func NewDoubleCmd(state DoublePoint, qual uint, exec bool) DoubleCmd {
-	return DoubleCmd{Cmd(state) | newCmd(qual, exec)}
+func NewDoubleCmd(p DoublePoint, qual uint, exec bool) DoubleCmd {
+	return DoubleCmd{Cmd(p) | newCmd(qual, exec)}
 }
 
 // Point returns the command's destination.
@@ -158,12 +145,12 @@ type RegulCmd struct{ Cmd }
 
 // NewRegulCmd returns a new regulating step command.
 // The function panics when the qualifier exceeds range (0, 31).
-func NewRegulCmd(higher DoublePoint, qual uint, exec bool) RegulCmd {
-	return RegulCmd{Cmd(higher) | newCmd(qual, exec)}
+func NewRegulCmd(up DoublePoint, qual uint, exec bool) RegulCmd {
+	return RegulCmd{Cmd(up) | newCmd(qual, exec)}
 }
 
-// Higher returns wheather the next step is higher (or lower).
-func (c RegulCmd) Higher() DoublePoint { return DoublePoint(c.Cmd & 3) }
+// Up returns wheather the next step is higher (or lower).
+func (c RegulCmd) Up() DoublePoint { return DoublePoint(c.Cmd & 3) }
 
 // QualParam is the qualifier of parameter of measured values.
 //
@@ -197,7 +184,7 @@ func (p QualParam) Split() (kind QualParam, change, inOperation bool) {
 	return p & 63, p&Change != 0, p&InOperation != 0
 }
 
-// Cmd is a command including qualifier.
+// Cmd is a command.
 // See companion standard 101, subclause 7.2.6.26.
 type Cmd uint
 
