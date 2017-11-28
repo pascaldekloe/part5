@@ -82,7 +82,7 @@ const (
 type StepPos uint
 
 // NewStepPos returns a new step position.
-// Values out of range (-64, 63) oveflow silently.
+// Values out of [-64, 63] oveflow silently.
 func NewStepPos(value int, transient bool) StepPos {
 	p := StepPos(value & 0x7f)
 	if transient {
@@ -91,8 +91,7 @@ func NewStepPos(value int, transient bool) StepPos {
 	return p
 }
 
-// Pos returns the value in the range of (-64, 63)
-// including wheather the equipment is transient state.
+// Pos returns the value in [-64, 63] plus wheather the equipment is transient state.
 func (p StepPos) Pos() (value int, transient bool) {
 	u := uint(p)
 	if u&0x40 == 0 {
@@ -110,7 +109,7 @@ func (p StepPos) Pos() (value int, transient bool) {
 // See companion standard 101, subclause 7.2.6.6.
 type Normal int16
 
-// Float64 returns the value in the range of (-1, 1 − 2⁻¹⁵)
+// Float64 returns the value in [-1, 1 − 2⁻¹⁵].
 func (n Normal) Float64() float64 { return float64(n) / 32768 }
 
 // SingleCmd is a singe command.
@@ -118,7 +117,7 @@ func (n Normal) Float64() float64 { return float64(n) / 32768 }
 type SingleCmd struct{ Cmd }
 
 // NewSingleCmd returns a new single command.
-// The function panics when the qualifier exceeds range (0, 31).
+// The function panics when the qualifier exceeds [0, 31].
 func NewSingleCmd(p SinglePoint, qual uint, exec bool) SingleCmd {
 	return SingleCmd{Cmd(p) | newCmd(qual, exec)}
 }
@@ -131,7 +130,7 @@ func (c SingleCmd) Point() SinglePoint { return SinglePoint(c.Cmd & 1) }
 type DoubleCmd struct{ Cmd }
 
 // NewDoubleCmd returns a new double command.
-// The function panics when the qualifier exceeds range (0, 31).
+// The function panics when the qualifier exceeds [0, 31].
 func NewDoubleCmd(p DoublePoint, qual uint, exec bool) DoubleCmd {
 	return DoubleCmd{Cmd(p) | newCmd(qual, exec)}
 }
@@ -144,7 +143,7 @@ func (c DoubleCmd) Point() DoublePoint { return DoublePoint(c.Cmd & 3) }
 type RegulCmd struct{ Cmd }
 
 // NewRegulCmd returns a new regulating step command.
-// The function panics when the qualifier exceeds range (0, 31).
+// The function panics when the qualifier exceeds [0, 31].
 func NewRegulCmd(up DoublePoint, qual uint, exec bool) RegulCmd {
 	return RegulCmd{Cmd(up) | newCmd(qual, exec)}
 }
@@ -218,7 +217,7 @@ func (c Cmd) Exec() bool { return c&128 == 0 }
 type SetpointCmd uint
 
 // NewSetpointCmd returns a new set-point command.
-// The function panics when the qualifier exceeds range (0, 127).
+// The function panics when the qualifier exceeds [0, 127].
 func NewSetpointCmd(qual uint, exec bool) SetpointCmd {
 	if qual > 127 {
 		panic("qualifier out of range")

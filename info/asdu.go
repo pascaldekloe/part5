@@ -18,16 +18,16 @@ var (
 // See companion standard 101, subclause 7.1.
 type Params struct {
 	// Number of octets for an ASDU common address.
-	// The standard specifies "a" in the range of (1, 2).
+	// The standard requires "a" in [1, 2].
 	CommonAddrSize int
 
 	// Number of octets for an ASDU cause of transmission.
-	// The standard specifies "b" in the range of (1, 2).
+	// The standard requires "b" in [1, 2].
 	// Value 2 includes/activates the originator address.
 	CauseSize int
 
 	// Number of octets for an ASDU information object address.
-	// The standard specifies "c" in the range of (1, 3).
+	// The standard requires "c" in [1, 3].
 	ObjAddrSize int
 
 	// TimeZone controls the time tag interpretation.
@@ -58,7 +58,7 @@ var (
 	errOrigFit    = errors.New("part5: originator address not allowed with cause size 1 system parameter")
 	errAddrFit    = errors.New("part5: common address exceeds size system parameter")
 	errObjAddrFit = errors.New("part5: information object address exceeds size system parameter")
-	errObjFit     = errors.New("part5: information object index exceeds range (1, 127)")
+	errObjFit     = errors.New("part5: information object index not in [1, 127]")
 )
 
 // ID identifies the application data.
