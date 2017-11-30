@@ -18,7 +18,7 @@ func (u *ASDU) AddSingle(addr ObjAddr, v SinglePoint) error {
 }
 
 // SetSingles sets Type to M_SP_NA_1 and encodes a sequence of measured values
-// into Info, whereby the n-th entry has an address of addr + n - 1.
+// into Info, whereby the entry at index i has an address of addr + i.
 func (u *ASDU) SetSingles(addr ObjAddr, seq ...SinglePoint) error {
 	u.Type = M_SP_NA_1
 	bytes, err := u.setSeq(len(seq), 1, addr)

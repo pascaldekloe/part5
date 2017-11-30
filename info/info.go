@@ -27,7 +27,6 @@ const IrrelevantAddr ObjAddr = 0
 // See companion standard 101, subclause 7.2.6.1.
 type SinglePoint uint
 
-// Two states with OK quality descriptor.
 const (
 	Off SinglePoint = iota
 	On
