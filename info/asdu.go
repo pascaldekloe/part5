@@ -93,10 +93,17 @@ func NewASDU(p *Params, addr CommonAddr, t TypeID, c Cause) *ASDU {
 	return &u
 }
 
-// Reply returns a new ASDU which addresses u.
-func (u *ASDU) Reply(t TypeID, c Cause) *ASDU {
+// Respond returns a new "responding" ASDU which addresses "initiating" u.
+func (u *ASDU) Respond(t TypeID, c Cause) *ASDU {
 	r := NewASDU(u.Params, u.Addr, t, c)
 	r.Orig = u.Orig
+	return r
+}
+
+// Reply returns a new "responding" ASDU which addresses "initiating" u
+// with a copy of Info.
+func (u *ASDU) Reply(t TypeID, c Cause) *ASDU {
+	r := u.Respond(t, c)
 	r.Info = append(r.Info, u.Info...)
 	return r
 }
