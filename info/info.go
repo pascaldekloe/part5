@@ -4,7 +4,7 @@ package info
 import "errors"
 
 // CommonAddr is a station address. Zero is not used.
-// The width is controlled by Params.CommonAddrSize.
+// The width is controlled by Params.AddrSize.
 // See companion standard 101, subclause 7.2.4.
 type CommonAddr uint16
 

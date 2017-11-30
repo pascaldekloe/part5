@@ -9,9 +9,9 @@ import (
 
 var (
 	// Narrow is the smalles configuration.
-	Narrow = &Params{CauseSize: 1, CommonAddrSize: 1, ObjAddrSize: 1, TimeZone: time.UTC}
+	Narrow = &Params{CauseSize: 1, AddrSize: 1, ObjAddrSize: 1, TimeZone: time.UTC}
 	// Wide is the largest configuration.
-	Wide = &Params{CauseSize: 2, CommonAddrSize: 2, ObjAddrSize: 3, TimeZone: time.UTC}
+	Wide = &Params{CauseSize: 2, AddrSize: 2, ObjAddrSize: 3, TimeZone: time.UTC}
 )
 
 // Params defines network-specific fixed system parameters.
@@ -19,7 +19,7 @@ var (
 type Params struct {
 	// Number of octets for an ASDU common address.
 	// The standard requires "a" in [1, 2].
-	CommonAddrSize int
+	AddrSize int
 
 	// Number of octets for an ASDU cause of transmission.
 	// The standard requires "b" in [1, 2].
@@ -45,7 +45,7 @@ func (p Params) Valid() error {
 		return nil
 	case p.CauseSize < 1 || p.CauseSize > 2:
 		return errParam
-	case p.CommonAddrSize < 1 || p.CommonAddrSize > 2:
+	case p.AddrSize < 1 || p.AddrSize > 2:
 		return errParam
 	case p.ObjAddrSize < 1 || p.ObjAddrSize > 3:
 		return errParam
@@ -145,7 +145,7 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 		}
 	}
 
-	data = make([]byte, 2+u.CauseSize+u.CommonAddrSize+len(u.Info))
+	data = make([]byte, 2+u.CauseSize+u.AddrSize+len(u.Info))
 	data[0] = byte(u.Type)
 	data[1] = vsq
 	data[2] = byte(u.Cause)
@@ -163,7 +163,7 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 		i++
 	}
 
-	switch u.CommonAddrSize {
+	switch u.AddrSize {
 	default:
 		return nil, errParam
 	case 1:
@@ -190,7 +190,7 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 // UnmarshalBinary honors the encoding.BinaryUnmarshaler interface.
 // Params must be set in advance. All other fields are initialized.
 func (u *ASDU) UnmarshalBinary(data []byte) error {
-	n := 2 + u.CauseSize + u.CommonAddrSize
+	n := 2 + u.CauseSize + u.AddrSize
 	if n > len(data) {
 		return io.EOF
 	}
@@ -237,7 +237,7 @@ func (u *ASDU) UnmarshalBinary(data []byte) error {
 		u.Orig = data[3]
 	}
 
-	switch u.CommonAddrSize {
+	switch u.AddrSize {
 	default:
 		return errParam
 	case 1:

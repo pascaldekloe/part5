@@ -111,8 +111,8 @@ func (u *ASDU) SetInro(qual byte) error {
 	if qual == 0 {
 		return errInroZero
 	}
-	u.Info = make([]byte, u.CommonAddrSize+1)
-	u.Info[u.CommonAddrSize] = qual
+	u.Info = make([]byte, u.AddrSize+1)
+	u.Info[u.AddrSize] = qual
 	return nil
 }
 
