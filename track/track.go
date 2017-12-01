@@ -66,13 +66,13 @@ func (h *Head) Inro(req *info.ASDU, resp chan *info.ASDU) {
 
 	// check cause of transmission
 	if req.Cause&127 != info.Act {
-		resp <- req.Reply(req.Type, info.UnkCause|testFlag)
+		resp <- req.Reply(info.UnkCause | testFlag)
 		return
 	}
 
 	// check payload
 	if len(req.Info) != req.ObjAddrSize+1 || req.GetObjAddrAt(0) != 0 {
-		resp <- req.Reply(req.Type, info.UnkInfo|testFlag)
+		resp <- req.Reply(info.UnkInfo | testFlag)
 		return
 	}
 
@@ -80,13 +80,13 @@ func (h *Head) Inro(req *info.ASDU, resp chan *info.ASDU) {
 	// of transmission value for generic interrogation and group 1‥16.
 	cause := info.Cause(req.Info[req.ObjAddrSize])
 	if cause < info.Inrogen || cause > info.Inro16 {
-		resp <- req.Reply(req.Type, info.Actcon|info.NegFlag|testFlag)
+		resp <- req.Reply(info.Actcon | info.NegFlag | testFlag)
 		return
 	}
 	cause |= testFlag
 
 	// confirm
-	resp <- req.Reply(req.Type, info.Actcon|testFlag)
+	resp <- req.Reply(info.Actcon | testFlag)
 
 	h.db.Range(func(key, value interface{}) bool {
 		addr := key.(info.ObjAddr)
@@ -104,5 +104,5 @@ func (h *Head) Inro(req *info.ASDU, resp chan *info.ASDU) {
 	})
 
 	// terminate
-	resp <- req.Reply(req.Type, info.Actterm|testFlag)
+	resp <- req.Reply(info.Actterm | testFlag)
 }

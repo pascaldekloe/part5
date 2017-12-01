@@ -10,13 +10,17 @@ func TestParseASDU(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := NewASDU(Narrow, 3, M_ME_NC_1, Spont|NegFlag|TestFlag)
+	want := NewASDU(Narrow, ID{
+		Addr:  3,
+		Type:  M_ME_NC_1,
+		Cause: Spont | NegFlag | TestFlag,
+	})
 	want.Info, err = hex.DecodeString("100000c6428111286b6ece00")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	got := NewASDU(Narrow, 0, 0, 0)
+	got := &ASDU{Params: Narrow}
 	if err := got.UnmarshalBinary(serial); err != nil {
 		t.Fatal("unmarshal:", err)
 	}

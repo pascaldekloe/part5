@@ -63,47 +63,48 @@ var (
 
 // ID identifies the application data.
 type ID struct {
-	Addr  CommonAddr // station address
-	Type  TypeID     // information content
-	Cause Cause      // submission category
+	Addr CommonAddr // station address
+
+	// Originator Address [1, 255] or 0 for the default.
+	// The applicability is controlled by Params.CauseSize.
+	Orig uint8
+
+	Type  TypeID // information content
+	Cause Cause  // submission category
 }
 
 // ASDU (Application Service Data Unit) is an application message.
 type ASDU struct {
 	*Params
 	ID
-
-	// Originator Address (1, 255) or 0 for the default.
-	// The precense is controlled by Params.CauseSize.
-	Orig uint8
-
-	InfoSeq bool // marks Info as a sequence
-
-	bootstrap [17]byte // common case
+	bootstrap [17]byte // prevents Info malloc
+	InfoSeq   bool     // marks Info as a sequence
 	Info      []byte   // information object serial
 }
 
 // NewASDU returns a new ASDU with the provided parameters.
-func NewASDU(p *Params, addr CommonAddr, t TypeID, c Cause) *ASDU {
-	u := ASDU{
-		Params: p,
-		ID:     ID{Addr: addr, Type: t, Cause: c},
-	}
+func NewASDU(p *Params, id ID) *ASDU {
+	u := ASDU{Params: p, ID: id}
 	u.Info = u.bootstrap[:0]
 	return &u
 }
 
 // Respond returns a new "responding" ASDU which addresses "initiating" u.
 func (u *ASDU) Respond(t TypeID, c Cause) *ASDU {
-	r := NewASDU(u.Params, u.Addr, t, c)
-	r.Orig = u.Orig
-	return r
+	return NewASDU(u.Params, ID{
+		Addr:  u.Addr,
+		Orig:  u.Orig,
+		Type:  t,
+		Cause: c,
+	})
 }
 
 // Reply returns a new "responding" ASDU which addresses "initiating" u
 // with a copy of Info.
-func (u *ASDU) Reply(t TypeID, c Cause) *ASDU {
-	r := u.Respond(t, c)
+func (u *ASDU) Reply(c Cause) *ASDU {
+	r := NewASDU(u.Params, u.ID)
+	r.Cause = c
+	r.InfoSeq = u.InfoSeq
 	r.Info = append(r.Info, u.Info...)
 	return r
 }

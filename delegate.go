@@ -24,7 +24,7 @@ type Delegate struct {
 	// See section 5, subclause 6.11.
 	Tests []func() (ok bool)
 
-	// listeners for measured values
+	// listeners for measured values [primary]
 	Singles map[info.ObjAddr]Single
 	Doubles map[info.ObjAddr]Double
 	Steps   map[info.ObjAddr]Step
@@ -33,7 +33,7 @@ type Delegate struct {
 	Scaleds map[info.ObjAddr]Scaled
 	Floats  map[info.ObjAddr]Float
 
-	// listeners for commands
+	// listeners for commands [secondary]
 	SingleCmds      map[info.ObjAddr]SingleCmd
 	DoubleCmds      map[info.ObjAddr]DoubleCmd
 	RegulCmds       map[info.ObjAddr]RegulCmd
@@ -179,11 +179,11 @@ func selectProc(req *info.ASDU, cmdIndex int, in <-chan *info.ASDU, out chan<- *
 
 	case info.Deact:
 		// nothing in progress
-		out <- req.Reply(req.Type, info.Deactcon|info.NegFlag)
+		out <- req.Reply(info.Deactcon | info.NegFlag)
 		return nil, nil
 
 	default:
-		out <- req.Reply(req.Type, info.UnkCause)
+		out <- req.Reply(info.UnkCause)
 		return nil, nil
 	}
 
@@ -193,7 +193,7 @@ func selectProc(req *info.ASDU, cmdIndex int, in <-chan *info.ASDU, out chan<- *
 	}
 
 	// acknowledge select
-	out <- req.Reply(req.Type, info.Actcon)
+	out <- req.Reply(info.Actcon)
 
 	// "not interruptable and controlled by a time out"
 	timeout := time.NewTimer(10 * time.Second)
@@ -222,10 +222,10 @@ func selectProc(req *info.ASDU, cmdIndex int, in <-chan *info.ASDU, out chan<- *
 		return exec, nil // success
 	case info.Deact:
 		// break off
-		out <- req.Reply(req.Type, info.Deactcon)
+		out <- req.Reply(info.Deactcon)
 		return nil, nil
 	default:
-		out <- req.Reply(req.Type, info.UnkCause)
+		out <- req.Reply(info.UnkCause)
 		return nil, nil
 	}
 }
@@ -238,7 +238,7 @@ func (d *Delegate) singleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *i
 		f, ok = d.SingleCmds[info.IrrelevantAddr]
 	}
 	if !ok {
-		out <- req.Reply(req.Type, info.UnkInfo)
+		out <- req.Reply(info.UnkInfo)
 		return nil
 	}
 
@@ -261,13 +261,13 @@ func (d *Delegate) singleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *i
 	}
 
 	terminate := func() {
-		out <- req.Reply(req.Type, info.Actterm)
+		out <- req.Reply(info.Actterm)
 	}
 
 	if f(req.ID, cmd.Point(), attrs, terminate) {
-		out <- req.Reply(req.Type, info.Actcon)
+		out <- req.Reply(info.Actcon)
 	} else {
-		out <- req.Reply(req.Type, info.Actcon|info.NegFlag)
+		out <- req.Reply(info.Actcon | info.NegFlag)
 	}
 	return nil
 }
@@ -280,7 +280,7 @@ func (d *Delegate) doubleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *i
 		f, ok = d.DoubleCmds[info.IrrelevantAddr]
 	}
 	if !ok {
-		out <- req.Reply(req.Type, info.UnkInfo)
+		out <- req.Reply(info.UnkInfo)
 		return nil
 	}
 
@@ -303,13 +303,13 @@ func (d *Delegate) doubleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *i
 	}
 
 	terminate := func() {
-		out <- req.Reply(req.Type, info.Actterm)
+		out <- req.Reply(info.Actterm)
 	}
 
 	if f(req.ID, cmd.Point(), attrs, terminate) {
-		out <- req.Reply(req.Type, info.Actcon)
+		out <- req.Reply(info.Actcon)
 	} else {
-		out <- req.Reply(req.Type, info.Actcon|info.NegFlag)
+		out <- req.Reply(info.Actcon | info.NegFlag)
 	}
 	return nil
 }
@@ -322,7 +322,7 @@ func (d *Delegate) floatSetpoint(req *info.ASDU, in <-chan *info.ASDU, out chan<
 		f, ok = d.FloatSetpoints[info.IrrelevantAddr]
 	}
 	if !ok {
-		out <- req.Reply(req.Type, info.UnkInfo)
+		out <- req.Reply(info.UnkInfo)
 		return nil
 	}
 
@@ -345,14 +345,14 @@ func (d *Delegate) floatSetpoint(req *info.ASDU, in <-chan *info.ASDU, out chan<
 	}
 
 	terminate := func() {
-		out <- req.Reply(req.Type, info.Actterm)
+		out <- req.Reply(info.Actterm)
 	}
 
 	m := math.Float32frombits(binary.LittleEndian.Uint32(req.Info[req.ObjAddrSize:]))
 	if f(req.ID, m, attrs, terminate) {
-		out <- req.Reply(req.Type, info.Actcon)
+		out <- req.Reply(info.Actcon)
 	} else {
-		out <- req.Reply(req.Type, info.Actcon|info.NegFlag)
+		out <- req.Reply(info.Actcon | info.NegFlag)
 	}
 	return nil
 }

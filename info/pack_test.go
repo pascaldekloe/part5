@@ -6,7 +6,11 @@ import (
 )
 
 func TestAddSingle(t *testing.T) {
-	u := NewASDU(Narrow, GlobalAddr, M_SP_NA_1, Spont|TestFlag)
+	u := NewASDU(Narrow, ID{
+		Addr:  GlobalAddr,
+		Type:  M_SP_NA_1,
+		Cause: Spont | TestFlag,
+	})
 	if err := u.AddSingle(17, On|Blocked|Substituted); err != nil {
 		t.Fatal("single[0] error:", err)
 	}
@@ -24,7 +28,11 @@ func TestAddSingle(t *testing.T) {
 }
 
 func TestSetSingles(t *testing.T) {
-	u := NewASDU(Wide, GlobalAddr, M_SP_NA_1, Spont|TestFlag)
+	u := NewASDU(Wide, ID{
+		Addr:  GlobalAddr,
+		Type:  M_SP_NA_1,
+		Cause: Spont | TestFlag,
+	})
 	u.Orig = 42
 	if err := u.SetSingles(17, On, Off); err != nil {
 		t.Error("set error:", err)
@@ -40,7 +48,11 @@ func TestSetSingles(t *testing.T) {
 }
 
 func TestAddFloat(t *testing.T) {
-	u := NewASDU(Narrow, 3, M_ME_NC_1, Spont|TestFlag)
+	u := NewASDU(Narrow, ID{
+		Addr:  3,
+		Type:  M_ME_NC_1,
+		Cause: Spont | TestFlag,
+	})
 	if err := u.AddFloat(16, MeasuredFloat{99, Overflow | Invalid}); err != nil {
 		t.Fatal("float[0] error:", err)
 	}
@@ -59,7 +71,11 @@ func TestAddFloat(t *testing.T) {
 }
 
 func TestAddFloatSetpoint(t *testing.T) {
-	u := NewASDU(Narrow, 3, C_SE_NC_1, Spont|TestFlag)
+	u := NewASDU(Narrow, ID{
+		Addr:  3,
+		Type:  C_SE_NC_1,
+		Cause: Spont | TestFlag,
+	})
 	if err := u.AddFloatSetpoint(16, NewSetpointCmd(7, true), 99); err != nil {
 		t.Fatal("setpoint[0] error:", err)
 	}

@@ -17,18 +17,30 @@ func TestInro(t *testing.T) {
 		"C_IC_NA_1[99] actterm,test: 0x001a",
 	}
 
-	u1 := info.NewASDU(info.Narrow, 99, info.M_ME_NC_1, info.Percyc|info.TestFlag)
+	u1 := info.NewASDU(info.Narrow, info.ID{
+		Addr:  99,
+		Type:  info.M_ME_NC_1,
+		Cause: info.Percyc | info.TestFlag,
+	})
 	u1.AddFloat(42, info.MeasuredFloat{1, info.OK})
 	u1.AddFloat(44, info.MeasuredFloat{4, info.OK})
 
-	u2 := info.NewASDU(info.Narrow, 99, info.M_ME_NC_1, info.Back|info.TestFlag)
+	u2 := info.NewASDU(info.Narrow, info.ID{
+		Addr:  99,
+		Type:  info.M_ME_NC_1,
+		Cause: info.Back | info.TestFlag,
+	})
 	u2.SetFloats(43, info.MeasuredFloat{2, info.NotTopical}, info.MeasuredFloat{3, info.OK})
 
 	var h Head
 	h.Add(u1)
 	h.Add(u2)
 
-	req := info.NewASDU(info.Narrow, 99, info.C_IC_NA_1, info.Act|info.TestFlag)
+	req := info.NewASDU(info.Narrow, info.ID{
+		Addr:  99,
+		Type:  info.C_IC_NA_1,
+		Cause: info.Act | info.TestFlag,
+	})
 	req.SetInro(26)
 	out := make(chan *info.ASDU, 100)
 	h.Inro(req, out)
