@@ -10,11 +10,11 @@ import (
 
 func TestInro(t *testing.T) {
 	want := []string{
-		"C_IC_NA_1[99] actcon,test: 0x001a",
-		"M_ME_NC_1[99] inro6,test: 0x2a0000803f00",
-		"M_ME_NC_1[99] inro6,test: 0x2b0000004040",
-		"M_ME_NC_1[99] inro6,test: 0x2c0000404000",
-		"C_IC_NA_1[99] actterm,test: 0x001a",
+		"@99 C_IC_NA_1 <actcon,test> 0:0x1a",
+		"@99 M_ME_NC_1 <inro6,test> 42:0x0000803f00",
+		"@99 M_ME_NC_1 <inro6,test> 43:0x0000004040",
+		"@99 M_ME_NC_1 <inro6,test> 44:0x0000404000",
+		"@99 C_IC_NA_1 <actterm,test> 0:0x1a",
 	}
 
 	u1 := info.NewASDU(info.Narrow, info.ID{

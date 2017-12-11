@@ -64,7 +64,7 @@ func TestDelegateDirectExecute(t *testing.T) {
 	}
 
 	want := []string{
-		"C_SE_NC_1[99] actcon: 0x070000284209",
+		"@99 C_SE_NC_1 <actcon> 7:0x0000284209",
 	}
 	if got := getASDUStrings(out); !reflect.DeepEqual(got, want) {
 		t.Errorf("response is %q, want %q", got, want)
@@ -106,8 +106,8 @@ func TestDelegateSelectProcedure(t *testing.T) {
 	}
 
 	want := []string{
-		"C_DC_NA_1[99] actcon: 0x0782",
-		"C_DC_NA_1[99] actcon,neg: 0x0702",
+		"@99 C_DC_NA_1 <actcon> 7:0x82",
+		"@99 C_DC_NA_1 <actcon,neg> 7:0x02",
 	}
 	if got := getASDUStrings(out); !reflect.DeepEqual(got, want) {
 		t.Errorf("response is %q, want %q", got, want)

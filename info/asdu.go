@@ -1,6 +1,7 @@
 package info
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -73,6 +74,14 @@ type ID struct {
 	Cause Cause  // submission category
 }
 
+// String returns a compact label.
+func (id *ID) String() string {
+	if id.Orig == 0 {
+		return fmt.Sprintf("@%d %s <%s>", id.Addr, id.Type, id.Cause)
+	}
+	return fmt.Sprintf("%d@%d %s <%s>", id.Orig, id.Addr, id.Type, id.Cause)
+}
+
 // ASDU (Application Service Data Unit) is an application message.
 type ASDU struct {
 	*Params
@@ -109,13 +118,54 @@ func (u *ASDU) Reply(c Cause) *ASDU {
 	return r
 }
 
-// String returns a compact description.
+// String returns a full description.
 func (u *ASDU) String() string {
-	seqParam := ""
-	if u.InfoSeq {
-		seqParam = ",seq"
+	dataSize := ObjSize[u.Type]
+	if dataSize == 0 {
+		if !u.InfoSeq {
+			return fmt.Sprintf("%s: %#x", &u.ID, u.Info)
+		}
+		return fmt.Sprintf("%s seq: %#x", &u.ID, u.Info)
 	}
-	return fmt.Sprintf("%s[%d]%s %s: %#x", u.Type, u.Addr, seqParam, u.Cause, u.Info)
+
+	end := len(u.Info)
+	addrSize := u.ObjAddrSize
+	if end < addrSize {
+		if !u.InfoSeq {
+			return fmt.Sprintf("%s: %#x <EOF>", &u.ID, u.Info)
+		}
+		return fmt.Sprintf("%s seq: %#x <EOF>", &u.ID, u.Info)
+	}
+	addr := u.GetObjAddrAt(0)
+
+	buf := bytes.NewBufferString(u.ID.String())
+
+	for i := addrSize; ; {
+		start := i
+		i += dataSize
+		if i > end {
+			fmt.Fprintf(buf, " %d:%#x <EOF>", addr, u.Info[start:])
+			break
+		}
+		fmt.Fprintf(buf, " %d:%#x", addr, u.Info[start:i])
+		if i == end {
+			break
+		}
+
+		if u.InfoSeq {
+			addr++
+		} else {
+			start = i
+			i += addrSize
+			if i > end {
+				fmt.Fprintf(buf, " %#x <EOF>", u.Info[start:i])
+				break
+			}
+			addr = u.GetObjAddrAt(start)
+		}
+	}
+
+	return buf.String()
 }
 
 // MarshalBinary honors the encoding.BinaryMarshaler interface.
