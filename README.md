@@ -1,12 +1,15 @@
 [![GoDoc](https://godoc.org/github.com/pascaldekloe/part5?status.svg)](https://godoc.org/github.com/pascaldekloe/part5)
 [![Build Status](https://travis-ci.org/pascaldekloe/part5.svg?branch=master)](https://travis-ci.org/pascaldekloe/part5)
 
-# part5
+# Part5 With The Go Programming Language
 
 The International Electrotechnical Commission standard 870 part 5 (IEC 870-5) is
 a set of transmission procedures intended for SCADA systems. Prefix 60 was added
 later as in IEC 60870. For serial communication please refer to **60870-5-101**
 and **60870-5-104** is the TCP-based evolution.
+
+The project consists of a high-level framework, including a low-level library,
+and tooling for network exploration and automated testing.
 
 This is free and unencumbered software released into the
 [public domain](http://creativecommons.org/publicdomain/zero/1.0).
@@ -38,7 +41,7 @@ Optionaly the command may indicate completion with a *terminate*
 [message](http://godoc.org/github.com/pascaldekloe/part5/info#Actterm).
 Some commands can be preceded with a *select*
 [directive](http://godoc.org/github.com/pascaldekloe/part5/info#Cmd.Exec)
-which locks down the execution accaptance to one at a time.
+which locks down processing to one at a time.
 
 To get started please see the API documentation of
 [Dial](http://godoc.org/github.com/pascaldekloe/part5#Dial) [serial],

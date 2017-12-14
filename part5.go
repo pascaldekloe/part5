@@ -50,34 +50,76 @@ type ExecAttrs struct {
 	// when the type does not include timing at all.
 	Time *time.Time
 
-	// Flags wheather to execute with "select" protection.
+	// Flags whether to execute with "select" protection.
 	// See README.md and section 5, subclause 6.8.
 	InSelect bool
 }
 
-// CmdTerm gets called when the respective command terminates.
-// This step is optional. See info.Actterm.
-type CmdTerm func()
+// ExecTerm causes a notification message to be send about the termination
+// of a command execution. Note that the outcome, whether success or failure,
+// is out of scope and error handling is unspecified.
+//
+// This notification step is optional depending on the vendor.
+type ExecTerm func()
 
-// SingleCmd gets called for type C_SC_NC_1 and C_SC_TA_1.
-type SingleCmd func(info.ID, info.SinglePoint, ExecAttrs, CmdTerm) (accept bool)
+// CmdTerm gets called for notification messages about the termination of a
+// command execution. Note that the outcome, whether success or failure, is
+// out of scope and error handling is unspecified.
+//
+// This notification step is optional depending on the vendor. When ignored
+// (with a nil CmdTerm) then it must be done consistently so per address or
+// risk false hits.
+//
+// Go routines may safely wait for a call thanks to timeout protection(s).
+type CmdTerm func(error)
+
+// SingleCmd gets called for type C_SC_NA_1 and C_SC_TA_1.
+// Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
+// confirmation message to be send about whether the specified control
+// action is about to commence—hence the actual execution should proceed
+// in a separate routine and ExecTerm may be called once on completion.
+type SingleCmd func(info.ID, info.SinglePoint, ExecAttrs, ExecTerm) (ok bool)
 
 // DoubleCmd gets called for type C_DC_NA_1 and C_DC_TA_1.
-type DoubleCmd func(info.ID, info.DoublePoint, ExecAttrs, CmdTerm) (accept bool)
+// Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
+// confirmation message to be send about whether the specified control
+// action is about to commence—hence the actual execution should proceed
+// in a separate routine and ExecTerm may be called once on completion.
+type DoubleCmd func(info.ID, info.DoublePoint, ExecAttrs, ExecTerm) (ok bool)
 
 // RegulCmd gets called for type C_RC_NA_1 and C_RC_TA_1.
-type RegulCmd func(info.ID, info.DoublePoint, ExecAttrs, CmdTerm) (accept bool)
+// Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
+// confirmation message to be send about whether the specified control
+// action is about to commence—hence the actual execution should proceed
+// in a separate routine and ExecTerm may be called once on completion.
+type RegulCmd func(info.ID, info.DoublePoint, ExecAttrs, ExecTerm) (ok bool)
 
 // NormalSetpoint gets called for type C_SE_NA_1 and C_SE_TA_1.
-type NormalSetpoint func(info.ID, info.Normal, ExecAttrs, CmdTerm) (accept bool)
+// Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
+// confirmation message to be send about whether the specified control
+// action is about to commence—hence the actual execution should proceed
+// in a separate routine and ExecTerm may be called once on completion.
+type NormalSetpoint func(info.ID, info.Normal, ExecAttrs, ExecTerm) (ok bool)
 
 // ScaledSetpoint gets called for type C_SE_NB_1 and C_SE_TB_1.
-type ScaledSetpoint func(info.ID, int16, ExecAttrs, CmdTerm) (accept bool)
+// Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
+// confirmation message to be send about whether the specified control
+// action is about to commence—hence the actual execution should proceed
+// in a separate routine and ExecTerm may be called once on completion.
+type ScaledSetpoint func(info.ID, int16, ExecAttrs, ExecTerm) (ok bool)
 
 // FloatSetpoint gets called for type C_SE_NC_1 and C_SE_TC_1.
-type FloatSetpoint func(info.ID, float32, ExecAttrs, CmdTerm) (accept bool)
+// Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
+// confirmation message to be send about whether the specified control
+// action is about to commence—hence the actual execution should proceed
+// in a separate routine and ExecTerm may be called once on completion.
+type FloatSetpoint func(info.ID, float32, ExecAttrs, ExecTerm) (ok bool)
 
 // BitsCmd gets called for type C_BO_NA_1 and C_BO_TA_1.
 // The timestamp is nil when the data is invalid or
 // when the type does not include timing at all.
-type BitsCmd func(info.ID, uint32, info.ObjAddr, *time.Time, CmdTerm) (accept bool)
+// Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
+// confirmation message to be send about whether the specified control
+// action is about to commence—hence the actual execution should proceed
+// in a separate routine and ExecTerm may be called once on completion.
+type BitsCmd func(info.ID, uint32, info.ObjAddr, *time.Time, ExecTerm) (ok bool)

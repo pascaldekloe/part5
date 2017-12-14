@@ -122,17 +122,17 @@ func (gold *GoldenExec) check(id info.ID, m interface{}, attrs ExecAttrs) {
 	gold.Count++
 }
 
-func (gold *GoldenExec) SingleCmd(id info.ID, m info.SinglePoint, attrs ExecAttrs, term CmdTerm) (accept bool) {
+func (gold *GoldenExec) SingleCmd(id info.ID, m info.SinglePoint, attrs ExecAttrs, term ExecTerm) (ok bool) {
 	gold.check(id, m, attrs)
 	return gold.Accept
 }
 
-func (gold *GoldenExec) DoubleCmd(id info.ID, m info.DoublePoint, attrs ExecAttrs, term CmdTerm) (accept bool) {
+func (gold *GoldenExec) DoubleCmd(id info.ID, m info.DoublePoint, attrs ExecAttrs, term ExecTerm) (ok bool) {
 	gold.check(id, m, attrs)
 	return gold.Accept
 }
 
-func (gold *GoldenExec) FloatSetpoint(id info.ID, m float32, attrs ExecAttrs, term CmdTerm) (accept bool) {
+func (gold *GoldenExec) FloatSetpoint(id info.ID, m float32, attrs ExecAttrs, term ExecTerm) (ok bool) {
 	gold.check(id, m, attrs)
 	return gold.Accept
 }

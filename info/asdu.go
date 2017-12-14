@@ -313,6 +313,34 @@ func (u *ASDU) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// AppendAddr adds an information object address to Info.
+func (u *ASDU) AppendAddr(addr ObjAddr) error {
+	switch u.ObjAddrSize {
+	default:
+		return errParam
+
+	case 1:
+		if addr > 255 {
+			return errObjAddrFit
+		}
+		u.Info = append(u.Info, byte(addr))
+
+	case 2:
+		if addr > 65535 {
+			return errObjAddrFit
+		}
+		u.Info = append(u.Info, byte(addr), byte(addr>>8))
+
+	case 3:
+		if addr > 16777215 {
+			return errObjAddrFit
+		}
+		u.Info = append(u.Info, byte(addr), byte(addr>>8), byte(addr>>16))
+	}
+
+	return nil
+}
+
 // PutObjAddrAt encodes addr into Info at index i.
 // The function panics when the byte array is too small.
 func (u *ASDU) PutObjAddrAt(i int, addr ObjAddr) error {
