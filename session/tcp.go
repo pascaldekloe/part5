@@ -30,7 +30,7 @@ var (
 )
 
 type tcp struct {
-	conf TCPConf
+	TCPConf
 	conn net.Conn
 
 	// Transport counterparts
@@ -74,10 +74,10 @@ func TCP(conf *TCPConf, conn net.Conn) *Station {
 	levelChan := make(chan Level)
 
 	t := tcp{
-		conf:   *conf,
-		conn:   conn,
-		level:  levelChan,
-		launch: launchChan,
+		TCPConf: *conf,
+		conn:    conn,
+		level:   levelChan,
+		launch:  launchChan,
 
 		in:     inChan,
 		class1: class1Chan,
@@ -95,13 +95,11 @@ func TCP(conf *TCPConf, conn net.Conn) *Station {
 	go t.sendLoop()
 	go t.run()
 
-	// exit strategy:
-	// (1) recvLoop closes tcp.recv feed for run on return
-	// (2) run closes tcp.send feed for sendLoop on return
-	// (3) sendLoop closes tcp.conn for (1) on return
-	// because run (2) may quit for various reasons it flushes
-	// tcp.recv to prevent blocked routines
-	// run also controls the levelChan and closes errChan and inChan
+	// Circular exit strategy:
+	// (1) recvLoop stops and closes t.recv on (4) or any other read error
+	// (2) run closes t.send on (1) or Exit [fatal error or user requested]
+	// (3) sendLoop stops and closes t.sendQuit on (2)
+	// (4) run closes t.conn on (3)
 
 	return &Station{
 		Transport: Transport{inChan, class1Chan, class2Chan, errChan},
@@ -118,6 +116,8 @@ func (t *tcp) recvLoop() {
 	var datagram apdu // reusable instance
 	for {
 		byteCount, err := datagram.Unmarshal(t.conn, 0)
+
+		var deadline time.Time
 		for err != nil {
 			// See: https://github.com/golang/go/issues/4373
 			if err != io.EOF && err != io.ErrClosedPipe || strings.Contains(err.Error(), "use of closed network connection") {
@@ -129,14 +129,23 @@ func (t *tcp) recvLoop() {
 			}
 			// temporary error may be recoverable
 
-			<-retryTicker.C
+			now := <-retryTicker.C
+			switch {
+			case byteCount == 0:
+				break // not started
+			case deadline.IsZero():
+				deadline = now.Add(t.SendUnackTimeout)
+			case now.After(deadline):
+				t.err <- errAckExpire
+				return
+			}
 
 			byteCount, err = datagram.Unmarshal(t.conn, byteCount)
 		}
+
 		if Trace {
 			log.Printf("%s@%s: received %s", t.conn.RemoteAddr(), t.conn.LocalAddr(), datagram.String())
 		}
-
 		t.recv <- datagram // copy
 	}
 }
@@ -199,8 +208,10 @@ func (t *tcp) run() {
 			}
 		}
 
+		// kill send loop
 		close(t.send)
-		time.Sleep(timeoutResolution)
+		<-t.sendQuit
+
 		t.conn.Close()
 
 		// await receive loop
@@ -243,7 +254,7 @@ func (t *tcp) run() {
 		// nil channel blocks (for SendUnackMax and Down case)
 		var class1, class2 <-chan *Outbound
 
-		if level >= Up && seqNoCount(t.ackNoOut, t.seqNoOut) <= t.conf.SendUnackMax {
+		if level >= Up && seqNoCount(t.ackNoOut, t.seqNoOut) <= t.SendUnackMax {
 			// may send; unblock
 			class1, class2 = t.class1, t.class2
 
@@ -289,7 +300,7 @@ func (t *tcp) run() {
 		case now := <-checkTicker.C:
 			// check all timeouts
 
-			timeout := t.conf.SendUnackTimeout
+			timeout := t.SendUnackTimeout
 			if now.Sub(bringUpSend) >= timeout {
 				t.err <- errBringUpExpire
 				return
@@ -311,13 +322,13 @@ func (t *tcp) run() {
 			}
 
 			// check oldest unacknowledged inbound
-			if t.ackNoIn != t.seqNoIn && (now.Sub(unackRecvd) >= t.conf.RecvUnackTimeout || now.Sub(t.idleSince) >= timeoutResolution) {
+			if t.ackNoIn != t.seqNoIn && (now.Sub(unackRecvd) >= t.RecvUnackTimeout || now.Sub(t.idleSince) >= timeoutResolution) {
 				t.send <- newAck(t.seqNoIn)
 				t.ackNoIn = t.seqNoIn
 				t.idleSince = time.Now()
 			}
 
-			if now.Sub(t.idleSince) >= t.conf.IdleTimeout {
+			if now.Sub(t.idleSince) >= t.IdleTimeout {
 				t.send <- newFunc(keepAlive)
 				keepAliveSend = time.Now()
 				t.idleSince = keepAliveSend
@@ -372,7 +383,7 @@ func (t *tcp) run() {
 				}
 				t.seqNoIn = (t.seqNoIn + 1) & 32767
 
-				if seqNoCount(t.ackNoIn, t.seqNoIn) >= t.conf.RecvUnackMax {
+				if seqNoCount(t.ackNoIn, t.seqNoIn) >= t.RecvUnackMax {
 					t.send <- newAck(t.seqNoIn)
 					t.ackNoIn = t.seqNoIn
 					t.idleSince = time.Now()
