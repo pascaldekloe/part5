@@ -25,11 +25,8 @@ func TestUFormat(t *testing.T) {
 		{bringUp | bringDown, "<illegal 0x14>", "680417000000"},
 	}
 
-	var u apdu
-	rand.Read(u[:]) // populate with junk
-
 	for _, gold := range golden {
-		u.InitFunc(gold.f)
+		u := newFunc(gold.f)
 
 		if got := u.Format(); got != uFrame {
 			t.Errorf("%s(%s): got %c-frame", gold.serial, gold.name, got)
@@ -53,11 +50,8 @@ func TestUFormat(t *testing.T) {
 
 // TestSFormat tests all sequence number acknowledges.
 func TestSFormat(t *testing.T) {
-	var u apdu
-	rand.Read(u[:]) // populate with junk
-
 	for seqNo := uint(0); seqNo < 1<<15; seqNo++ {
-		u.InitAck(seqNo)
+		u := newAck(seqNo)
 
 		if got := u.RecvSeqNo(); got != seqNo {
 			t.Fatalf("got sequence number %d, want %d", got, seqNo)
@@ -90,7 +84,10 @@ func TestIFormat(t *testing.T) {
 		seqNo2 := (seqNo + 1) % (1 << 15)
 		asduLen := int(seqNo) % len(feed)
 
-		u.InitASDU(feed[:asduLen], seqNo, seqNo2)
+		u, err := packASDU(feed[:asduLen], seqNo, seqNo2)
+		if err != nil {
+			t.Fatal("ASDU wrap error:", err)
+		}
 
 		if got := u.SendSeqNo(); got != seqNo {
 			t.Fatalf("got send sequence number %d, want %d", got, seqNo)

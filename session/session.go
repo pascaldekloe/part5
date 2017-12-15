@@ -19,7 +19,7 @@ var (
 var Trace = false
 
 // Level is the availability status.
-type Level int
+type Level uint
 
 const (
 	Exit Level = iota // no connection
@@ -58,8 +58,10 @@ type Station struct {
 }
 
 // Transport layer as datagram channels.
-// In is closed first on Exit followed by Err. Class1 and Class2
-// MUST be closed by the user after, and only after Exit.
+// Channel In and Err MUST be read continuously or operation may block and
+// behave in an unexpected way. On Exit, In is closed first follewed by Err.
+// Both Class1 and Class2 MUST be closed by the user and doing so ensures an
+// Exit.
 type Transport struct {
 	// In captures inbound datagrams in order of appearance.
 	In <-chan []byte
@@ -76,9 +78,8 @@ type Transport struct {
 	// cyclic transmission or for low priority messages.
 	Class2 chan<- *Outbound
 
-	// Err captures protocol failure.
-	// Err must be read or operation may block and behave
-	// in an unexpected way.
+	// Err captures all protocol failures which are not
+	// directly related to an Outbound submission.
 	Err <-chan error
 }
 

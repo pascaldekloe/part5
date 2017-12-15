@@ -174,8 +174,6 @@ func (t *tcp) run() {
 	level := Down
 	t.level <- level
 
-	var datagram apdu // reusable instance
-
 	checkTicker := time.NewTicker(timeoutResolution)
 
 	defer func() {
@@ -183,23 +181,21 @@ func (t *tcp) run() {
 
 		// try gracefull shutdown
 		if level > Down {
-			datagram.InitFunc(bringDown)
 			select {
+			case t.send <- newFunc(bringDown):
+				break
 			default:
 				break // best effort
-			case t.send <- datagram:
-				break
 			}
 			t.level <- Down
 		}
 
-		if level > Exit && t.ackNoIn != t.seqNoIn {
-			datagram.InitAck(t.seqNoIn)
+		if t.ackNoIn != t.seqNoIn {
 			select {
+			case t.send <- newAck(t.seqNoIn):
+				t.ackNoIn = t.seqNoIn
 			default:
 				break // best effort
-			case t.send <- datagram:
-				t.ackNoIn = t.seqNoIn
 			}
 		}
 
@@ -208,7 +204,7 @@ func (t *tcp) run() {
 		t.conn.Close()
 
 		// await receive loop
-		for datagram = range t.recv {
+		for datagram := range t.recv {
 			if f := datagram.Format(); f == iFrame || f == sFrame {
 				t.updateAckNoOut(datagram.RecvSeqNo())
 			}
@@ -253,30 +249,42 @@ func (t *tcp) run() {
 
 			// won't block because cap(t.send) = SendUnackMax
 			select {
-			case o := <-class1:
+			case o, ok := <-class1:
+				if !ok {
+					return
+				}
 				// favour class Ⅰ
-				t.submit(o, &datagram)
+				t.submit(o)
 				continue
 
 			default:
 				// try class Ⅱ
 				select {
-				case o := <-class2:
-					t.submit(o, &datagram)
+				case o, ok := <-class2:
+					if !ok {
+						return
+					}
+					t.submit(o)
 					continue
 
 				default:
-					// nothing available right now
+					break // nothing available right now
 				}
 			}
 		}
 
 		select {
-		case o := <-class1:
-			t.submit(o, &datagram)
+		case o, ok := <-class1:
+			if !ok {
+				return
+			}
+			t.submit(o)
 
-		case o := <-class2:
-			t.submit(o, &datagram)
+		case o, ok := <-class2:
+			if !ok {
+				return
+			}
+			t.submit(o)
 
 		case now := <-checkTicker.C:
 			// check all timeouts
@@ -304,36 +312,33 @@ func (t *tcp) run() {
 
 			// check oldest unacknowledged inbound
 			if t.ackNoIn != t.seqNoIn && (now.Sub(unackRecvd) >= t.conf.RecvUnackTimeout || now.Sub(t.idleSince) >= timeoutResolution) {
-				datagram.InitAck(t.seqNoIn)
+				t.send <- newAck(t.seqNoIn)
 				t.ackNoIn = t.seqNoIn
-				t.send <- datagram // copy
-				t.idleSince = now
+				t.idleSince = time.Now()
 			}
 
 			if now.Sub(t.idleSince) >= t.conf.IdleTimeout {
-				datagram.InitFunc(keepAlive)
-				t.send <- datagram // copy
-				keepAliveSend = now
-				t.idleSince = now
+				t.send <- newFunc(keepAlive)
+				keepAliveSend = time.Now()
+				t.idleSince = keepAliveSend
 			}
 
 		case l := <-t.launch:
+			var f function
 			switch l {
 			case Exit:
 				return
 			case Down:
 				level = Down
-				datagram.InitFunc(bringDown)
+				f = bringDown
 			default: // Up or higher
-				datagram.InitFunc(bringUp)
+				f = bringUp
 			}
-			t.send <- datagram
+			t.send <- newFunc(f)
 			t.idleSince = time.Now()
 
-		case datagram = <-t.recv: // copy
-			var zero apdu
-			if datagram == zero { // assume channel closed
-				level = Exit
+		case datagram, ok := <-t.recv:
+			if !ok {
 				return
 			}
 
@@ -346,7 +351,7 @@ func (t *tcp) run() {
 				}
 
 			case iFrame:
-				if level != Up {
+				if level < Up {
 					break // discard
 				}
 
@@ -368,9 +373,8 @@ func (t *tcp) run() {
 				t.seqNoIn = (t.seqNoIn + 1) & 32767
 
 				if seqNoCount(t.ackNoIn, t.seqNoIn) >= t.conf.RecvUnackMax {
-					datagram.InitAck(t.seqNoIn)
+					t.send <- newAck(t.seqNoIn)
 					t.ackNoIn = t.seqNoIn
-					t.send <- datagram
 					t.idleSince = time.Now()
 				}
 
@@ -379,8 +383,7 @@ func (t *tcp) run() {
 				case bringUp:
 					level = Up
 					t.level <- level
-					datagram.InitFunc(bringUpOK)
-					t.send <- datagram
+					t.send <- newFunc(bringUpOK)
 					t.idleSince = time.Now()
 
 				case bringUpOK:
@@ -391,8 +394,7 @@ func (t *tcp) run() {
 				case bringDown:
 					level = Down
 					t.level <- level
-					datagram.InitFunc(bringDownOK)
-					t.send <- datagram
+					t.send <- newFunc(bringDownOK)
 					t.idleSince = time.Now()
 
 				case bringDownOK:
@@ -401,8 +403,7 @@ func (t *tcp) run() {
 					bringDownSend = willNotTimeout
 
 				case keepAlive:
-					datagram.InitFunc(keepAliveOK)
-					t.send <- datagram
+					t.send <- newFunc(keepAliveOK)
 					t.idleSince = time.Now()
 
 				case keepAliveOK:
@@ -416,10 +417,11 @@ func (t *tcp) run() {
 	}
 }
 
-func (t *tcp) submit(o *Outbound, datagram *apdu) {
+func (t *tcp) submit(o *Outbound) {
 	seqNo := t.seqNoOut
 
-	if err := datagram.InitASDU(o.Payload, seqNo, t.seqNoIn); err != nil {
+	datagram, err := packASDU(o.Payload, seqNo, t.seqNoIn)
+	if err != nil {
 		o.err <- err // buffered channel
 		return
 	}
@@ -430,7 +432,7 @@ func (t *tcp) submit(o *Outbound, datagram *apdu) {
 	p.done = o.err
 	p.send = time.Now()
 
-	t.send <- *datagram // copy
+	t.send <- datagram
 	t.idleSince = time.Now()
 }
 

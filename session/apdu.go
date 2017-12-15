@@ -135,32 +135,37 @@ func (u *apdu) Payload() []byte {
 	return p
 }
 
-// InitFunc sets the U format.
-func (u *apdu) InitFunc(f function) {
+// NewFunc returns a new U-frame.
+func newFunc(f function) apdu {
+	var u apdu
 	u[0] = start
 	u[1] = 4
 	u[2] = byte(f | 3)
 	u[3] = 0
 	u[4] = 0
 	u[5] = 0
+	return u
 }
 
-// InitAck sets the S format.
-func (u *apdu) InitAck(seqNo uint) {
+// NewAck returns a new S-frame.
+func newAck(seqNo uint) apdu {
+	var u apdu
 	u[0] = start
 	u[1] = 4
 	u[2] = 1
 	u[3] = 0
 	u[4] = uint8(seqNo << 1)
 	u[5] = uint8(seqNo >> 7)
+	return u
 }
 
-// InitASDU sets the I format.
-func (u *apdu) InitASDU(asdu []byte, sendSeqNo, recvSeqNo uint) error {
+// packASDU returns a new I-frame.
+func packASDU(asdu []byte, sendSeqNo, recvSeqNo uint) (apdu, error) {
 	if len(asdu) > 249 {
-		return errLength
+		return apdu{}, errLength
 	}
 
+	var u apdu
 	u[0] = start
 	u[1] = uint8(len(asdu) + 4)
 	u[2] = uint8(sendSeqNo << 1)
@@ -169,7 +174,7 @@ func (u *apdu) InitASDU(asdu []byte, sendSeqNo, recvSeqNo uint) error {
 	u[5] = uint8(recvSeqNo >> 7)
 	copy(u[6:], asdu)
 
-	return nil
+	return u, nil
 }
 
 // Marshal encodes the datagram and returns the number of octets written.
