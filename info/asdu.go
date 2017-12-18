@@ -104,7 +104,7 @@ func (u *ASDU) Respond(t TypeID, c Cause) *ASDU {
 		Addr:  u.Addr,
 		Orig:  u.Orig,
 		Type:  t,
-		Cause: c,
+		Cause: c | u.Cause&TestFlag,
 	})
 }
 
@@ -112,7 +112,7 @@ func (u *ASDU) Respond(t TypeID, c Cause) *ASDU {
 // with a copy of Info.
 func (u *ASDU) Reply(c Cause) *ASDU {
 	r := NewASDU(u.Params, u.ID)
-	r.Cause = c
+	r.Cause = c | u.Cause&TestFlag
 	r.InfoSeq = u.InfoSeq
 	r.Info = append(r.Info, u.Info...)
 	return r

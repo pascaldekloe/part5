@@ -56,23 +56,20 @@ func (h *Head) Add(u *info.ASDU) {
 }
 
 // Inro responds to an interrogation request C_IC_NA_1.
-func (h *Head) Inro(req *info.ASDU, resp chan *info.ASDU) {
+func (h *Head) Inro(req *info.ASDU, resp chan<- *info.ASDU) {
 	if req.Type != info.C_IC_NA_1 {
 		panic("not an interrogation request")
 	}
 
-	// when set all responses should be too
-	testFlag := req.Cause & info.TestFlag
-
 	// check cause of transmission
 	if req.Cause&127 != info.Act {
-		resp <- req.Reply(info.UnkCause | testFlag)
+		resp <- req.Reply(info.UnkCause)
 		return
 	}
 
 	// check payload
 	if len(req.Info) != req.ObjAddrSize+1 || req.GetObjAddrAt(0) != 0 {
-		resp <- req.Reply(info.UnkInfo | testFlag)
+		resp <- req.Reply(info.UnkInfo)
 		return
 	}
 
@@ -80,13 +77,12 @@ func (h *Head) Inro(req *info.ASDU, resp chan *info.ASDU) {
 	// of transmission value for generic interrogation and group 1‥16.
 	cause := info.Cause(req.Info[req.ObjAddrSize])
 	if cause < info.Inrogen || cause > info.Inro16 {
-		resp <- req.Reply(info.Actcon | info.NegFlag | testFlag)
+		resp <- req.Reply(info.Actcon | info.NegFlag)
 		return
 	}
-	cause |= testFlag
 
 	// confirm
-	resp <- req.Reply(info.Actcon | testFlag)
+	resp <- req.Reply(info.Actcon)
 
 	h.db.Range(func(key, value interface{}) bool {
 		addr := key.(info.ObjAddr)
@@ -104,5 +100,5 @@ func (h *Head) Inro(req *info.ASDU, resp chan *info.ASDU) {
 	})
 
 	// terminate
-	resp <- req.Reply(info.Actterm | testFlag)
+	resp <- req.Reply(info.Actterm)
 }
