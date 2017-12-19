@@ -76,7 +76,7 @@ func TestSeq(t *testing.T) {
 	}()
 
 	// need timeouts to report issues instead of hanging on'm
-	expire := time.After(2 * time.Second)
+	expire := time.After(9 * time.Second)
 
 	for i := 0; i < calls; i++ {
 		select {
@@ -141,6 +141,8 @@ func TestBringDown(t *testing.T) {
 	default:
 		t.Error("outbound after exit blocked")
 	}
+
+	exitGroup.Wait()
 
 	for {
 		line, err := logLines.ReadString('\n')
@@ -424,7 +426,7 @@ func newTCPTestDuo(t testing.TB, connA, connB net.Conn, conf *TCPConf) (a, b *St
 	exitGroup = new(sync.WaitGroup)
 
 	// fail test on expiry and free exitGroup
-	expiry := 9 * time.Second
+	expiry := 10 * time.Second
 	deadline := time.After(expiry)
 
 	// ensure a level or fail test
