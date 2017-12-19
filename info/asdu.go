@@ -75,7 +75,7 @@ type ID struct {
 }
 
 // String returns a compact label.
-func (id *ID) String() string {
+func (id ID) String() string {
 	if id.Orig == 0 {
 		return fmt.Sprintf("@%d %s <%s>", id.Addr, id.Type, id.Cause)
 	}
@@ -123,18 +123,18 @@ func (u *ASDU) String() string {
 	dataSize := ObjSize[u.Type]
 	if dataSize == 0 {
 		if !u.InfoSeq {
-			return fmt.Sprintf("%s: %#x", &u.ID, u.Info)
+			return fmt.Sprintf("%s: %#x", u.ID, u.Info)
 		}
-		return fmt.Sprintf("%s seq: %#x", &u.ID, u.Info)
+		return fmt.Sprintf("%s seq: %#x", u.ID, u.Info)
 	}
 
 	end := len(u.Info)
 	addrSize := u.ObjAddrSize
 	if end < addrSize {
 		if !u.InfoSeq {
-			return fmt.Sprintf("%s: %#x <EOF>", &u.ID, u.Info)
+			return fmt.Sprintf("%s: %#x <EOF>", u.ID, u.Info)
 		}
-		return fmt.Sprintf("%s seq: %#x <EOF>", &u.ID, u.Info)
+		return fmt.Sprintf("%s seq: %#x <EOF>", u.ID, u.Info)
 	}
 	addr := u.GetObjAddrAt(0)
 
