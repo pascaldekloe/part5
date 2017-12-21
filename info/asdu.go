@@ -248,11 +248,12 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 // UnmarshalBinary honors the encoding.BinaryUnmarshaler interface.
 // Params must be set in advance. All other fields are initialized.
 func (u *ASDU) UnmarshalBinary(data []byte) error {
-	n := 2 + u.CauseSize + u.AddrSize
-	if n > len(data) {
+	// data unit identifier size check
+	lenDUI := 2 + u.CauseSize + u.AddrSize
+	if lenDUI > len(data) {
 		return io.EOF
 	}
-	u.Info = append(u.bootstrap[:0], data[n:]...)
+	u.Info = append(u.bootstrap[:0], data[lenDUI:]...)
 
 	u.Type = TypeID(data[0])
 
@@ -299,15 +300,14 @@ func (u *ASDU) UnmarshalBinary(data []byte) error {
 	default:
 		return errParam
 	case 1:
-		addr := CommonAddr(data[n-1])
+		addr := CommonAddr(data[lenDUI-1])
 		if addr == 255 {
 			// map 8-bit variant to 16-bit equivalent
 			addr = GlobalAddr
 		}
 		u.Addr = addr
-
 	case 2:
-		u.Addr = CommonAddr(data[n-2]) | CommonAddr(data[n-1])<<8
+		u.Addr = CommonAddr(data[lenDUI-2]) | CommonAddr(data[lenDUI-1])<<8
 	}
 
 	return nil
