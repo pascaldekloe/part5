@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/pascaldekloe/part5/info"
@@ -14,17 +14,20 @@ import (
 
 // Delegate is a listener configuration for one common address.
 type Delegate struct {
-	// Inbound messages are reported to each entry in All first. The
+	sync.WaitGroup
+
+	// All inbound messages are reported to these entries first. The
 	// functions are called in order of appearance. An ASDU is dropped
 	// immediately when the return is false. Thus All can be used as a
 	// filter, a preprocessor or as an extension point.
 	All []func(*info.ASDU) (pass bool)
 
-	// Called in order of appearance for type C_TS_NA_1.
+	// Tests are called in order of appearance for type C_TS_NA_1.
 	// See section 5, subclause 6.11.
 	Tests []func() (ok bool)
 
-	// listeners for measured values [primary]
+	// Listeners For Measured Values [primary]
+	// Use info.IrrelevantAddr to catch'm all.
 	Singles map[info.ObjAddr]Single
 	Doubles map[info.ObjAddr]Double
 	Steps   map[info.ObjAddr]Step
@@ -33,7 +36,8 @@ type Delegate struct {
 	Scaleds map[info.ObjAddr]Scaled
 	Floats  map[info.ObjAddr]Float
 
-	// listeners for commands [secondary]
+	// Listeners For Commands [secondary]
+	// Use info.IrrelevantAddr to catch'm all.
 	SingleCmds      map[info.ObjAddr]SingleCmd
 	DoubleCmds      map[info.ObjAddr]DoubleCmd
 	RegulCmds       map[info.ObjAddr]RegulCmd
@@ -41,6 +45,55 @@ type Delegate struct {
 	ScaledSetpoints map[info.ObjAddr]ScaledSetpoint
 	FloatSetpoints  map[info.ObjAddr]FloatSetpoint
 	BitsCmds        map[info.ObjAddr]BitsCmd
+}
+
+// Valid returns the validation result.
+func (d *Delegate) Valid() error {
+	registered := make(map[info.ObjAddr]struct{})
+	for addr := range d.Singles {
+		if _, ok := registered[addr]; ok {
+			return fmt.Errorf("part5: multiple listeners on information object address %d", addr)
+		}
+		registered[addr] = struct{}{}
+	}
+	for addr := range d.Doubles {
+		if _, ok := registered[addr]; ok {
+			return fmt.Errorf("part5: multiple listeners on information object address %d", addr)
+		}
+		registered[addr] = struct{}{}
+	}
+	for addr := range d.Steps {
+		if _, ok := registered[addr]; ok {
+			return fmt.Errorf("part5: multiple listeners on information object address %d", addr)
+		}
+		registered[addr] = struct{}{}
+	}
+	for addr := range d.Bits {
+		if _, ok := registered[addr]; ok {
+			return fmt.Errorf("part5: multiple listeners on information object address %d", addr)
+		}
+		registered[addr] = struct{}{}
+	}
+	for addr := range d.Normals {
+		if _, ok := registered[addr]; ok {
+			return fmt.Errorf("part5: multiple listeners on information object address %d", addr)
+		}
+		registered[addr] = struct{}{}
+	}
+	for addr := range d.Scaleds {
+		if _, ok := registered[addr]; ok {
+			return fmt.Errorf("part5: multiple listeners on information object address %d", addr)
+		}
+		registered[addr] = struct{}{}
+	}
+	for addr := range d.Floats {
+		if _, ok := registered[addr]; ok {
+			return fmt.Errorf("part5: multiple listeners on information object address %d", addr)
+		}
+		registered[addr] = struct{}{}
+	}
+
+	return nil
 }
 
 // String returns a compact description of the setup.
@@ -166,47 +219,57 @@ func (d *Delegate) float(id info.ID, m float32, attrs MeasureAttrs) {
 	}
 }
 
-var errSelectTimeout = errors.New("part5: command execute after select timeout")
-var errSelectInterrupt = errors.New("part5: command select–execute procedure interrupted")
+var errSelectExpire = errors.New("part5: command execute after select timeout")
+var errSelectLost = errors.New("part5: command select abort due connection loss")
 
 // SelectProc passes a command select procedure when applicable and
 // returns the execute message or nil for abort.
 // The position of the qualifier of command is given with cmdIndex.
-func selectProc(req *info.ASDU, cmdIndex int, in <-chan *info.ASDU, out chan<- *info.ASDU) (exec *info.ASDU, err error) {
-	switch req.Cause {
+func selectProc(req *info.ASDU, cmdIndex int, c *Caller, errCh chan<- error) (exec *info.ASDU) {
+	switch req.Cause &^ info.TestFlag {
 	case info.Act:
 		break
 
 	case info.Deact:
 		// nothing in progress
-		out <- req.Reply(info.Deactcon | info.NegFlag)
-		return nil, nil
+		sendNB(req.Reply(info.Deactcon|info.NegFlag), c, errCh)
+		return nil
 
 	default:
-		out <- req.Reply(info.UnkCause)
-		return nil, nil
+		sendNB(req.Reply(info.UnkCause), c, errCh)
+		return nil
 	}
 
 	if req.Info[cmdIndex]&128 == 0 {
 		// direct command; no select
-		return req, nil
+		return req
 	}
+	// "not interruptable and controlled by a time out"
 
 	// acknowledge select
-	out <- req.Reply(info.Actcon)
+	if err := c.Send(req.Reply(info.Actcon)); err != nil {
+		errCh <- err
+		return nil
+	}
 
-	// "not interruptable and controlled by a time out"
-	timeout := time.NewTimer(10 * time.Second)
+	// BUG(pascaldekloe): Hardcoded select timeout of 10s.
+	expire := time.NewTimer(10 * time.Second)
+	defer expire.Stop()
 	select {
-	case <-timeout.C:
-		return nil, errSelectTimeout
+	case <-expire.C:
+		errCh <- errSelectExpire
+		return nil
 
-	case exec = <-in:
-		if !timeout.Stop() {
-			<-timeout.C
+	case bytes, ok := <-c.transport.In:
+		if !ok {
+			errCh <- errSelectLost
+			return nil
 		}
-		if exec == nil {
-			return nil, io.EOF
+
+		exec = &info.ASDU{Params: c.params}
+		if err := exec.UnmarshalBinary(bytes); err != nil {
+			errCh <- err
+			return nil
 		}
 	}
 
@@ -214,32 +277,34 @@ func selectProc(req *info.ASDU, cmdIndex int, in <-chan *info.ASDU, out chan<- *
 		!bytes.Equal(exec.Info[:cmdIndex], req.Info[:cmdIndex]) ||
 		exec.Info[cmdIndex] != req.Info[cmdIndex]&127 ||
 		!bytes.Equal(exec.Info[cmdIndex+1:], req.Info[cmdIndex+1:]) {
-		return nil, errSelectInterrupt
+		errCh <- fmt.Errorf("part5: %s interrupted by %s", req, exec)
+		return nil
 	}
 
-	switch exec.Cause {
+	switch exec.Cause ^ req.Cause&info.TestFlag {
 	case info.Act:
-		return exec, nil // success
+		return exec // success
+
 	case info.Deact:
 		// break off
-		out <- req.Reply(info.Deactcon)
-		return nil, nil
+		sendNB(req.Reply(info.Deactcon), c, errCh)
+		return nil
+
 	default:
-		out <- req.Reply(info.UnkCause)
-		return nil, nil
+		sendNB(req.Reply(info.UnkCause), c, errCh)
+		return nil
 	}
 }
 
-// Called in isolation per originating address.
-func (d *Delegate) singleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *info.ASDU) error {
+func (d *Delegate) singleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 	addr := req.GetObjAddrAt(0)
 	f, ok := d.SingleCmds[addr]
 	if !ok {
 		f, ok = d.SingleCmds[info.IrrelevantAddr]
 	}
 	if !ok {
-		out <- req.Reply(info.UnkInfo)
-		return nil
+		sendNB(req.Reply(info.UnkInfo), c, errCh)
+		return
 	}
 
 	cmd := info.SingleCmd{Cmd: info.Cmd(req.Info[req.ObjAddrSize])}
@@ -252,36 +317,35 @@ func (d *Delegate) singleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *i
 		// TODO(pascaldekloe): time tag
 	}
 
-	req, err := selectProc(req, req.ObjAddrSize, in, out)
-	if err != nil {
-		return err
-	}
+	req = selectProc(req, req.ObjAddrSize, c, errCh)
 	if req == nil {
-		return nil
+		return
 	}
 
-	terminate := func() {
-		out <- req.Reply(info.Actterm)
-	}
+	d.Add(1)
+	go func() {
+		defer d.Done()
 
-	if f(req.ID, cmd.Point(), attrs, terminate) {
-		out <- req.Reply(info.Actcon)
-	} else {
-		out <- req.Reply(info.Actcon | info.NegFlag)
-	}
-	return nil
+		terminate := func() {
+			sendNB(req.Reply(info.Actterm), c, errCh)
+		}
+		if f(req.ID, cmd.Point(), attrs, terminate) {
+			sendNB(req.Reply(info.Actcon), c, errCh)
+		} else {
+			sendNB(req.Reply(info.Actcon|info.NegFlag), c, errCh)
+		}
+	}()
 }
 
-// Called in isolation per originating address.
-func (d *Delegate) doubleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *info.ASDU) error {
+func (d *Delegate) doubleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 	addr := req.GetObjAddrAt(0)
 	f, ok := d.DoubleCmds[addr]
 	if !ok {
 		f, ok = d.DoubleCmds[info.IrrelevantAddr]
 	}
 	if !ok {
-		out <- req.Reply(info.UnkInfo)
-		return nil
+		sendNB(req.Reply(info.UnkInfo), c, errCh)
+		return
 	}
 
 	cmd := info.DoubleCmd{Cmd: info.Cmd(req.Info[req.ObjAddrSize])}
@@ -294,44 +358,35 @@ func (d *Delegate) doubleCmd(req *info.ASDU, in <-chan *info.ASDU, out chan<- *i
 		// TODO(pascaldekloe): time tag
 	}
 
-	req, err := selectProc(req, req.ObjAddrSize, in, out)
-	if err != nil {
-		return err
-	}
+	req = selectProc(req, req.ObjAddrSize, c, errCh)
 	if req == nil {
-		return nil
+		return
 	}
 
-	terminate := func() {
-		out <- req.Reply(info.Actterm)
-	}
+	d.Add(1)
+	go func() {
+		defer d.Done()
 
-	if f(req.ID, cmd.Point(), attrs, terminate) {
-		out <- req.Reply(info.Actcon)
-	} else {
-		out <- req.Reply(info.Actcon | info.NegFlag)
-	}
-	return nil
+		terminate := func() {
+			sendNB(req.Reply(info.Actterm), c, errCh)
+		}
+		if f(req.ID, cmd.Point(), attrs, terminate) {
+			sendNB(req.Reply(info.Actcon), c, errCh)
+		} else {
+			sendNB(req.Reply(info.Actcon|info.NegFlag), c, errCh)
+		}
+	}()
 }
 
-// Called in isolation per originating address.
-func (d *Delegate) floatSetpoint(req *info.ASDU, in <-chan *info.ASDU, out chan<- *info.ASDU) error {
+func (d *Delegate) floatSetpoint(req *info.ASDU, c *Caller, errCh chan<- error) {
 	addr := req.GetObjAddrAt(0)
 	f, ok := d.FloatSetpoints[addr]
 	if !ok {
 		f, ok = d.FloatSetpoints[info.IrrelevantAddr]
 	}
 	if !ok {
-		out <- req.Reply(info.UnkInfo)
-		return nil
-	}
-
-	req, err := selectProc(req, req.ObjAddrSize, in, out)
-	if err != nil {
-		return err
-	}
-	if req == nil {
-		return nil
+		sendNB(req.Reply(info.UnkInfo), c, errCh)
+		return
 	}
 
 	cmd := info.SetpointCmd(req.Info[req.ObjAddrSize+4])
@@ -344,15 +399,32 @@ func (d *Delegate) floatSetpoint(req *info.ASDU, in <-chan *info.ASDU, out chan<
 		// TODO(pascaldekloe): time tag
 	}
 
-	terminate := func() {
-		out <- req.Reply(info.Actterm)
+	req = selectProc(req, req.ObjAddrSize+4, c, errCh)
+	if req == nil {
+		return
 	}
 
-	m := math.Float32frombits(binary.LittleEndian.Uint32(req.Info[req.ObjAddrSize:]))
-	if f(req.ID, m, attrs, terminate) {
-		out <- req.Reply(info.Actcon)
-	} else {
-		out <- req.Reply(info.Actcon | info.NegFlag)
-	}
-	return nil
+	d.Add(1)
+	go func() {
+		defer d.Done()
+
+		terminate := func() {
+			sendNB(req.Reply(info.Actterm), c, errCh)
+		}
+		p := math.Float32frombits(binary.LittleEndian.Uint32(req.Info[req.ObjAddrSize:]))
+		if f(req.ID, p, attrs, terminate) {
+			sendNB(req.Reply(info.Actcon), c, errCh)
+		} else {
+			sendNB(req.Reply(info.Actcon|info.NegFlag), c, errCh)
+		}
+	}()
+}
+
+// SendNB does a non-blocking outbound submission.
+func sendNB(u *info.ASDU, c *Caller, errCh chan<- error) {
+	go func() {
+		if err := c.Send(u); err != nil {
+			errCh <- err
+		}
+	}()
 }

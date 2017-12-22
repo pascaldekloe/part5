@@ -1,7 +1,6 @@
 package part5
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -161,9 +160,8 @@ func (c *Caller) Float(id info.ID, v float32, attrs MeasureAttrs) error {
 	if attrs.QualDesc&^0xf1 != 0 {
 		return errQualDesc
 	}
-	i := len(u.Info)
-	u.Info = append(u.Info, 0, 0, 0, 0, byte(attrs.QualDesc))
-	binary.LittleEndian.PutUint32(u.Info[i:], math.Float32bits(v))
+	bits := math.Float32bits(v)
+	u.Info = append(u.Info, byte(bits), byte(bits>>8), byte(bits>>16), byte(bits>>24), byte(attrs.QualDesc))
 
 	switch id.Type {
 	case info.M_ME_NC_1:
@@ -216,16 +214,48 @@ func (c *Caller) SingleCmd(id info.ID, p info.SinglePoint, attrs ExecAttrs, term
 		return errType
 	}
 
-	selIndex := -1
-	if attrs.InSelect {
-		selIndex = u.ObjAddrSize
+	if !attrs.InSelect {
+		return c.launchCmd(u, -1, term)
 	}
-	return c.launchCmd(u, selIndex, term)
+	return c.launchCmd(u, u.ObjAddrSize, term)
 }
 
 // DoubleCmd sends a type C_DC_NA_1 or C_DC_TA_1.
 func (c *Caller) DoubleCmd(id info.ID, p info.DoublePoint, attrs ExecAttrs, term CmdTerm) error {
-	panic("TODO: not implemented")
+	if id.Cause&^info.TestFlag != info.Act {
+		return errCmdCause
+	}
+
+	u := info.NewASDU(c.params, id)
+	if err := u.AppendAddr(attrs.Addr); err != nil {
+		return err
+	}
+
+	if p&^3 != 0 {
+		return errDouble
+	}
+	if attrs.Qual > 31 {
+		return errCmdQual
+	}
+	u.Info = append(u.Info, byte(attrs.Qual<<2|uint(p)))
+
+	switch id.Type {
+	case info.C_DC_NA_1:
+		if attrs.Time != nil {
+			return errType
+		}
+
+	case info.C_DC_TA_1:
+		panic("TODO: append 56-bit timestamp")
+
+	default:
+		return errType
+	}
+
+	if !attrs.InSelect {
+		return c.launchCmd(u, -1, term)
+	}
+	return c.launchCmd(u, u.ObjAddrSize, term)
 }
 
 // RegulCmd sends a type C_RC_NA_1 or C_RC_TA_1.
@@ -245,7 +275,38 @@ func (c *Caller) ScaledSetpoint(id info.ID, p int16, attrs ExecAttrs, term CmdTe
 
 // FloatSetpoint sends a type C_SE_NC_1 or C_SE_TC_1.
 func (c *Caller) FloatSetpoint(id info.ID, p float32, attrs ExecAttrs, term CmdTerm) error {
-	panic("TODO: not implemented")
+	if id.Cause&^info.TestFlag != info.Act {
+		return errCmdCause
+	}
+
+	u := info.NewASDU(c.params, id)
+	if err := u.AppendAddr(attrs.Addr); err != nil {
+		return err
+	}
+
+	if attrs.Qual > 127 {
+		return errCmdQual
+	}
+	bits := math.Float32bits(p)
+	u.Info = append(u.Info, byte(bits), byte(bits>>8), byte(bits>>16), byte(bits>>24), byte(attrs.Qual))
+
+	switch id.Type {
+	case info.C_SE_NC_1:
+		if attrs.Time != nil {
+			return errType
+		}
+
+	case info.C_SE_TC_1:
+		panic("TODO: append 56-bit timestamp")
+
+	default:
+		return errType
+	}
+
+	if !attrs.InSelect {
+		return c.launchCmd(u, -1, term)
+	}
+	return c.launchCmd(u, u.ObjAddrSize+4, term)
 }
 
 // BitsCmd sends a type C_BO_NA_1 or C_BO_TA_1.
@@ -261,8 +322,8 @@ func (c *Caller) launchCmd(exe *info.ASDU, selIndex int, term CmdTerm) error {
 		c.interrupts.Lock()
 		defer c.interrupts.Unlock()
 
-		sel := exe.Reply(exe.Cause)   // clone
-		sel.Info[sel.AddrSize] |= 128 // select flag
+		sel := exe.Reply(exe.Cause) // clone
+		sel.Info[selIndex] |= 128   // select flag
 
 		if err := c.sendCmd(sel, nil); err != nil {
 			return err
@@ -339,7 +400,7 @@ func (c *Caller) sendCmd(req *info.ASDU, term CmdTerm) (err error) {
 }
 
 func cmdKey(u *info.ASDU) uint64 {
-	key := uint64(u.GetObjAddrAt(0)<<16) | uint64(u.Orig<<8) | uint64(u.Type)
+	key := uint64(u.GetObjAddrAt(0)) | uint64(u.Orig)<<16 | uint64(u.Type)<<24
 
 	hash := fnv.New32a()
 	hash.Write(u.Info)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/bits"
 	"time"
 )
 
@@ -61,6 +62,17 @@ var (
 	errObjAddrFit = errors.New("part5: information object address exceeds size system parameter")
 	errObjFit     = errors.New("part5: information object index not in [1, 127]")
 )
+
+// ValidAddr returns the validation result of a station address.
+func (p Params) ValidAddr(addr CommonAddr) error {
+	if addr == 0 {
+		return errAddrZero
+	}
+	if bits.Len(uint(addr)) > p.AddrSize*8 {
+		return errAddrFit
+	}
+	return nil
+}
 
 // ID identifies the application data.
 type ID struct {
