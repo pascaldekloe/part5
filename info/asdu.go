@@ -121,12 +121,12 @@ func MustNewInro(p *Params, addr CommonAddr, orig uint8, group uint) *ASDU {
 
 	u := ASDU{
 		Params: p,
-		ID: ID{addr, orig, C_IC_NA_1, Act},
+		ID:     ID{addr, orig, C_IC_NA_1, Act},
 	}
 
 	u.Info = u.bootstrap[:p.AddrSize+1]
-        u.Info[p.AddrSize] = byte(group + uint(Inrogen))
-        return &u
+	u.Info[p.AddrSize] = byte(group + uint(Inrogen))
+	return &u
 }
 
 // Respond returns a new "responding" ASDU which addresses "initiating" u.
@@ -367,37 +367,6 @@ func (u *ASDU) AppendAddr(addr ObjAddr) error {
 			return errObjAddrFit
 		}
 		u.Info = append(u.Info, byte(addr), byte(addr>>8), byte(addr>>16))
-	}
-
-	return nil
-}
-
-// PutObjAddrAt encodes addr into Info at index i.
-// The function panics when the byte array is too small.
-func (u *ASDU) PutObjAddrAt(i int, addr ObjAddr) error {
-	u.Info[i] = byte(addr)
-
-	switch u.ObjAddrSize {
-	default:
-		return errParam
-
-	case 1:
-		if addr > 255 {
-			return errObjAddrFit
-		}
-
-	case 2:
-		if addr > 65535 {
-			return errObjAddrFit
-		}
-		u.Info[i+1] = byte(addr >> 8)
-
-	case 3:
-		if addr > 16777215 {
-			return errObjAddrFit
-		}
-		u.Info[i+1] = byte(addr >> 8)
-		u.Info[i+2] = byte(addr >> 16)
 	}
 
 	return nil

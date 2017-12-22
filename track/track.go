@@ -89,8 +89,7 @@ func (h *Head) Inro(req *info.ASDU, resp chan<- *info.ASDU) {
 		l := value.(*latest)
 
 		u := req.Respond(l.Type, cause)
-		u.Info = u.Info[:u.AddrSize]
-		if err := u.PutObjAddrAt(0, addr); err != nil {
+		if err := u.AppendAddr(addr); err != nil {
 			panic(err)
 		}
 		u.Info = append(u.Info, l.Serial...)
