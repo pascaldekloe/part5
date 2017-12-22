@@ -110,6 +110,25 @@ func NewASDU(p *Params, id ID) *ASDU {
 	return &u
 }
 
+var errInroGroup = errors.New("part5: interrogation group number exceeds 16")
+
+// MustNewInro returns a new interrogation command [C_IC_NA_1].
+// Use group 1 to 16, or 0 for the default.
+func MustNewInro(p *Params, addr CommonAddr, orig uint8, group uint) *ASDU {
+	if group > 16 {
+		panic(errInroGroup)
+	}
+
+	u := ASDU{
+		Params: p,
+		ID: ID{addr, orig, C_IC_NA_1, Act},
+	}
+
+	u.Info = u.bootstrap[:p.AddrSize+1]
+        u.Info[p.AddrSize] = byte(group + uint(Inrogen))
+        return &u
+}
+
 // Respond returns a new "responding" ASDU which addresses "initiating" u.
 func (u *ASDU) Respond(t TypeID, c Cause) *ASDU {
 	return NewASDU(u.Params, ID{
