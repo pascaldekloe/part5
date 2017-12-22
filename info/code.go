@@ -55,7 +55,7 @@ const (
 	M_EP_TD_1               // event of protection equipment with time tag CP56Time2a
 	M_EP_TE_1               // packed start events of protection equipment with time tag CP56Time2a
 	M_EP_TF_1               // packed output circuit information of protection equipment with time tag CP56Time2a
-	_                       // 41: reserved for further compatible definitions
+	S_IT_TC_1               // integrated totals containing time-tagged security statistics
 	_                       // 42: reserved for further compatible definitions
 	_                       // 43: reserved for further compatible definitions
 	_                       // 44: reserved for further compatible definitions
@@ -95,21 +95,21 @@ const (
 	_                       // 78: reserved for further compatible definitions
 	_                       // 79: reserved for further compatible definitions
 	_                       // 80: reserved for further compatible definitions
-	_                       // 81: reserved for further compatible definitions
-	_                       // 82: reserved for further compatible definitions
-	_                       // 83: reserved for further compatible definitions
-	_                       // 84: reserved for further compatible definitions
-	_                       // 85: reserved for further compatible definitions
-	_                       // 86: reserved for further compatible definitions
-	_                       // 87: reserved for further compatible definitions
+	S_CH_NA_1               // authentication challenge
+	S_RP_NA_1               // authentication reply
+	S_AR_NA_1               // aggressive mode authentication request
+	S_KR_NA_1               // session key status request
+	S_KS_NA_1               // session key status
+	S_KC_NA_1               // session key change
+	S_ER_NA_1               // authentication error
 	_                       // 88: reserved for further compatible definitions
 	_                       // 89: reserved for further compatible definitions
-	_                       // 90: reserved for further compatible definitions
-	_                       // 91: reserved for further compatible definitions
-	_                       // 92: reserved for further compatible definitions
-	_                       // 93: reserved for further compatible definitions
-	_                       // 94: reserved for further compatible definitions
-	_                       // 95: reserved for further compatible definitions
+	S_US_NA_1               // user status change
+	S_UQ_NA_1               // update key change request
+	S_UR_NA_1               // update key change reply
+	S_UK_NA_1               // update key change — symetric
+	S_UA_NA_1               // update key change — asymetric
+	S_UC_NA_1               // update key change confirmation
 	_                       // 96: reserved for further compatible definitions
 	_                       // 97: reserved for further compatible definitions
 	_                       // 98: reserved for further compatible definitions
@@ -237,9 +237,9 @@ const (
 	Retrem                // return information caused by a remote command
 	Retloc                // return information caused by a local command
 	File                  // file transfer
-	_                     // reserved for further compatible definitions
-	_                     // reserved for further compatible definitions
-	_                     // reserved for further compatible definitions
+	Auth                  // authentication
+	Seskey                // maintenance of authentication session key
+	Usrkey                // maintenance of user role and update key
 	_                     // reserved for further compatible definitions
 	_                     // reserved for further compatible definitions
 	_                     // reserved for further compatible definitions
@@ -316,9 +316,9 @@ var causeLabels = [64]string{
 	"retrem",
 	"retloc",
 	"file",
-	"reserved14",
-	"reserved15",
-	"reserved16",
+	"auth",
+	"seskey",
+	"usrkey",
 	"reserved17",
 	"reserved18",
 	"reserved19",

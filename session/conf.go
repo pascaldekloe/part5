@@ -2,8 +2,13 @@ package session
 
 import "time"
 
-// TCPPort is the IANA registered port number.
-const TCPPort = 2404
+const (
+	// TCPPort is the IANA registered port number for unsecure connection.
+	TCPPort = 2404
+
+	// TCPPortSecure is the IANA registered port number for secure connection.
+	TCPPortSecure = 19998
+)
 
 // TCPConf defines an IEC 60870-5-104 configuration.
 // The default is applied for each unspecified value.

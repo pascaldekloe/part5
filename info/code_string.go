@@ -6,24 +6,28 @@ import "strconv"
 
 const (
 	_TypeID_name_0 = "M_SP_NA_1M_SP_TA_1M_DP_NA_1M_DP_TA_1M_ST_NA_1M_ST_TA_1M_BO_NA_1M_BO_TA_1M_ME_NA_1M_ME_TA_1M_ME_NB_1M_ME_TB_1M_ME_NC_1M_ME_TC_1M_IT_NA_1M_IT_TA_1M_EP_TA_1M_EP_TB_1M_EP_TC_1M_PS_NA_1M_ME_ND_1"
-	_TypeID_name_1 = "M_SP_TB_1M_DP_TB_1M_ST_TB_1M_BO_TB_1M_ME_TD_1M_ME_TE_1M_ME_TF_1M_IT_TB_1M_EP_TD_1M_EP_TE_1M_EP_TF_1"
+	_TypeID_name_1 = "M_SP_TB_1M_DP_TB_1M_ST_TB_1M_BO_TB_1M_ME_TD_1M_ME_TE_1M_ME_TF_1M_IT_TB_1M_EP_TD_1M_EP_TE_1M_EP_TF_1S_IT_TC_1"
 	_TypeID_name_2 = "C_SC_NA_1C_DC_NA_1C_RC_NA_1C_SE_NA_1C_SE_NB_1C_SE_NC_1C_BO_NA_1"
 	_TypeID_name_3 = "C_SC_TA_1C_DC_TA_1C_RC_TA_1C_SE_TA_1C_SE_TB_1C_SE_TC_1C_BO_TA_1"
 	_TypeID_name_4 = "M_EI_NA_1"
-	_TypeID_name_5 = "C_IC_NA_1C_CI_NA_1C_RD_NA_1C_CS_NA_1C_TS_NA_1C_RP_NA_1C_CD_NA_1C_TS_TA_1"
-	_TypeID_name_6 = "P_ME_NA_1P_ME_NB_1P_ME_NC_1P_AC_NA_1"
-	_TypeID_name_7 = "F_FR_NA_1F_SR_NA_1F_SC_NA_1F_LS_NA_1F_AF_NA_1F_SG_NA_1F_DR_TA_1F_SC_NB_1"
+	_TypeID_name_5 = "S_CH_NA_1S_RP_NA_1S_AR_NA_1S_KR_NA_1S_KS_NA_1S_KC_NA_1S_ER_NA_1"
+	_TypeID_name_6 = "S_US_NA_1S_UQ_NA_1S_UR_NA_1S_UK_NA_1S_UA_NA_1S_UC_NA_1"
+	_TypeID_name_7 = "C_IC_NA_1C_CI_NA_1C_RD_NA_1C_CS_NA_1C_TS_NA_1C_RP_NA_1C_CD_NA_1C_TS_TA_1"
+	_TypeID_name_8 = "P_ME_NA_1P_ME_NB_1P_ME_NC_1P_AC_NA_1"
+	_TypeID_name_9 = "F_FR_NA_1F_SR_NA_1F_SC_NA_1F_LS_NA_1F_AF_NA_1F_SG_NA_1F_DR_TA_1F_SC_NB_1"
 )
 
 var (
 	_TypeID_index_0 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63, 72, 81, 90, 99, 108, 117, 126, 135, 144, 153, 162, 171, 180, 189}
-	_TypeID_index_1 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63, 72, 81, 90, 99}
+	_TypeID_index_1 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63, 72, 81, 90, 99, 108}
 	_TypeID_index_2 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63}
 	_TypeID_index_3 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63}
 	_TypeID_index_4 = [...]uint8{0, 9}
-	_TypeID_index_5 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63, 72}
-	_TypeID_index_6 = [...]uint8{0, 9, 18, 27, 36}
+	_TypeID_index_5 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63}
+	_TypeID_index_6 = [...]uint8{0, 9, 18, 27, 36, 45, 54}
 	_TypeID_index_7 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63, 72}
+	_TypeID_index_8 = [...]uint8{0, 9, 18, 27, 36}
+	_TypeID_index_9 = [...]uint8{0, 9, 18, 27, 36, 45, 54, 63, 72}
 )
 
 func (i TypeID) String() string {
@@ -31,7 +35,7 @@ func (i TypeID) String() string {
 	case 1 <= i && i <= 21:
 		i -= 1
 		return _TypeID_name_0[_TypeID_index_0[i]:_TypeID_index_0[i+1]]
-	case 30 <= i && i <= 40:
+	case 30 <= i && i <= 41:
 		i -= 30
 		return _TypeID_name_1[_TypeID_index_1[i]:_TypeID_index_1[i+1]]
 	case 45 <= i && i <= 51:
@@ -42,15 +46,21 @@ func (i TypeID) String() string {
 		return _TypeID_name_3[_TypeID_index_3[i]:_TypeID_index_3[i+1]]
 	case i == 70:
 		return _TypeID_name_4
+	case 81 <= i && i <= 87:
+		i -= 81
+		return _TypeID_name_5[_TypeID_index_5[i]:_TypeID_index_5[i+1]]
+	case 90 <= i && i <= 95:
+		i -= 90
+		return _TypeID_name_6[_TypeID_index_6[i]:_TypeID_index_6[i+1]]
 	case 100 <= i && i <= 107:
 		i -= 100
-		return _TypeID_name_5[_TypeID_index_5[i]:_TypeID_index_5[i+1]]
+		return _TypeID_name_7[_TypeID_index_7[i]:_TypeID_index_7[i+1]]
 	case 110 <= i && i <= 113:
 		i -= 110
-		return _TypeID_name_6[_TypeID_index_6[i]:_TypeID_index_6[i+1]]
+		return _TypeID_name_8[_TypeID_index_8[i]:_TypeID_index_8[i+1]]
 	case 120 <= i && i <= 127:
 		i -= 120
-		return _TypeID_name_7[_TypeID_index_7[i]:_TypeID_index_7[i+1]]
+		return _TypeID_name_9[_TypeID_index_9[i]:_TypeID_index_9[i+1]]
 	default:
 		return "TypeID(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
