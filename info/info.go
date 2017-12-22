@@ -8,6 +8,7 @@ import "errors"
 // See companion standard 101, subclause 7.2.4.
 type CommonAddr uint16
 
+// ErrAddrZero signals an uninitialized CommonAddr.
 var errAddrZero = errors.New("part5: common address 0 is not used")
 
 // GlobalAddr is the broadcast address. Use is restricted
@@ -90,7 +91,7 @@ func NewStepPos(value int, transient bool) StepPos {
 	return p
 }
 
-// Pos returns the value in [-64, 63] plus wheather the equipment is transient state.
+// Pos returns the value in [-64, 63] plus whether the equipment is transient state.
 func (p StepPos) Pos() (value int, transient bool) {
 	u := uint(p)
 	if u&0x40 == 0 {
@@ -110,45 +111,6 @@ type Normal int16
 
 // Float64 returns the value in [-1, 1 − 2⁻¹⁵].
 func (n Normal) Float64() float64 { return float64(n) / 32768 }
-
-// SingleCmd is a singe command.
-// See companion standard 101, subclause 7.2.6.15.
-type SingleCmd struct{ Cmd }
-
-// NewSingleCmd returns a new single command.
-// The function panics when the qualifier exceeds [0, 31].
-func NewSingleCmd(p SinglePoint, qual uint, exec bool) SingleCmd {
-	return SingleCmd{Cmd(p) | newCmd(qual, exec)}
-}
-
-// Point returns the command's destination.
-func (c SingleCmd) Point() SinglePoint { return SinglePoint(c.Cmd & 1) }
-
-// DoubleCmd is a double command.
-// See companion standard 101, subclause 7.2.6.16.
-type DoubleCmd struct{ Cmd }
-
-// NewDoubleCmd returns a new double command.
-// The function panics when the qualifier exceeds [0, 31].
-func NewDoubleCmd(p DoublePoint, qual uint, exec bool) DoubleCmd {
-	return DoubleCmd{Cmd(p) | newCmd(qual, exec)}
-}
-
-// Point returns the command's destination.
-func (c DoubleCmd) Point() DoublePoint { return DoublePoint(c.Cmd & 3) }
-
-// RegulCmd is a regulating step command.
-// See companion standard 101, subclause 7.2.6.17.
-type RegulCmd struct{ Cmd }
-
-// NewRegulCmd returns a new regulating step command.
-// The function panics when the qualifier exceeds [0, 31].
-func NewRegulCmd(up DoublePoint, qual uint, exec bool) RegulCmd {
-	return RegulCmd{Cmd(up) | newCmd(qual, exec)}
-}
-
-// Up returns wheather the next step is higher (or lower).
-func (c RegulCmd) Up() DoublePoint { return DoublePoint(c.Cmd & 3) }
 
 // QualParam is the qualifier of parameter of measured values.
 //
@@ -214,18 +176,6 @@ func (c Cmd) Exec() bool { return c&128 == 0 }
 // SetpointCmd is the qualifier of a set-point command.
 // See companion standard 101, subclause 7.2.6.39.
 type SetpointCmd uint
-
-// NewSetpointCmd returns a new set-point command.
-// The function panics when the qualifier exceeds [0, 127].
-func NewSetpointCmd(qual uint, exec bool) SetpointCmd {
-	if qual > 127 {
-		panic("qualifier out of range")
-	}
-	if exec {
-		return SetpointCmd(qual)
-	}
-	return SetpointCmd(qual | 128)
-}
 
 // Qual returns the qualifier of set-point command.
 //

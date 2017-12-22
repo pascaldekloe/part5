@@ -20,12 +20,13 @@ var ErrCmdDeny = errors.New("part5: command execution denied")
 
 // Validation Rejection
 var (
-	errType     = errors.New("part5: type identifier doesn't match call or time tag")
-	errSingle   = errors.New("part5: unknown single-point state")
-	errDouble   = errors.New("part5: unknown double-point state")
-	errQualDesc = errors.New("part5: illegal quality descriptor flags")
-	errCmdCause = errors.New("part5: cause of transmission for command not act(ivate)")
-	errCmdQual  = errors.New("part5: command qualifier exceeds [0, 31]")
+	errType         = errors.New("part5: type identifier doesn't match call or time tag")
+	errSingle       = errors.New("part5: unknown single-point state")
+	errDouble       = errors.New("part5: unknown double-point state")
+	errQualDesc     = errors.New("part5: illegal quality descriptor flags")
+	errCmdCause     = errors.New("part5: cause of transmission for command not act(ivate)")
+	errCmdQual      = errors.New("part5: command qualifier not in [0, 31]")
+	errSetpointQual = errors.New("part5: setpoint qualifier not in [0, 127]")
 )
 
 // Command Acknowledge Problems
@@ -285,7 +286,7 @@ func (c *Caller) FloatSetpoint(id info.ID, p float32, attrs ExecAttrs, term CmdT
 	}
 
 	if attrs.Qual > 127 {
-		return errCmdQual
+		return errSetpointQual
 	}
 	bits := math.Float32bits(p)
 	u.Info = append(u.Info, byte(bits), byte(bits>>8), byte(bits>>16), byte(bits>>24), byte(attrs.Qual))

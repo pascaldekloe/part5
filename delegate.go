@@ -307,7 +307,7 @@ func (d *Delegate) singleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 		return
 	}
 
-	cmd := info.SingleCmd{Cmd: info.Cmd(req.Info[req.ObjAddrSize])}
+	cmd := info.Cmd(req.Info[req.ObjAddrSize])
 	attrs := ExecAttrs{
 		Addr:     addr,
 		Qual:     cmd.Qual(),
@@ -329,7 +329,8 @@ func (d *Delegate) singleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 		terminate := func() {
 			sendNB(req.Reply(info.Actterm), c, errCh)
 		}
-		if f(req.ID, cmd.Point(), attrs, terminate) {
+		p := info.SinglePoint(cmd & 1)
+		if f(req.ID, p, attrs, terminate) {
 			sendNB(req.Reply(info.Actcon), c, errCh)
 		} else {
 			sendNB(req.Reply(info.Actcon|info.NegFlag), c, errCh)
@@ -348,7 +349,7 @@ func (d *Delegate) doubleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 		return
 	}
 
-	cmd := info.DoubleCmd{Cmd: info.Cmd(req.Info[req.ObjAddrSize])}
+	cmd := info.Cmd(req.Info[req.ObjAddrSize])
 	attrs := ExecAttrs{
 		Addr:     addr,
 		Qual:     cmd.Qual(),
@@ -370,7 +371,8 @@ func (d *Delegate) doubleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 		terminate := func() {
 			sendNB(req.Reply(info.Actterm), c, errCh)
 		}
-		if f(req.ID, cmd.Point(), attrs, terminate) {
+		p := info.DoublePoint(cmd & 3)
+		if f(req.ID, p, attrs, terminate) {
 			sendNB(req.Reply(info.Actcon), c, errCh)
 		} else {
 			sendNB(req.Reply(info.Actcon|info.NegFlag), c, errCh)

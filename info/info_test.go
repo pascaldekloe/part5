@@ -18,27 +18,3 @@ func TestStepPos(t *testing.T) {
 		}
 	}
 }
-
-func TestRegulCmd(t *testing.T) {
-	c := NewRegulCmd(DeterminedOn, 31, true)
-	if got := c.Up(); got != DeterminedOn {
-		t.Errorf("got higher %v, want %v", got, DeterminedOn)
-	}
-	if got := c.Qual(); got != 31 {
-		t.Errorf("got qualifier %d, want 31", got)
-	}
-	if got := c.Exec(); got != true {
-		t.Error("got execute false, want true")
-	}
-
-	c = NewRegulCmd(DeterminedOff, 0, false)
-	if got := c.Up(); got != DeterminedOff {
-		t.Errorf("got higher %v, want %v", got, DeterminedOff)
-	}
-	if got := c.Qual(); got != 0 {
-		t.Errorf("got qualifier %d, want 0", got)
-	}
-	if got := c.Exec(); got != false {
-		t.Error("got execute true, want false")
-	}
-}
