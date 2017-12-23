@@ -28,29 +28,24 @@ func (h *Head) Add(u *info.ASDU) {
 		return
 	}
 
-	serial := u.Info
-	if u.InfoSeq {
-		addr := u.GetObjAddrAt(0)
-		for i := u.ObjAddrSize; i < len(serial); addr++ {
-			offset := i
-			i += objSize
-
-			h.db.Store(addr, &latest{
-				Type:   u.Type,
-				Serial: serial[offset:i],
-			})
+	addr := u.ObjAddr(u.Info)
+	i := u.ObjAddrSize
+	for {
+		end := i + objSize
+		h.db.Store(addr, &latest{
+			Type:   u.Type,
+			Serial: u.Info[i:end],
+		})
+		if end >= len(u.Info) {
+			break
 		}
-	} else {
-		addrSize := u.ObjAddrSize
-		for i := 0; i < len(serial); {
-			addr := u.GetObjAddrAt(i)
-			offset := i + addrSize
-			i = offset + objSize
 
-			h.db.Store(addr, &latest{
-				Type:   u.Type,
-				Serial: serial[offset:i],
-			})
+		if u.InfoSeq {
+			addr++
+			i = end
+		} else {
+			addr = u.ObjAddr(u.Info[end:])
+			i = end + u.ObjAddrSize
 		}
 	}
 }
@@ -68,7 +63,7 @@ func (h *Head) Inro(req *info.ASDU, resp chan<- *info.ASDU) {
 	}
 
 	// check payload
-	if len(req.Info) != req.ObjAddrSize+1 || req.GetObjAddrAt(0) != 0 {
+	if len(req.Info) != req.ObjAddrSize+1 || req.ObjAddr(req.Info) != info.IrrelevantAddr {
 		resp <- req.Reply(info.UnkInfo)
 		return
 	}
@@ -89,7 +84,7 @@ func (h *Head) Inro(req *info.ASDU, resp chan<- *info.ASDU) {
 		l := value.(*latest)
 
 		u := req.Respond(l.Type, cause)
-		if err := u.AppendAddr(addr); err != nil {
+		if err := u.AddObjAddr(addr); err != nil {
 			panic(err)
 		}
 		u.Info = append(u.Info, l.Serial...)

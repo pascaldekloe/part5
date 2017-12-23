@@ -74,6 +74,26 @@ func (p Params) ValidAddr(addr CommonAddr) error {
 	return nil
 }
 
+// ObjAddr decodes an information object address from buf.
+// The function panics when the byte array is too small
+// or when the address size parameter is out of bounds.
+func (p *Params) ObjAddr(buf []byte) ObjAddr {
+	addr := ObjAddr(buf[0])
+
+	switch p.ObjAddrSize {
+	default:
+		panic(errParam)
+	case 1:
+		break
+	case 2:
+		addr |= ObjAddr(buf[1]) << 8
+	case 3:
+		addr |= ObjAddr(buf[1])<<8 | ObjAddr(buf[2])<<16
+	}
+
+	return addr
+}
+
 // ID identifies the application data.
 type ID struct {
 	Addr CommonAddr // station address
@@ -167,7 +187,7 @@ func (u *ASDU) String() string {
 		}
 		return fmt.Sprintf("%s seq: %#x <EOF>", u.ID, u.Info)
 	}
-	addr := u.GetObjAddrAt(0)
+	addr := u.ObjAddr(u.Info)
 
 	buf := bytes.NewBufferString(u.ID.String())
 
@@ -192,7 +212,7 @@ func (u *ASDU) String() string {
 				fmt.Fprintf(buf, " %#x <EOF>", u.Info[start:i])
 				break
 			}
-			addr = u.GetObjAddrAt(start)
+			addr = u.ObjAddr(u.Info[start:])
 		}
 	}
 
@@ -344,8 +364,8 @@ func (u *ASDU) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-// AppendAddr adds an information object address to Info.
-func (u *ASDU) AppendAddr(addr ObjAddr) error {
+// AddObjAddr appends an information object address to Info.
+func (u *ASDU) AddObjAddr(addr ObjAddr) error {
 	switch u.ObjAddrSize {
 	default:
 		return errParam
@@ -370,24 +390,4 @@ func (u *ASDU) AppendAddr(addr ObjAddr) error {
 	}
 
 	return nil
-}
-
-// GetObjAddrAt decodes from Info at index i.
-// The function panics when the byte array is too small
-// or when the address size parameter is out of bounds.
-func (u *ASDU) GetObjAddrAt(i int) ObjAddr {
-	addr := ObjAddr(u.Info[i])
-
-	switch u.ObjAddrSize {
-	default:
-		panic(errParam)
-	case 1:
-		break
-	case 2:
-		addr |= ObjAddr(u.Info[i+1]) << 8
-	case 3:
-		addr |= ObjAddr(u.Info[i+1])<<8 | ObjAddr(u.Info[i+2])<<16
-	}
-
-	return addr
 }

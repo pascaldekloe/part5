@@ -297,7 +297,7 @@ func selectProc(req *info.ASDU, cmdIndex int, c *Caller, errCh chan<- error) (ex
 }
 
 func (d *Delegate) singleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
-	addr := req.GetObjAddrAt(0)
+	addr := req.ObjAddr(req.Info)
 	f, ok := d.SingleCmds[addr]
 	if !ok {
 		f, ok = d.SingleCmds[info.IrrelevantAddr]
@@ -339,7 +339,7 @@ func (d *Delegate) singleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 }
 
 func (d *Delegate) doubleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
-	addr := req.GetObjAddrAt(0)
+	addr := req.ObjAddr(req.Info)
 	f, ok := d.DoubleCmds[addr]
 	if !ok {
 		f, ok = d.DoubleCmds[info.IrrelevantAddr]
@@ -381,7 +381,7 @@ func (d *Delegate) doubleCmd(req *info.ASDU, c *Caller, errCh chan<- error) {
 }
 
 func (d *Delegate) floatSetpoint(req *info.ASDU, c *Caller, errCh chan<- error) {
-	addr := req.GetObjAddrAt(0)
+	addr := req.ObjAddr(req.Info)
 	f, ok := d.FloatSetpoints[addr]
 	if !ok {
 		f, ok = d.FloatSetpoints[info.IrrelevantAddr]

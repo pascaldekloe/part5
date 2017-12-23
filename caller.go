@@ -65,7 +65,7 @@ func (c *Caller) Send(u *info.ASDU) error {
 // Single sends a type M_SP_NA_1, M_SP_TA_1 or M_SP_TB_1.
 func (c *Caller) Single(id info.ID, v info.SinglePoint, attrs MeasureAttrs) error {
 	u := info.NewASDU(c.params, id)
-	if err := u.AppendAddr(attrs.Addr); err != nil {
+	if err := u.AddObjAddr(attrs.Addr); err != nil {
 		return err
 	}
 
@@ -99,7 +99,7 @@ func (c *Caller) Single(id info.ID, v info.SinglePoint, attrs MeasureAttrs) erro
 // Double sends a type M_DP_NA_1, M_DP_TA_1 or M_DP_TB_1.
 func (c *Caller) Double(id info.ID, v info.DoublePoint, attrs MeasureAttrs) error {
 	u := info.NewASDU(c.params, id)
-	if err := u.AppendAddr(attrs.Addr); err != nil {
+	if err := u.AddObjAddr(attrs.Addr); err != nil {
 		return err
 	}
 
@@ -154,7 +154,7 @@ func (c *Caller) Scaled(id info.ID, v int16, attrs MeasureAttrs) {
 // Float sends a type M_ME_NC_1, M_ME_TC_1 or M_ME_TF_1.
 func (c *Caller) Float(id info.ID, v float32, attrs MeasureAttrs) error {
 	u := info.NewASDU(c.params, id)
-	if err := u.AppendAddr(attrs.Addr); err != nil {
+	if err := u.AddObjAddr(attrs.Addr); err != nil {
 		return err
 	}
 
@@ -190,7 +190,7 @@ func (c *Caller) SingleCmd(id info.ID, p info.SinglePoint, attrs ExecAttrs, term
 	}
 
 	u := info.NewASDU(c.params, id)
-	if err := u.AppendAddr(attrs.Addr); err != nil {
+	if err := u.AddObjAddr(attrs.Addr); err != nil {
 		return err
 	}
 
@@ -228,7 +228,7 @@ func (c *Caller) DoubleCmd(id info.ID, p info.DoublePoint, attrs ExecAttrs, term
 	}
 
 	u := info.NewASDU(c.params, id)
-	if err := u.AppendAddr(attrs.Addr); err != nil {
+	if err := u.AddObjAddr(attrs.Addr); err != nil {
 		return err
 	}
 
@@ -281,7 +281,7 @@ func (c *Caller) FloatSetpoint(id info.ID, p float32, attrs ExecAttrs, term CmdT
 	}
 
 	u := info.NewASDU(c.params, id)
-	if err := u.AppendAddr(attrs.Addr); err != nil {
+	if err := u.AddObjAddr(attrs.Addr); err != nil {
 		return err
 	}
 
@@ -401,7 +401,7 @@ func (c *Caller) sendCmd(req *info.ASDU, term CmdTerm) (err error) {
 }
 
 func cmdKey(u *info.ASDU) uint64 {
-	key := uint64(u.GetObjAddrAt(0)) | uint64(u.Orig)<<16 | uint64(u.Type)<<24
+	key := uint64(u.ObjAddr(u.Info)) | uint64(u.Orig)<<16 | uint64(u.Type)<<24
 
 	hash := fnv.New32a()
 	hash.Write(u.Info)

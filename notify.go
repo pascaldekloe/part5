@@ -99,7 +99,7 @@ func (d *Delegate) notify(u *info.ASDU, c *Caller, errCh chan<- error) {
 		return
 	}
 
-	addr := u.GetObjAddrAt(0)
+	addr := u.ObjAddr(u.Info)
 	i := u.ObjAddrSize
 	for {
 		end := i + objSize
@@ -118,7 +118,7 @@ func (d *Delegate) notify(u *info.ASDU, c *Caller, errCh chan<- error) {
 			addr++
 			i = end
 		} else {
-			addr = u.GetObjAddrAt(end)
+			addr = u.ObjAddr(u.Info[end:])
 			i = end + u.ObjAddrSize
 		}
 	}
