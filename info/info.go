@@ -112,51 +112,25 @@ type Normal int16
 // Float64 returns the value in [-1, 1 − 2⁻¹⁵].
 func (n Normal) Float64() float64 { return float64(n) / 32768 }
 
-// QualParam is the qualifier of parameter of measured values.
-//
-//	0: not used
-//	1: threshold value
-//	2: smoothing factor (filter time constant)
-//	3: low limit for transmission of measured values
-//	4: high limit for transmission of measured values
-//	5‥31: reserved for standard definitions of this companion standard (compatible range)
-//	32‥63: reserved for special use (private range)
-//
+// Qualifier Of Parameter Of Measured Values
 // See companion standard 101, subclause 7.2.6.24.
-type QualParam uint
-
 const (
-	// four standard kinds
-	Threashold QualParam = iota + 1
-	Smoothing
-	LowLimit
-	HighLimit
+	_          = iota // 0: not used
+	Threashold        // 1: threshold value
+	Smoothing         // 2: smoothing factor (filter time constant)
+	LowLimit          // 3: low limit for transmission of measured values
+	HighLimit         // 4: high limit for transmission of measured values
 
-	// Change flags local parameter change.
-	Change QualParam = 64
+	// 5‥31: reserved for standard definitions of this companion standard (compatible range)
+	// 32‥63: reserved for special use (private range)
 
-	// InOperation flags parameter operation.
-	InOperation QualParam = 128
+	ChangeFlag      = 64  // marks local parameter change
+	InOperationFlag = 128 // marks parameter operation
 )
-
-// Split returns the kind and the flags separated.
-func (p QualParam) Split() (kind QualParam, change, inOperation bool) {
-	return p & 63, p&Change != 0, p&InOperation != 0
-}
 
 // Cmd is a command.
 // See companion standard 101, subclause 7.2.6.26.
 type Cmd uint
-
-func newCmd(qual uint, exec bool) Cmd {
-	if qual > 31 {
-		panic("qualifier out of range")
-	}
-	if exec {
-		return Cmd(qual << 2)
-	}
-	return Cmd((qual << 2) | 128)
-}
 
 // Qual returns the qualifier of command.
 //
