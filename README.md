@@ -10,6 +10,7 @@ and **60870-5-104** is the TCP-based evolution.
 
 The project consists of a high-level framework, including a low-level library,
 and tooling for network exploration and automated testing.
+**Incomplete**! About 95% of the work has been published; see issue #1.
 
 This is free and unencumbered software released into the
 [public domain](http://creativecommons.org/publicdomain/zero/1.0).
