@@ -144,8 +144,8 @@ func MustNewInro(p *Params, addr CommonAddr, orig uint8, group uint) *ASDU {
 		ID:     ID{addr, orig, C_IC_NA_1, Act},
 	}
 
-	u.Info = u.bootstrap[:p.AddrSize+1]
-	u.Info[p.AddrSize] = byte(group + uint(Inrogen))
+	u.Info = u.bootstrap[:p.ObjAddrSize+1]
+	u.Info[p.ObjAddrSize] = byte(group + uint(Inrogen))
 	return &u
 }
 
