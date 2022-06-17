@@ -1,5 +1,5 @@
-[![GoDoc](https://godoc.org/github.com/pascaldekloe/part5?status.svg)](https://godoc.org/github.com/pascaldekloe/part5)
-[![Build Status](https://travis-ci.org/pascaldekloe/part5.svg?branch=master)](https://travis-ci.org/pascaldekloe/part5)
+[![Go Reference](https://pkg.go.dev/badge/github.com/pascaldekloe/part5.svg)](https://pkg.go.dev/github.com/pascaldekloe/part5)
+[![Build Status](https://github.com/pascaldekloe/part5/actions/workflows/go.yml/badge.svg)](https://github.com/pascaldekloe/part5/actions/workflows/go.yml)
 
 # Part5 With The Go Programming Language
 
