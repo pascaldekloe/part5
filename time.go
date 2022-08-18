@@ -2,10 +2,10 @@ package part5
 
 import "time"
 
-// GetCP56Time2a reads 7 octets and returns the value or nil when invalid.
+// GetCP56Time2a reads 7 octets and returns the value or zero when invalid.
 // The year is assumed to be in the 20th century.
 // See IEC 60870-5-4 § 6.8 and IEC 60870-5-101 second edition § 7.2.6.18.
-func getCP56Time2a(bytes []byte, loc *time.Location) *time.Time {
+func getCP56Time2a(bytes []byte, loc *time.Location) time.Time {
 	if loc == nil {
 		loc = time.UTC
 	}
@@ -18,7 +18,7 @@ func getCP56Time2a(bytes []byte, loc *time.Location) *time.Time {
 	o := bytes[2]
 	min := int(o & 63)
 	if o > 127 {
-		return nil
+		return time.Time{}
 	}
 
 	hour := int(bytes[3] & 31)
@@ -27,14 +27,13 @@ func getCP56Time2a(bytes []byte, loc *time.Location) *time.Time {
 	year := 2000 + int(bytes[6]&127)
 
 	nsec := msec * 1000000
-	val := time.Date(year, month, day, hour, min, sec, nsec, loc)
-	return &val
+	return time.Date(year, month, day, hour, min, sec, nsec, loc)
 }
 
-// GetCP24Time2a reads 3 octets and returns the value or nil when invalid.
+// GetCP24Time2a reads 3 octets and returns the value or zero when invalid.
 // The moment is assumed to be in the recent present.
 // See IEC 60870-5-4 § 6.8 and IEC 60870-5-101 second edition § 7.2.6.19.
-func getCP24Time2a(bytes []byte, loc *time.Location) *time.Time {
+func getCP24Time2a(bytes []byte, loc *time.Location) time.Time {
 	if loc == nil {
 		loc = time.UTC
 	}
@@ -47,7 +46,7 @@ func getCP24Time2a(bytes []byte, loc *time.Location) *time.Time {
 	o := bytes[2]
 	min := int(o & 63)
 	if o > 127 {
-		return nil
+		return time.Time{}
 	}
 
 	now := time.Now()
@@ -62,5 +61,5 @@ func getCP24Time2a(bytes []byte, loc *time.Location) *time.Time {
 		val = val.Add(-time.Hour)
 	}
 
-	return &val
+	return val
 }

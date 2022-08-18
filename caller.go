@@ -79,7 +79,7 @@ func (c *Caller) Single(id info.ID, v info.SinglePoint, attrs MeasureAttrs) erro
 
 	switch id.Type {
 	case info.M_SP_NA_1:
-		if attrs.Time != nil {
+		if !attrs.Time.IsZero() {
 			return errType
 		}
 
@@ -113,7 +113,7 @@ func (c *Caller) Double(id info.ID, v info.DoublePoint, attrs MeasureAttrs) erro
 
 	switch id.Type {
 	case info.M_DP_NA_1:
-		if attrs.Time != nil {
+		if !attrs.Time.IsZero() {
 			return errType
 		}
 
@@ -166,7 +166,7 @@ func (c *Caller) Float(id info.ID, v float32, attrs MeasureAttrs) error {
 
 	switch id.Type {
 	case info.M_ME_NC_1:
-		if attrs.Time != nil {
+		if !attrs.Time.IsZero() {
 			return errType
 		}
 
@@ -204,7 +204,7 @@ func (c *Caller) SingleCmd(id info.ID, p info.SinglePoint, attrs ExecAttrs, term
 
 	switch id.Type {
 	case info.C_SC_NA_1:
-		if attrs.Time != nil {
+		if !attrs.Time.IsZero() {
 			return errType
 		}
 
@@ -242,7 +242,7 @@ func (c *Caller) DoubleCmd(id info.ID, p info.DoublePoint, attrs ExecAttrs, term
 
 	switch id.Type {
 	case info.C_DC_NA_1:
-		if attrs.Time != nil {
+		if !attrs.Time.IsZero() {
 			return errType
 		}
 
@@ -293,7 +293,7 @@ func (c *Caller) FloatSetpoint(id info.ID, p float32, attrs ExecAttrs, term CmdT
 
 	switch id.Type {
 	case info.C_SE_NC_1:
-		if attrs.Time != nil {
+		if !attrs.Time.IsZero() {
 			return errType
 		}
 
@@ -311,7 +311,7 @@ func (c *Caller) FloatSetpoint(id info.ID, p float32, attrs ExecAttrs, term CmdT
 }
 
 // BitsCmd sends a type C_BO_NA_1 or C_BO_TA_1.
-func (c *Caller) BitsCmd(id info.ID, bits uint32, addr info.ObjAddr, tag *time.Time, term CmdTerm) error {
+func (c *Caller) BitsCmd(id info.ID, bits uint32, addr info.ObjAddr, tag time.Time, term CmdTerm) error {
 	panic("TODO: not implemented")
 }
 

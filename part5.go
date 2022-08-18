@@ -11,9 +11,9 @@ type MeasureAttrs struct {
 	// Quality descriptor info.OK means no remarks.
 	QualDesc uint
 
-	// The timestamp is nil when the data is invalid or
-	// when the type does not include timing at all.
-	Time *time.Time
+	// The timestamp is zero when the data is invalid
+	// or when the type does not include timing at all.
+	Time time.Time
 }
 
 // Single gets called for type M_SP_NA_1, M_SP_TA_1 and M_SP_TB_1.
@@ -46,9 +46,9 @@ type ExecAttrs struct {
 	// See info.Cmd.Qual and info.SetpointCmd.Qual.
 	Qual uint
 
-	// The timestamp is nil when the data is invalid or
-	// when the type does not include timing at all.
-	Time *time.Time
+	// The timestamp is zero when the data is invalid
+	// or when the type does not include timing at all.
+	Time time.Time
 
 	// Flags whether to execute with "select" protection.
 	// See README.md and section 5, subclause 6.8.
@@ -116,10 +116,10 @@ type ScaledSetpoint func(info.ID, int16, ExecAttrs, ExecTerm) (ok bool)
 type FloatSetpoint func(info.ID, float32, ExecAttrs, ExecTerm) (ok bool)
 
 // BitsCmd gets called for type C_BO_NA_1 and C_BO_TA_1.
-// The timestamp is nil when the data is invalid or
-// when the type does not include timing at all.
+// The timestamp is zero when the data is invalid
+// or when the type does not include timing at all.
 // Return ok causes a positive [info.Actcon] or negative [info.NegFlag]
 // confirmation message to be send about whether the specified control
 // action is about to commence—hence the actual execution should proceed
 // in a separate routine and ExecTerm may be called once on completion.
-type BitsCmd func(info.ID, uint32, info.ObjAddr, *time.Time, ExecTerm) (ok bool)
+type BitsCmd func(info.ID, uint32, info.ObjAddr, time.Time, ExecTerm) (ok bool)
