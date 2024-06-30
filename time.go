@@ -4,13 +4,17 @@ import "time"
 
 // CP56Time2a, a.k.a. the seven octet “Binary Time 2a”, provides millisecond
 // precission while omitting both the century and the time-zone.
+//
+// Encoding is defined in section 4, chapter 6.8, “COMPOUND INFORMATION ELEMENT
+// (CP)”, and in companion standard 101, chapter 7.2.6.18, “Seven octet binary
+// time”
 type CP56Time2a [7]byte
 
 // Set marshals the time. Reserved bits can be set afterwards.
 // The zero value marks the time as invalid (with the IV flag).
 // Digits beyond milliseconds are dropped (without rounding).
 // ⚠️ Encoding loses the time-zone context.
-func (c *CP56Time2a) SetTo(t time.Time) {
+func (c *CP56Time2a) Set(t time.Time) {
 	c.setAll(t, true)
 }
 
@@ -53,12 +57,12 @@ func (c *CP56Time2a) setAll(t time.Time, all bool) {
 	c[6] = byte(year % 100)
 }
 
-// In20thCentury unmarshals the time without any validation, and it then
+// Within20thCentury unmarshals the time without any validation, and it then
 // reconstructs the timestamp under the assumption that the moment was in the
 // 20th century, and that encoding applied an equivalent of the time.Location.
 // The return is zero when the invalid flag [IV] is set. Otherwise the return is
 // in range [2000-01-01 00:00:00.000, 2099-12-31 23:59:59.999].
-func (c *CP56Time2a) In20thCentury(loc *time.Location) time.Time {
+func (c *CP56Time2a) Within20thCentury(loc *time.Location) time.Time {
 	// check invalid flag
 	if c[2]&0x80 != 0 {
 		return time.Time{}
@@ -134,6 +138,10 @@ func (c *CP56Time2a) FlagReserve3(bits uint) {
 
 // CP24Time2a, a.k.a. the three octet “Binary Time 2a”, provides millisecond
 // precission while omitting both the hour and the time-zone context.
+//
+// Encoding is defined in section 4, chapter 6.8, “COMPOUND INFORMATION ELEMENT
+// (CP)”, and in companion standard 101, chapter 7.2.6.19, “Three octet binary
+// time”
 type CP24Time2a [3]byte
 
 // Set marshals the time. Reserved bits can be set afterwards.
@@ -165,12 +173,12 @@ func (c *CP24Time2a) MinuteAndMillis() (min, secInMilli int) {
 		int(uint(c[1])<<8 | uint(c[0]))
 }
 
-// InLessThanHourBefore unmarshals the time without any validation, and it then
+// WithinHourBefore unmarshals the time without any validation, and then it
 // reconstructs the timestamp under the assumption that the moment is less than
 // one hour before t, and that the encoding applied an equivalent time.Location.
 // The return is zero when the invalid flag [IV] is set. Otherwise the return is
 // in range [t − 00:59:59.999, t].
-func (c *CP24Time2a) InLessThanHourBefore(t time.Time) time.Time {
+func (c *CP24Time2a) WithinHourBefore(t time.Time) time.Time {
 	if c.Invalid() {
 		return time.Time{}
 	}
@@ -215,64 +223,12 @@ func (c *CP24Time2a) FlagReserve1() {
 	c[2] |= 0x40
 }
 
-// GetCP56Time2a reads 7 octets and returns the value or zero when invalid.
-// The year is assumed to be in the 20th century.
-// See IEC 60870-5-4 § 6.8 and IEC 60870-5-101 second edition § 7.2.6.18.
+// TODO: Eliminate getCP56Time2a.
 func getCP56Time2a(bytes []byte, loc *time.Location) time.Time {
-	if loc == nil {
-		loc = time.UTC
-	}
-
-	x := int(bytes[0])
-	x |= int(bytes[1]) << 8
-	msec := x % 1000
-	sec := (x / 1000)
-
-	o := bytes[2]
-	min := int(o & 63)
-	if o > 127 {
-		return time.Time{}
-	}
-
-	hour := int(bytes[3] & 31)
-	day := int(bytes[4] & 31)
-	month := time.Month(bytes[5] & 15)
-	year := 2000 + int(bytes[6]&127)
-
-	nsec := msec * 1000000
-	return time.Date(year, month, day, hour, min, sec, nsec, loc)
+	return (*CP56Time2a)(bytes[:7]).Within20thCentury(loc)
 }
 
-// GetCP24Time2a reads 3 octets and returns the value or zero when invalid.
-// The moment is assumed to be in the recent present.
-// See IEC 60870-5-4 § 6.8 and IEC 60870-5-101 second edition § 7.2.6.19.
+// TODO: Eliminate getCP24Time2a.
 func getCP24Time2a(bytes []byte, loc *time.Location) time.Time {
-	if loc == nil {
-		loc = time.UTC
-	}
-
-	x := int(bytes[0])
-	x |= int(bytes[1]) << 8
-	msec := x % 1000
-	sec := (x / 1000)
-
-	o := bytes[2]
-	min := int(o & 63)
-	if o > 127 {
-		return time.Time{}
-	}
-
-	now := time.Now()
-	year, month, day := now.Date()
-	hour, currentMin, _ := now.Clock()
-
-	nsec := msec * 1000000
-	val := time.Date(year, month, day, hour, min, sec, nsec, loc)
-
-	// 5 minute rounding - 55 minute span
-	if min > currentMin+5 {
-		val = val.Add(-time.Hour)
-	}
-
-	return val
+	return (*CP24Time2a)(bytes[:3]).WithinHourBefore(time.Now().In(loc))
 }
