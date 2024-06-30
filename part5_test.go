@@ -18,8 +18,8 @@ func TestMeasuredValues(t *testing.T) {
 
 	// test definitions
 	var measures = []*GoldenMeasure{
-		0: {ID: info.ID{Type: info.M_SP_NA_1}, Value: info.On},
-		1: {ID: info.ID{Type: info.M_DP_NA_1}, Value: info.DeterminedOn},
+		0: {ID: info.ID{Type: info.M_SP_NA_1}, Value: info.SinglePoint(info.On)},
+		1: {ID: info.ID{Type: info.M_DP_NA_1}, Value: info.DoublePoint(info.DeterminedOn)},
 		2: {ID: info.ID{Type: info.M_ME_NC_1}, Value: float32(99.8)},
 	}
 	for i, m := range measures {
@@ -78,7 +78,7 @@ func TestMeasuredValues(t *testing.T) {
 		case float32:
 			err = caller.Float(m.ID, v, m.MeasureAttrs)
 		default:
-			t.Fatalf("%d: unknown datatype", i)
+			t.Fatalf("%d: unknown datatype %T", i, m.Value)
 		}
 
 		if err != nil {
@@ -109,8 +109,8 @@ func TestCommandExecution(t *testing.T) {
 
 	// test definitions
 	var executes = []*GoldenExec{
-		0: {ID: info.ID{Type: info.C_SC_NA_1}, Point: info.On},
-		1: {ID: info.ID{Type: info.C_DC_NA_1}, Point: info.DeterminedOn},
+		0: {ID: info.ID{Type: info.C_SC_NA_1}, Point: info.SinglePoint(info.On)},
+		1: {ID: info.ID{Type: info.C_DC_NA_1}, Point: info.DoublePoint(info.DeterminedOn)},
 		2: {ID: info.ID{Type: info.C_SE_NC_1}, Point: float32(99.8)},
 	}
 	for i, e := range executes {
@@ -179,7 +179,7 @@ func TestCommandExecution(t *testing.T) {
 		case float32:
 			err = caller.FloatSetpoint(e.ID, p, e.ExecAttrs, term)
 		default:
-			t.Fatalf("%d: unknown datatype", i)
+			t.Fatalf("%d: unknown datatype %T", i, e.Point)
 		}
 
 		if e.Accept && err != nil {

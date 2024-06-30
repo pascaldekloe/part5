@@ -24,57 +24,90 @@ type ObjAddr uint
 // Zero means that the address is irrelevant.
 const IrrelevantAddr ObjAddr = 0
 
-// SinglePoint is a measured value of a switch.
-// See companion standard 101, subclause 7.2.6.1.
-type SinglePoint uint
+// A SinglePoint information object (IEV 371-02-07) is either On or Off.
+type SinglePoint uint8
 
+// Single-Point States
 const (
-	Off SinglePoint = iota
+	Off = iota
 	On
 )
 
-// DoublePoint is a measured value of a determination aware switch.
-// See companion standard 101, subclause 7.2.6.2.
-// See http://blog.iec61850.com/2009/04/why-do-we-need-single-point-and-double.html
-type DoublePoint uint
+// SinglePointQual has a single-point information-object (IEV 371-02-07)
+// with a quality descriptor. If the octet does not equal On or Off, then
+// it has quality remarks.
+type SinglePointQual uint8
 
+// SinglePoint loses the quality descriptor.
+func (p SinglePointQual) SinglePoint() SinglePoint { return SinglePoint(p & 1) }
+
+// QualDesc gets the quality descriptor flags. Overflow is always zero and
+// EllapesTimeInvalid does not apply.
+func (p SinglePointQual) QualDesc() uint { return uint(p & 0xfe) }
+
+// A DoublePoint information object (IEV 371-02-08) is either DeterminatedOn,
+// DeterminatedOff, Indeterminated, or IndeterminateOrIntermediate.
+// http://blog.iec61850.com/2009/04/why-do-we-need-single-point-and-double.html
+type DoublePoint uint8
+
+// Double-Point States
 const (
-	IndeterminateOrIntermediate DoublePoint = iota
+	IndeterminateOrIntermediate = iota
 	DeterminedOff
 	DeterminedOn
 	Indeterminate
 )
 
-// Quality descriptor flags attribute measured values.
-// See companion standard 101, subclause 7.2.6.3.
+// DoublePointQual has a double-point information-object (IEV 371-02-08)
+// with a quality descriptor. If the octet does not equal any of the four
+// states, then it has quality remarks.
+type DoublePointQual uint8
+
+// DoublePoint loses the quality descriptor.
+func (p DoublePointQual) DoublePoint() DoublePoint { return DoublePoint(p & 3) }
+
+// QualDesc gets the quality descriptor flags. Overflow is always zero and
+// EllapesTimeInvalid does not apply.
+func (p DoublePointQual) QualDesc() uint { return uint(p & 0xfc) }
+
+// Quality Descriptor Flags
 const (
-	// Overflow marks whether the value is beyond a predefined range.
+	// The OV flag signals that the value of the information object is
+	// beyond a predefined range of value (mainly applicable to analog
+	// values).
 	Overflow = 1 << iota
 
 	_ // reserve
 	_ // reserve
 
-	// TimeInvalid flags that the elapsed time was incorrectly acquired.
-	// This attribute is only valid for events of protection equipment.
-	// See companion standard 101, subclause 7.2.6.4.
-	TimeInvalid
+	// The EI flag signals that the acquisition function recognized abnormal
+	// conditions. The elapsed time of the information object is not defined
+	// under this condition.
+	EllapsedTimeInvalid
 
-	// Blocked flags that the value is blocked for transmission; the
-	// value remains in the state that was acquired before it was blocked.
+	// The BL flag signals that the value of the information object is
+	// blocked for transmission. The value remains in the state that was
+	// acquired before it was blocked. Blocking and deblocking may be
+	// initiated for example by a local lock or a local automatic cause.
 	Blocked
 
-	// Substituted flags that the value was provided by the input of
-	// an operator (dispatcher) instead of an automatic source.
+	// The SB flag signals that the value of the information object was
+	// provided by the input of an operator (dispatcher) instead of an
+	// automatic source.
 	Substituted
 
-	// NotTopical flags that the most recent update was unsuccessful.
+	// The NT flag signals that the most recent update was unsuccessful,
+	// i.e., not updated during a specified time interval, or if it is
+	// unavailable.
 	NotTopical
 
-	// Invalid flags that the value was incorrectly acquired.
+	// The IV flag signals that the acquisition function recognized abnormal
+	// conditions of the information source, i.e, missing or non-operating
+	// updating devices. The value of the information object is not defined
+	// under this condition.
 	Invalid
 
-	// OK means no flags, no problems.
-	OK = 0
+	OK = 0 // no remarks
 )
 
 // StepPos is a measured value with transient state indication.
