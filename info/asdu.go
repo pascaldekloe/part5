@@ -94,16 +94,33 @@ func (p *Params) ObjAddr(buf []byte) ObjAddr {
 	return addr
 }
 
+// A VarStructQual, or variable structure qualifier, defines the ASDU payload
+// with a Count() and a Sequence flag.
+type VarStructQual uint8
+
+// Variable Structure Qualifier Flags
+const (
+	// The SQ flag signals that the information applies to a consecutive
+	// sequence of addresses, in which each information object address is
+	// one higher than its previous element. The address in the ASDU gives
+	// the offset (for the first information object).
+	Sequence = 0x80
+)
+
+// Count returns the number of information objects, which can be zero.
+func (q VarStructQual) Count() int { return int(q & 0x7f) }
+
 // ID identifies the application data.
 type ID struct {
-	Addr CommonAddr // station address
+	Type   TypeID
+	Struct VarStructQual
+	Cause  Cause
 
 	// Originator Address [1, 255] or 0 for the default.
 	// The applicability is controlled by Params.CauseSize.
 	Orig uint8
 
-	Type  TypeID // information content
-	Cause Cause  // submission category
+	Addr CommonAddr // station address
 }
 
 // String returns a compact label.
@@ -119,7 +136,6 @@ type ASDU struct {
 	*Params
 	ID
 	bootstrap [17]byte // prevents Info malloc
-	InfoSeq   bool     // marks Info as a sequence
 	Info      []byte   // information object serial
 }
 
@@ -141,7 +157,13 @@ func MustNewInro(p *Params, addr CommonAddr, orig uint8, group uint) *ASDU {
 
 	u := ASDU{
 		Params: p,
-		ID:     ID{addr, orig, C_IC_NA_1, Act},
+		ID: ID{
+			Type:   C_IC_NA_1,
+			Struct: 0x01,
+			Cause:  Act,
+			Addr:   addr,
+			Orig:   orig,
+		},
 	}
 
 	u.Info = u.bootstrap[:p.ObjAddrSize+1]
@@ -164,7 +186,7 @@ func (u *ASDU) Respond(t TypeID, c Cause) *ASDU {
 func (u *ASDU) Reply(c Cause) *ASDU {
 	r := NewASDU(u.Params, u.ID)
 	r.Cause = c | u.Cause&TestFlag
-	r.InfoSeq = u.InfoSeq
+	r.Struct = u.Struct & Sequence
 	r.Info = append(r.Info, u.Info...)
 	return r
 }
@@ -173,16 +195,14 @@ func (u *ASDU) Reply(c Cause) *ASDU {
 func (u *ASDU) String() string {
 	dataSize := ObjSize[u.Type]
 	if dataSize == 0 {
-		if !u.InfoSeq {
+		if u.Struct&Sequence == 0 {
 			return fmt.Sprintf("%s: %#x", u.ID, u.Info)
 		}
 		return fmt.Sprintf("%s seq: %#x", u.ID, u.Info)
 	}
 
-	end := len(u.Info)
-	addrSize := u.ObjAddrSize
-	if end < addrSize {
-		if !u.InfoSeq {
+	if len(u.Info) < u.ObjAddrSize {
+		if u.Struct&Sequence == 0 {
 			return fmt.Sprintf("%s: %#x <EOF>", u.ID, u.Info)
 		}
 		return fmt.Sprintf("%s seq: %#x <EOF>", u.ID, u.Info)
@@ -191,28 +211,27 @@ func (u *ASDU) String() string {
 
 	buf := bytes.NewBufferString(u.ID.String())
 
-	for i := addrSize; ; {
-		start := i
-		i += dataSize
-		if i > end {
-			fmt.Fprintf(buf, " %d:%#x <EOF>", addr, u.Info[start:])
+	for i := u.ObjAddrSize; ; {
+		if i+dataSize > len(u.Info) {
+			fmt.Fprintf(buf, " %d:%#x <EOF>", addr, u.Info[i:])
 			break
 		}
-		fmt.Fprintf(buf, " %d:%#x", addr, u.Info[start:i])
-		if i == end {
+		fmt.Fprintf(buf, " %d:%#x", addr, u.Info[i:i+dataSize])
+		i += dataSize
+
+		if i == len(u.Info) {
 			break
 		}
 
-		if u.InfoSeq {
+		if u.Struct&Sequence != 0 {
 			addr++
 		} else {
-			start = i
-			i += addrSize
-			if i > end {
-				fmt.Fprintf(buf, " %#x <EOF>", u.Info[start:i])
+			if i+u.ObjAddrSize > len(u.Info) {
+				fmt.Fprintf(buf, " %#x <EOF>", u.Info[i:])
 				break
 			}
-			addr = u.ObjAddr(u.Info[start:])
+			addr = u.ObjAddr(u.Info[i : i+u.ObjAddrSize])
+			i += u.ObjAddrSize
 		}
 	}
 
@@ -228,41 +247,13 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 		return nil, errAddrZero
 	}
 
-	// calculate the size declaration byte
-	// named "variable structure qualifier"
-	var vsq byte
-	{
-		// fixed element size
-		objSize := ObjSize[u.Type]
-		if objSize == 0 {
-			return nil, ErrType
-		}
-
-		// See companion standard 101, subclause 7.2.2.
-		if u.InfoSeq {
-			objCount := (len(u.Info) - u.ObjAddrSize) / objSize
-			if objCount >= 128 {
-				return nil, errObjFit
-			}
-			vsq = byte(objCount) | 128
-		} else {
-			objCount := len(u.Info) / (u.ObjAddrSize + objSize)
-			if objCount >= 128 {
-				return nil, errObjFit
-			}
-			vsq = byte(objCount)
-		}
-	}
-
 	data = make([]byte, 2+u.CauseSize+u.AddrSize+len(u.Info))
 	data[0] = byte(u.Type)
-	data[1] = vsq
+	data[1] = byte(u.Struct)
 	data[2] = byte(u.Cause)
+	i := 3 // write index
 
-	i := 3
 	switch u.CauseSize {
-	default:
-		return nil, errParam
 	case 1:
 		if u.Orig != 0 {
 			return nil, errOrigFit
@@ -270,11 +261,11 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 	case 2:
 		data[i] = u.Orig
 		i++
+	default:
+		return nil, errParam
 	}
 
 	switch u.AddrSize {
-	default:
-		return nil, errParam
 	case 1:
 		if u.Addr == GlobalAddr {
 			data[i] = 255
@@ -289,6 +280,8 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 		i++
 		data[i] = byte(u.Addr >> 8)
 		i++
+	default:
+		return nil, errParam
 	}
 
 	copy(data[i:], u.Info)
@@ -299,68 +292,53 @@ func (u *ASDU) MarshalBinary() (data []byte, err error) {
 // UnmarshalBinary honors the encoding.BinaryUnmarshaler interface.
 // Params must be set in advance. All other fields are initialized.
 func (u *ASDU) UnmarshalBinary(data []byte) error {
-	// data unit identifier size check
-	lenDUI := 2 + u.CauseSize + u.AddrSize
-	if lenDUI > len(data) {
-		return io.EOF
+	if len(data) < 3 {
+		if len(data) == 0 {
+			return io.EOF
+		}
+		return io.ErrUnexpectedEOF
 	}
-	u.Info = append(u.bootstrap[:0], data[lenDUI:]...)
 
 	u.Type = TypeID(data[0])
-
-	// fixed element size
-	objSize := ObjSize[u.Type]
-	if objSize == 0 {
-		return ErrType
-	}
-
-	var size int
-	// read the variable structure qualifier
-	if vsq := data[1]; vsq > 127 {
-		u.InfoSeq = true
-		objCount := int(vsq & 127)
-		size = u.ObjAddrSize + (objCount * objSize)
-	} else {
-		u.InfoSeq = false
-		objCount := int(vsq)
-		size = objCount * (u.ObjAddrSize + objSize)
-	}
-
-	switch {
-	case size == 0:
-		return errObjFit
-	case size > len(u.Info):
-		return io.EOF
-	case size < len(u.Info):
-		// not explicitly prohibited
-		u.Info = u.Info[:size]
-	}
-
+	u.Struct = VarStructQual(data[1])
 	u.Cause = Cause(data[2])
+	i := 3 // read index
 
 	switch u.CauseSize {
-	default:
-		return errParam
 	case 1:
 		u.Orig = 0
 	case 2:
+		if len(data) < 4 {
+			return io.ErrUnexpectedEOF
+		}
 		u.Orig = data[3]
+		i = 4
+	default:
+		return errParam
 	}
 
 	switch u.AddrSize {
+	case 1:
+		if len(data) < i {
+			return io.ErrUnexpectedEOF
+		}
+		u.Addr = CommonAddr(data[i])
+		i++
+		if u.Addr == 255 {
+			// map 8-bit variant to 16-bit equivalent
+			u.Addr = GlobalAddr
+		}
+	case 2:
+		if len(data) < i+1 {
+			return io.ErrUnexpectedEOF
+		}
+		u.Addr = CommonAddr(data[i]) | CommonAddr(data[i+1])<<8
+		i += 2
 	default:
 		return errParam
-	case 1:
-		addr := CommonAddr(data[lenDUI-1])
-		if addr == 255 {
-			// map 8-bit variant to 16-bit equivalent
-			addr = GlobalAddr
-		}
-		u.Addr = addr
-	case 2:
-		u.Addr = CommonAddr(data[lenDUI-2]) | CommonAddr(data[lenDUI-1])<<8
 	}
 
+	u.Info = append(u.bootstrap[:0], data[i:]...)
 	return nil
 }
 

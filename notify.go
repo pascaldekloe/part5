@@ -114,7 +114,7 @@ func (d *Delegate) notify(u *info.ASDU, c *Caller, errCh chan<- error) {
 			return
 		}
 
-		if u.InfoSeq {
+		if u.Struct&info.Sequence != 0 {
 			addr++
 			i = end
 		} else {

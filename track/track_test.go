@@ -18,18 +18,19 @@ func TestInro(t *testing.T) {
 	}
 
 	u1 := info.NewASDU(info.Narrow, info.ID{
-		Addr:  99,
-		Type:  info.M_ME_NC_1,
-		Cause: info.Percyc | info.TestFlag,
+		Type:   info.M_ME_NC_1,
+		Struct: 2,
+		Cause:  info.Percyc | info.TestFlag,
+		Addr:   99,
 	})
 	u1.Info = []byte{42, 1, 1, 1, 1, info.OK, 44, 2, 2, 2, 2, info.OK}
 
 	u2 := info.NewASDU(info.Narrow, info.ID{
-		Addr:  99,
-		Type:  info.M_ME_NC_1,
-		Cause: info.Back | info.TestFlag,
+		Type:   info.M_ME_NC_1,
+		Struct: 2 | info.Sequence,
+		Cause:  info.Back | info.TestFlag,
+		Addr:   99,
 	})
-	u2.InfoSeq = true
 	u2.Info = []byte{43, 3, 3, 3, 3, info.NotTopical, 4, 4, 4, 4, info.OK}
 
 	var h Head

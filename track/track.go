@@ -40,7 +40,7 @@ func (h *Head) Add(u *info.ASDU) {
 			break
 		}
 
-		if u.InfoSeq {
+		if u.Struct&info.Sequence != 0 {
 			addr++
 			i = end
 		} else {
