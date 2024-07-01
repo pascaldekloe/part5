@@ -1,6 +1,9 @@
 package info
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 // TestStepPos tests the full value range.
 func TestStepPos(t *testing.T) {
@@ -14,20 +17,20 @@ func TestStepPos(t *testing.T) {
 	}
 }
 
-// TestNormal tests the full value range.
-func TestNormal(t *testing.T) {
-	v := Normal(-1 << 15)
-	last := v.Float64()
-	if last != -1 {
-		t.Errorf("%#04x: got %f, want -1", uint16(v), last)
+// TestNorm tests the full value range.
+func TestNorm(t *testing.T) {
+	b := Norm{0x00, 0x80}
+	f := b.Float64()
+	if f != -1 {
+		t.Errorf("%#x: got %f, want -1", b, f)
 	}
 
-	for v != 1<<15-1 {
-		v++
-		got := v.Float64()
-		if got <= last || got >= 1 {
-			t.Errorf("%#04x: got %f (%#04x was %f)", uint16(v), got, uint16(v-1), last)
+	for i := int(math.MinInt16 + 1); i <= int(math.MaxInt16); i++ {
+		b.SetInt16(int16(i))
+		got := b.Float64()
+		if got <= f || got >= 1 {
+			t.Errorf("%#x: got %f, want in range (%f, 1)", b, got, f)
 		}
-		last = got
+		f = got
 	}
 }

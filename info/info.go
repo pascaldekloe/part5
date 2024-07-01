@@ -4,6 +4,7 @@ package info
 import (
 	"encoding/binary"
 	"errors"
+	"math"
 )
 
 // CommonAddr is a station address. Zero is not used.
@@ -196,6 +197,52 @@ func (b BitsQual) QualDesc() uint8 { return b[4] }
 
 // FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
 func (b *BitsQual) FlagQualDesc(flags uint8) { b[4] |= flags }
+
+// Norm is a 16-bit normalized value.
+type Norm [2]uint8
+
+// Int16 returns the numeric value as is [unscaled].
+func (n *Norm) Int16() int16 {
+	return int16(binary.LittleEndian.Uint16(n[:2]))
+}
+
+// SetInt16 updates the normalized value with the numeric value as is
+// [unscaled].
+func (n *Norm) SetInt16(v int16) {
+	binary.LittleEndian.PutUint16(n[:2], uint16(v))
+}
+
+// Float64 returns the value in range [-1, 1 − 2⁻¹⁵].
+func (n *Norm) Float64() float64 {
+	return float64(n.Int16()) / 32768
+}
+
+// SetFloat64 updates the value in range [-1, 1 − 2⁻¹⁵].
+func (n *Norm) SetFloat64(v float64) {
+	scaled := math.Round(v * 32768)
+	switch {
+	case scaled <= math.MinInt16:
+		n.SetInt16(math.MinInt16)
+	case scaled >= math.MaxInt16:
+		n.SetInt16(math.MaxInt16)
+	default:
+		n.SetInt16(int16(scaled))
+	}
+}
+
+// Norm is a 16-bit normalized value with a quality desciptor.
+type NormQual [3]uint8
+
+// Norm returns a reference to the normalized-value only
+// (withouth the quality descriptor).
+func (p *NormQual) Norm() *Norm { return (*Norm)(p[:2]) }
+
+// QualDesc returns the quality descriptor flags.
+// EllapesTimeInvalid does not apply.
+func (p *NormQual) QualDesc() (flags uint8) { return p[2] }
+
+// FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
+func (p *NormQual) FlagQualDesc(flags uint8) { p[2] |= flags }
 
 // Normal is a 16-bit normalized value.
 // See companion standard 101, subclause 7.2.6.6.
