@@ -4,19 +4,12 @@ import "testing"
 
 // TestStepPos tests the full value range.
 func TestStepPos(t *testing.T) {
-	if _, transient := NewStepPos(0, true).Pos(); !transient {
-		t.Error("got transient false, want true")
-	}
-	if _, transient := NewStepPos(0, false).Pos(); transient {
-		t.Error("got transient true, want false")
-	}
-
-	for _, transient := range []bool{false, true} {
-		for value := -64; value <= 63; value++ {
-			gotValue, gotTransient := NewStepPos(value, transient).Pos()
-			if gotValue != value || gotTransient != transient {
-				t.Errorf("StepPos(%d, %t) became (%d, %t)", value, transient, gotValue, gotTransient)
-			}
+	for value := -64; value <= 63; value++ {
+		if v, tr := NewStepPosQual(value).Pos(); v != value || tr {
+			t.Errorf("got position and tranient (%d, %t), want (%d, false)", v, tr, value)
+		}
+		if v, tr := NewTransientStepPosQual(value).Pos(); v != value || !tr {
+			t.Errorf("got position and tranient (%d, %t), want (%d, true)", v, tr, value)
 		}
 	}
 }

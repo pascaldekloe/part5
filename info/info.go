@@ -41,9 +41,9 @@ type SinglePointQual uint8
 // SinglePoint loses the quality descriptor.
 func (p SinglePointQual) SinglePoint() SinglePoint { return SinglePoint(p & 1) }
 
-// QualDesc gets the quality descriptor flags. Overflow is always zero and
+// QualDesc returns the quality descriptor flags. Overflow is always zero and
 // EllapesTimeInvalid does not apply.
-func (p SinglePointQual) QualDesc() uint { return uint(p & 0xfe) }
+func (p SinglePointQual) QualDesc() uint8 { return uint8(p & 0xfe) }
 
 // A DoublePoint information object (IEV 371-02-08) is either DeterminatedOn,
 // DeterminatedOff, Indeterminated, or IndeterminateOrIntermediate.
@@ -66,9 +66,9 @@ type DoublePointQual uint8
 // DoublePoint loses the quality descriptor.
 func (p DoublePointQual) DoublePoint() DoublePoint { return DoublePoint(p & 3) }
 
-// QualDesc gets the quality descriptor flags. Overflow is always zero and
+// QualDesc returns the quality descriptor flags. Overflow is always zero and
 // EllapesTimeInvalid does not apply.
-func (p DoublePointQual) QualDesc() uint { return uint(p & 0xfc) }
+func (p DoublePointQual) QualDesc() uint8 { return uint8(p & 0xfc) }
 
 // Quality Descriptor Flags
 const (
@@ -137,6 +137,39 @@ func (p StepPos) Pos() (value int, transient bool) {
 	transient = u&0x80 != 0
 	return
 }
+
+// StepPosQual is a measured value with transient state indication,
+// and with a quality descriptor.
+// See companion standard 101, subclause 7.2.6.5.
+type StepPosQual [2]uint8
+
+// NewStepPosQual returns a new step position, with quality descriptor OK.
+// Values out of [-64, 63] oveflow silently.
+func NewStepPosQual(value int) StepPosQual {
+	return StepPosQual{uint8(value & 0x7f), 0}
+}
+
+// NewTransientStepPosQual sets the transient flag.
+func NewTransientStepPosQual(value int) StepPosQual {
+	return StepPosQual{uint8(value&0x7f) | 0x80, 0}
+}
+
+// Pos returns the value, range [-64, 63], plus whether the equipment is
+// transient state.
+func (p StepPosQual) Pos() (value int, transient bool) {
+	value = int(p[0] & 0x7f)
+	signBit := value >> 6
+	signExt := 0 - signBit
+	value |= signExt << 6
+	return value, p[0]&0x80 != 0
+}
+
+// QualDesc returns the quality descriptor flags.
+// EllapesTimeInvalid does not apply.
+func (p StepPosQual) QualDesc() uint8 { return p[1] }
+
+// FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
+func (p StepPosQual) FlagQualDesc(flags uint8) { p[1] |= flags }
 
 // Normal is a 16-bit normalized value.
 // See companion standard 101, subclause 7.2.6.6.
