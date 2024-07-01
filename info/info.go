@@ -1,7 +1,10 @@
 // Package info provides the OSI presentation layer.
 package info
 
-import "errors"
+import (
+	"encoding/binary"
+	"errors"
+)
 
 // CommonAddr is a station address. Zero is not used.
 // The width is controlled by Params.AddrSize.
@@ -169,7 +172,30 @@ func (p StepPosQual) Pos() (value int, transient bool) {
 func (p StepPosQual) QualDesc() uint8 { return p[1] }
 
 // FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
-func (p StepPosQual) FlagQualDesc(flags uint8) { p[1] |= flags }
+func (p *StepPosQual) FlagQualDesc(flags uint8) { p[1] |= flags }
+
+// BitsQual is a four octet bitstring with a quality descriptor.
+type BitsQual [5]uint8
+
+// Slice gets a reference to the data.
+func (b *BitsQual) Slice() []uint8 { return b[:4] }
+
+// BigEndian returns the bitstring as an integer.
+func (b BitsQual) BigEndian() uint32 {
+	return binary.BigEndian.Uint32(b[:4])
+}
+
+// SetBigEndian updates the bitstring with an integer.
+func (b *BitsQual) SetBigEndian(v uint32) {
+	binary.BigEndian.PutUint32(b[:4], v)
+}
+
+// QualDesc returns the quality descriptor flags.
+// EllapesTimeInvalid does not apply.
+func (b BitsQual) QualDesc() uint8 { return b[4] }
+
+// FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
+func (b *BitsQual) FlagQualDesc(flags uint8) { b[4] |= flags }
 
 // Normal is a 16-bit normalized value.
 // See companion standard 101, subclause 7.2.6.6.
