@@ -8,10 +8,10 @@ import (
 // TestStepPos tests the full value range.
 func TestStepPos(t *testing.T) {
 	for value := -64; value <= 63; value++ {
-		if v, tr := NewStepPosQual(value).Pos(); v != value || tr {
+		if v, tr := NewStepPosQual(value, NotTopical).Value(); v != value || tr {
 			t.Errorf("got position and tranient (%d, %t), want (%d, false)", v, tr, value)
 		}
-		if v, tr := NewTransientStepPosQual(value).Pos(); v != value || !tr {
+		if v, tr := NewTransientStepPosQual(value, OK).Value(); v != value || !tr {
 			t.Errorf("got position and tranient (%d, %t), want (%d, true)", v, tr, value)
 		}
 	}

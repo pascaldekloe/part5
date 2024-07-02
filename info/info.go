@@ -42,12 +42,12 @@ const (
 // it has quality remarks.
 type SinglePointQual uint8
 
-// SinglePoint loses the quality descriptor.
-func (p SinglePointQual) SinglePoint() SinglePoint { return SinglePoint(p & 1) }
+// Value loses the quality descriptor.
+func (pt SinglePointQual) Value() SinglePoint { return SinglePoint(pt & 1) }
 
-// QualDesc returns the quality descriptor flags. Overflow is always zero and
+// Qual returns the quality descriptor flags. Overflow is always zero and
 // EllapesTimeInvalid does not apply.
-func (p SinglePointQual) QualDesc() uint8 { return uint8(p & 0xfe) }
+func (pt SinglePointQual) Qual() Qual { return Qual(pt & 0xfe) }
 
 // A DoublePoint information object (IEV 371-02-08) is either DeterminatedOn,
 // DeterminatedOff, Indeterminated, or IndeterminateOrIntermediate.
@@ -67,12 +67,15 @@ const (
 // states, then it has quality remarks.
 type DoublePointQual uint8
 
-// DoublePoint loses the quality descriptor.
-func (p DoublePointQual) DoublePoint() DoublePoint { return DoublePoint(p & 3) }
+// Value loses the quality descriptor.
+func (pt DoublePointQual) Value() DoublePoint { return DoublePoint(pt & 3) }
 
-// QualDesc returns the quality descriptor flags. Overflow is always zero and
+// Qual returns the quality descriptor. Overflow is always zero and
 // EllapesTimeInvalid does not apply.
-func (p DoublePointQual) QualDesc() uint8 { return uint8(p & 0xfc) }
+func (pt DoublePointQual) Qual() Qual { return Qual(pt & 0xfc) }
+
+// Qual holds flags about an information object, a.k.a. the quality descriptor.
+type Qual uint8
 
 // Quality Descriptor Flags
 const (
@@ -114,23 +117,23 @@ const (
 	OK = 0 // no remarks
 )
 
-// StepPos is a measured value with transient state indication.
+// StepPos is a measured value with a transient state indication.
 // See companion standard 101, subclause 7.2.6.5.
 type StepPos uint
 
 // NewStepPos returns a new step position.
 // Values out of [-64, 63] oveflow silently.
 func NewStepPos(value int, transient bool) StepPos {
-	p := StepPos(value & 0x7f)
+	pos := StepPos(value & 0x7f)
 	if transient {
-		p |= 0x80
+		pos |= 0x80
 	}
-	return p
+	return pos
 }
 
 // Pos returns the value in [-64, 63] plus whether the equipment is transient state.
-func (p StepPos) Pos() (value int, transient bool) {
-	u := uint(p)
+func (pos StepPos) Pos() (value int, transient bool) {
+	u := uint(pos)
 	if u&0x40 == 0 {
 		// trim rest
 		value = int(u & 0x3f)
@@ -149,100 +152,103 @@ type StepPosQual [2]uint8
 
 // NewStepPosQual returns a new step position, with quality descriptor OK.
 // Values out of [-64, 63] oveflow silently.
-func NewStepPosQual(value int) StepPosQual {
-	return StepPosQual{uint8(value & 0x7f), 0}
+func NewStepPosQual(value int, flags Qual) StepPosQual {
+	return StepPosQual{uint8(value & 0x7f), uint8(flags)}
 }
 
 // NewTransientStepPosQual sets the transient flag.
-func NewTransientStepPosQual(value int) StepPosQual {
-	return StepPosQual{uint8(value&0x7f) | 0x80, 0}
+func NewTransientStepPosQual(value int, flags Qual) StepPosQual {
+	return StepPosQual{uint8(value&0x7f) | 0x80, uint8(flags)}
 }
 
-// Pos returns the value, range [-64, 63], plus whether the equipment is
-// transient state.
-func (p StepPosQual) Pos() (value int, transient bool) {
-	value = int(p[0] & 0x7f)
+// Value returns the step position value in range [-64, 63], plus whether the
+// equipment is in a transient state.
+func (pos StepPosQual) Value() (value int, transient bool) {
+	value = int(pos[0] & 0x7f)
 	signBit := value >> 6
 	signExt := 0 - signBit
 	value |= signExt << 6
-	return value, p[0]&0x80 != 0
+	return value, pos[0]&0x80 != 0
 }
 
-// QualDesc returns the quality descriptor flags.
-// EllapesTimeInvalid does not apply.
-func (p StepPosQual) QualDesc() uint8 { return p[1] }
+// Qual returns the quality descriptor. EllapesTimeInvalid does not apply.
+func (pos StepPosQual) Qual() Qual { return Qual(pos[1]) }
 
-// FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
-func (p *StepPosQual) FlagQualDesc(flags uint8) { p[1] |= flags }
+// FlagQual sets [logical OR] the quality descriptor bits from flags.
+func (pos *StepPosQual) FlagQual(flags Qual) {
+	pos[1] |= uint8(flags)
+}
 
 // BitsQual is a four octet bitstring with a quality descriptor.
 type BitsQual [5]uint8
 
 // Slice gets a reference to the data.
-func (b *BitsQual) Slice() []uint8 { return b[:4] }
+func (bits *BitsQual) Slice() []uint8 { return bits[:4] }
 
 // BigEndian returns the bitstring as an integer.
-func (b BitsQual) BigEndian() uint32 {
-	return binary.BigEndian.Uint32(b[:4])
+func (bits BitsQual) BigEndian() uint32 {
+	return binary.BigEndian.Uint32(bits[:4])
 }
 
 // SetBigEndian updates the bitstring with an integer.
-func (b *BitsQual) SetBigEndian(v uint32) {
-	binary.BigEndian.PutUint32(b[:4], v)
+func (bits *BitsQual) SetBigEndian(v uint32) {
+	binary.BigEndian.PutUint32(bits[:4], v)
 }
 
-// QualDesc returns the quality descriptor flags.
-// EllapesTimeInvalid does not apply.
-func (b BitsQual) QualDesc() uint8 { return b[4] }
+// Qual returns the quality descriptor. EllapesTimeInvalid does not apply.
+func (bits BitsQual) Qual() Qual { return Qual(bits[4]) }
 
-// FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
-func (b *BitsQual) FlagQualDesc(flags uint8) { b[4] |= flags }
+// FlagQual sets [logical OR] the quality descriptor bits from flags.
+func (bits *BitsQual) FlagQual(flags Qual) {
+	bits[4] |= uint8(flags)
+}
 
 // Norm is a 16-bit normalized value.
 type Norm [2]uint8
 
 // Int16 returns the numeric value as is [unscaled].
-func (n *Norm) Int16() int16 {
-	return int16(binary.LittleEndian.Uint16(n[:2]))
+func (norm Norm) Int16() int16 {
+	return int16(binary.LittleEndian.Uint16(norm[:2]))
 }
 
 // SetInt16 updates the normalized value with the numeric value as is
 // [unscaled].
-func (n *Norm) SetInt16(v int16) {
-	binary.LittleEndian.PutUint16(n[:2], uint16(v))
+func (norm *Norm) SetInt16(v int16) {
+	binary.LittleEndian.PutUint16(norm[:2], uint16(v))
 }
 
 // Float64 returns the value in range [-1, 1 − 2⁻¹⁵].
-func (n *Norm) Float64() float64 {
-	return float64(n.Int16()) / 32768
+func (norm Norm) Float64() float64 {
+	return float64(norm.Int16()) / 32768
 }
 
 // SetFloat64 updates the value in range [-1, 1 − 2⁻¹⁵].
-func (n *Norm) SetFloat64(v float64) {
+func (norm *Norm) SetFloat64(v float64) {
 	scaled := math.Round(v * 32768)
 	switch {
 	case scaled <= math.MinInt16:
-		n.SetInt16(math.MinInt16)
+		norm.SetInt16(math.MinInt16)
 	case scaled >= math.MaxInt16:
-		n.SetInt16(math.MaxInt16)
+		norm.SetInt16(math.MaxInt16)
 	default:
-		n.SetInt16(int16(scaled))
+		norm.SetInt16(int16(scaled))
 	}
 }
 
 // Norm is a 16-bit normalized value with a quality desciptor.
 type NormQual [3]uint8
 
-// Norm returns a reference to the normalized-value only
-// (withouth the quality descriptor).
-func (p *NormQual) Norm() *Norm { return (*Norm)(p[:2]) }
+// Link returns a reference to the normalized-value withouth the quality
+// descriptor.
+func (norm *NormQual) Link() *Norm { return (*Norm)(norm[:2]) }
 
-// QualDesc returns the quality descriptor flags.
-// EllapesTimeInvalid does not apply.
-func (p *NormQual) QualDesc() (flags uint8) { return p[2] }
+// Qual returns the quality descriptor. EllapesTimeInvalid does not apply.
+func (norm NormQual) Qual() Qual { return Qual(norm[2]) }
 
-// FlagQualDesc sets [logical OR] the quality descriptor bits from flags.
-func (p *NormQual) FlagQualDesc(flags uint8) { p[2] |= flags }
+// FlagQual sets [logical OR] the quality descriptor bits from flags.
+func (norm *NormQual) FlagQual(flags Qual) {
+	norm[2] |= uint8(flags)
+}
 
 // Normal is a 16-bit normalized value.
 // See companion standard 101, subclause 7.2.6.6.
