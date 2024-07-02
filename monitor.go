@@ -42,8 +42,9 @@ type Monitor[Addr info.Addr] struct {
 
 // NextAddr gets the followup in an info.Sequence.
 func nextAddr[T info.Addr](addr T) T {
-	addr.SetN(addr.N() + 1)
-	return addr
+	// overflow ignored (as unspecified behaviour)
+	sum, _ := info.NewAddrN[T](addr.N() + 1)
+	return sum
 }
 
 var errNotMonitor = errors.New("part5: ASDU type is monitor information")

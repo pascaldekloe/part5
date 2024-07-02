@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math"
+	"unsafe"
 )
 
 // Information Object Address
@@ -15,9 +16,6 @@ type (
 
 		// N gets the address as a numeric value.
 		N() uint
-
-		// SetN updates the address as a numeric value.
-		SetN(uint)
 	}
 
 	Addr8  [1]uint8
@@ -25,35 +23,38 @@ type (
 	Addr24 [3]uint8
 )
 
+// NewAddrN returns a numeric address mapping. The return is false
+// when the numeric value does not fit the width of address type T.
+func NewAddrN[T Addr](n uint) (T, bool) {
+	var addr T
+
+	// addr[0] = uint8(n)
+	// Go's generics suck. Can't slice the type either.
+	// https://github.com/golang/go/issues/44253
+
+	view := unsafe.Slice(&addr[0], len(addr))
+	for i := range view {
+		view[i] = uint8(n)
+		n <<= 8
+	}
+
+	return addr, n == 0
+}
+
 // N implements the Addr interface.
 func (addr Addr8) N() uint { return uint(addr[0]) }
 
-// SetN implements the Addr interface.
-func (addr *Addr8) SetN(n uint) {
-	addr[0] = uint8(n)
-}
+// Slice implements the Addr interface.
+func (addr Addr8) Slice() []byte { return addr[:] }
 
 // N implements the Addr interface.
 func (addr Addr16) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8
 }
 
-// SetN implements the Addr interface.
-func (addr *Addr16) SetN(n uint) {
-	addr[0] = uint8(n)
-	addr[1] = uint8(n >> 8)
-}
-
 // N implements the Addr interface.
 func (addr Addr24) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8 | uint(addr[2])<<16
-}
-
-// SetN implements the Addr interface.
-func (addr *Addr24) SetN(n uint) {
-	addr[0] = uint8(n)
-	addr[1] = uint8(n >> 8)
-	addr[2] = uint8(n >> 16)
 }
 
 func (addr Addr16) LowOctet() uint8    { return addr[0] }
