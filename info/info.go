@@ -7,6 +7,61 @@ import (
 	"math"
 )
 
+// Information Object Address
+type (
+	Addr interface {
+		// Addressing can use any of these three modes.
+		Addr8 | Addr16 | Addr24
+
+		// N gets the address as a numeric value.
+		N() uint
+
+		// SetN updates the address as a numeric value.
+		SetN(uint)
+	}
+
+	Addr8  [1]uint8
+	Addr16 [2]uint8
+	Addr24 [3]uint8
+)
+
+// N implements the Addr interface.
+func (addr Addr8) N() uint { return uint(addr[0]) }
+
+// SetN implements the Addr interface.
+func (addr *Addr8) SetN(n uint) {
+	addr[0] = uint8(n)
+}
+
+// N implements the Addr interface.
+func (addr Addr16) N() uint {
+	return uint(addr[0]) | uint(addr[1])<<8
+}
+
+// SetN implements the Addr interface.
+func (addr *Addr16) SetN(n uint) {
+	addr[0] = uint8(n)
+	addr[1] = uint8(n >> 8)
+}
+
+// N implements the Addr interface.
+func (addr Addr24) N() uint {
+	return uint(addr[0]) | uint(addr[1])<<8 | uint(addr[2])<<16
+}
+
+// SetN implements the Addr interface.
+func (addr *Addr24) SetN(n uint) {
+	addr[0] = uint8(n)
+	addr[1] = uint8(n >> 8)
+	addr[2] = uint8(n >> 16)
+}
+
+func (addr Addr16) LowOctet() uint8    { return addr[0] }
+func (addr Addr16) HighOctet() uint8   { return addr[1] }
+func (addr Addr24) LowOctet() uint8    { return addr[0] }
+func (addr Addr24) MiddleOctet() uint8 { return addr[1] }
+func (addr Addr24) HighOctet() uint8   { return addr[2] }
+
 // CommonAddr is a station address. Zero is not used.
 // The width is controlled by Params.AddrSize.
 // See companion standard 101, subclause 7.2.4.
