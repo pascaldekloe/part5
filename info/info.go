@@ -8,13 +8,54 @@ import (
 	"unsafe"
 )
 
-// Information Object Address
+// The “common address” addresses stations. Zero is not used.
+// All information objects/addresses reside in a common address.
+// See companion standard 101, subclause 7.2.4.
 type (
+	// The address length is fixed per system.
+	ComAddr interface {
+		ComAddr8 | ComAddr16
+
+		// N gets the address as a numeric value.
+		N() uint
+
+		// The global address is a broadcast address,
+		// directed to all stations of a specific system.
+		// Use is restricted to type C_IC_NA_1, C_CI_NA_1,
+		// C_CS_NA_1 and C_RP_NA_1.
+		IsGlobal() bool
+	}
+
+	ComAddr8  [1]uint8
+	ComAddr16 [2]uint8
+)
+
+// IsGlobal implements the ComAddr interface.
+func (addr ComAddr8) IsGlobal() bool {
+	return addr[0] == 0xff
+}
+
+// IsGlobal implements the ComAddr interface.
+func (addr ComAddr16) IsGlobal() bool {
+	return addr[0] == 0xff && addr[1] == 0xff
+}
+
+// LowOctet provides an alternative to numeric addressing.
+func (addr ComAddr16) LowOctet() uint8 { return addr[0] }
+
+// HighOctet provides an alternative to numeric addressing.
+func (addr ComAddr16) HighOctet() uint8 { return addr[1] }
+
+// “The information object address is used as a destination address in
+// control direction and a source address in the monitor direction.”
+// — companion standard 101, subclause 7.2.5.
+type (
+	// The address length is fixed per system.
 	Addr interface {
-		// Addressing can use any of these three modes.
 		Addr8 | Addr16 | Addr24
 
 		// N gets the address as a numeric value.
+		// Zero marks the address as irrelevant.
 		N() uint
 	}
 
@@ -42,10 +83,9 @@ func NewAddrN[T Addr](n uint) (T, bool) {
 }
 
 // N implements the Addr interface.
-func (addr Addr8) N() uint { return uint(addr[0]) }
-
-// Slice implements the Addr interface.
-func (addr Addr8) Slice() []byte { return addr[:] }
+func (addr Addr8) N() uint {
+	return uint(addr[0])
+}
 
 // N implements the Addr interface.
 func (addr Addr16) N() uint {
@@ -57,11 +97,20 @@ func (addr Addr24) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8 | uint(addr[2])<<16
 }
 
-func (addr Addr16) LowOctet() uint8    { return addr[0] }
-func (addr Addr16) HighOctet() uint8   { return addr[1] }
-func (addr Addr24) LowOctet() uint8    { return addr[0] }
+// LowOctet provides an alternative to numeric addressing.
+func (addr Addr16) LowOctet() uint8 { return addr[0] }
+
+// HighOctet provides an alternative to numeric addressing.
+func (addr Addr16) HighOctet() uint8 { return addr[1] }
+
+// LowOctet provides an alternative to numeric addressing.
+func (addr Addr24) LowOctet() uint8 { return addr[0] }
+
+// MiddleOctet provides an alternative to numeric addressing.
 func (addr Addr24) MiddleOctet() uint8 { return addr[1] }
-func (addr Addr24) HighOctet() uint8   { return addr[2] }
+
+// HighOctet provides an alternative to numeric addressing.
+func (addr Addr24) HighOctet() uint8 { return addr[2] }
 
 // CommonAddr is a station address. Zero is not used.
 // The width is controlled by Params.AddrSize.
