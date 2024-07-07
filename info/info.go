@@ -5,8 +5,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"math"
-	"unsafe"
 )
+
+// ErrComAddrZero denies zero as an address.
+var errComAddrZero = errors.New("part5: common address 0 is not used")
 
 // The “common address” addresses stations. Zero is not used.
 // All information objects/addresses reside in a common address.
@@ -29,6 +31,27 @@ type (
 	ComAddr8  [1]uint8
 	ComAddr16 [2]uint8
 )
+
+// NewComAddrN returns the numeric address mapping. The return is false
+// when the numeric value does not fit in the width of address type T.
+func NewComAddrN[T ComAddr](n uint) (T, bool) {
+	var addr T
+	for i := 0; i < len(addr); i++ {
+		addr[i] = uint8(n)
+		n >>= 8
+	}
+	return addr, n == 0
+}
+
+// N implements the ComAddr interface.
+func (addr ComAddr8) N() uint {
+	return uint(addr[0])
+}
+
+// N implements the ComAddr interface.
+func (addr ComAddr16) N() uint {
+	return uint(addr[0]) | uint(addr[1])<<8
+}
 
 // IsGlobal implements the ComAddr interface.
 func (addr ComAddr8) IsGlobal() bool {
@@ -64,21 +87,14 @@ type (
 	Addr24 [3]uint8
 )
 
-// NewAddrN returns a numeric address mapping. The return is false
-// when the numeric value does not fit the width of address type T.
+// NewAddrN returns the numeric address mapping. The return is false
+// when the numeric value does not fit in the width of address type T.
 func NewAddrN[T Addr](n uint) (T, bool) {
 	var addr T
-
-	// addr[0] = uint8(n)
-	// Go's generics suck. Can't slice the type either.
-	// https://github.com/golang/go/issues/44253
-
-	view := unsafe.Slice(&addr[0], len(addr))
-	for i := range view {
-		view[i] = uint8(n)
-		n <<= 8
+	for i := 0; i < len(addr); i++ {
+		addr[i] = uint8(n)
+		n >>= 8
 	}
-
 	return addr, n == 0
 }
 
@@ -111,27 +127,6 @@ func (addr Addr24) MiddleOctet() uint8 { return addr[1] }
 
 // HighOctet provides an alternative to numeric addressing.
 func (addr Addr24) HighOctet() uint8 { return addr[2] }
-
-// CommonAddr is a station address. Zero is not used.
-// The width is controlled by Params.AddrSize.
-// See companion standard 101, subclause 7.2.4.
-type CommonAddr uint16
-
-// ErrAddrZero signals an uninitialized CommonAddr.
-var errAddrZero = errors.New("part5: common address 0 is not used")
-
-// GlobalAddr is the broadcast address. Use is restricted
-// to C_IC_NA_1, C_CI_NA_1, C_CS_NA_1 and C_RP_NA_1.
-// When in 8-bit mode 255 is mapped to this value on the fly.
-const GlobalAddr CommonAddr = 65535
-
-// ObjAddr is the information object address.
-// The width is controlled by Params.ObjAddrSize.
-// See companion standard 101, subclause 7.2.5.
-type ObjAddr uint
-
-// Zero means that the address is irrelevant.
-const IrrelevantAddr ObjAddr = 0
 
 // A SinglePoint information object (IEV 371-02-07) is either On or Off.
 type SinglePoint uint8
@@ -354,13 +349,6 @@ func (norm NormQual) Qual() Qual { return Qual(norm[2]) }
 func (norm *NormQual) FlagQual(flags Qual) {
 	norm[2] |= uint8(flags)
 }
-
-// Normal is a 16-bit normalized value.
-// See companion standard 101, subclause 7.2.6.6.
-type Normal int16
-
-// Float64 returns the value in [-1, 1 − 2⁻¹⁵].
-func (n Normal) Float64() float64 { return float64(n) / 32768 }
 
 // Qualifier Of Parameter Of Measured Values
 // See companion standard 101, subclause 7.2.6.24.

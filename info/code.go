@@ -1,6 +1,9 @@
 package info
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 //go:generate stringer -type TypeID -output code_string.go code.go
 
@@ -12,9 +15,8 @@ type TypeID uint8
 // [136..255] is for “special use”.
 const PrivateTypeFlag = 128
 
-// ErrType signals either the unused code 0, or a reserved code from the
-// compatible range [1..127], or any code from the private range [128..255].
-var ErrType = errors.New("part5: unknown type identification")
+// ErrTypeZero denies zero as a type identification.
+var errTypeZero = errors.New("part5: type identification 0 is not used")
 
 // The compatible codes are defined in table 8 from companion standard 101.
 // More compatible codes are defined in table 1 from companion standard 104.
@@ -236,18 +238,14 @@ var builtins = [256]int{
 	F_DR_TA_1: 13,
 }
 
-// Cause of transmission is a code to justify emission by secondary stations.
-// See companion standard 101, subclause 7.2.3, “ASDUs for process information
-// in control direction” for a listing.
-type Cause uint8
+// ErrCauseZero denies zero as a cause of transmission.
+var errCauseZero = errors.New("part5: cause of transmission 0 is not used")
 
-var errCauseZero = errors.New("part5: cause of transmission is zero")
-
-// The codes are defined in table 14 from companion standard 101.
-// Auth, Seskey and Usrkey are defined in section 7, table 1, “Additional
-// cause of transmission”.
+// The cause of transmission codes are defined in table 14 from companion
+// standard 101. Auth, Seskey and Usrkey are defined in section 7, table 1,
+// “Additional cause of transmission”.
 const (
-	_ Cause = iota // 0: not used
+	_ = iota // 0: not used
 
 	Percyc   // periodic, cyclic
 	Back     // background scan
@@ -317,24 +315,57 @@ const (
 	_ // 61: for special use (private range)
 	_ // 62: for special use (private range)
 	_ // 63: for special use (private range)
-)
 
-// The most-significant bits of Cause are flags.
-const (
 	// NegFlag indicates the negative (or positive) confirmation
 	// of activation requested by the primary application function.
-	NegFlag Cause = 0x40
+	// In case of irrelevance, the bit is zero.
+	NegFlag = 0x40
 
 	// TestFlag marks the cause of transmission for testing.
-	TestFlag Cause = 0x80
+	TestFlag = 0x80
 )
 
-// String returns a compact name in lowercase, including the tags
-// ",neg" and ",test" if applicable.
-func (c Cause) String() string {
-	s := causeLabels[c&^(NegFlag|TestFlag)]
+// Cause of transmission is a code to justify emission. The 2-octet extension
+// includes an originator address, which is optional per system.
+// See companion standard 101, subclause 7.2.3.
+type (
+	// The Cause size is fixed per system.
+	Cause interface {
+		Cause8 | Cause16
 
-	switch c & (NegFlag | TestFlag) {
+		// Value gets the cause of transmission together
+		// with the NegFlag and TestFlag.
+		Value() (codeAndFlags uint8)
+	}
+
+	Cause8  [1]uint8
+	Cause16 [2]uint8
+)
+
+// Value implements the Cause interface.
+func (cause Cause8) Value() uint8 { return cause[0] }
+
+// Value implements the Cause interface.
+func (cause Cause16) Value() uint8 { return cause[0] }
+
+// OrigAddr returns either the originator address in range [1..255], or it
+// returns zero for default.
+func (cause Cause16) OrigAddr() uint8 { return cause[1] }
+
+// String returns a compact description.
+func (cause Cause8) String() string {
+	return causeLabel(cause[0])
+}
+
+// String returns a compact description.
+func (cause Cause16) String() string {
+	return fmt.Sprintf("%s #%d", causeLabel(cause[0]), cause[1])
+}
+
+func causeLabel(cause uint8) string {
+	s := causeLabels[cause&^(NegFlag|TestFlag)]
+
+	switch cause & (NegFlag | TestFlag) {
 	case NegFlag:
 		s += ",neg"
 	case TestFlag:

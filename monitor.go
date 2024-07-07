@@ -9,35 +9,35 @@ import (
 )
 
 // Monitor listens for measured value updates.
-type Monitor[Addr info.Addr] struct {
-	SinglePoint         func(info.ID, Addr, info.SinglePointQual)
-	SinglePointWithTime func(info.ID, Addr, info.SinglePointQual, CP24Time2a)
-	SinglePointWithDate func(info.ID, Addr, info.SinglePointQual, CP56Time2a)
+type Monitor[COT info.Cause, Common info.ComAddr, Object info.Addr] struct {
+	SinglePoint         func(info.DataUnit[COT, Common, Object], Object, info.SinglePointQual)
+	SinglePointWithTime func(info.DataUnit[COT, Common, Object], Object, info.SinglePointQual, CP24Time2a)
+	SinglePointWithDate func(info.DataUnit[COT, Common, Object], Object, info.SinglePointQual, CP56Time2a)
 
-	DoublePoint         func(info.ID, Addr, info.DoublePointQual)
-	DoublePointWithTime func(info.ID, Addr, info.DoublePointQual, CP24Time2a)
-	DoublePointWithDate func(info.ID, Addr, info.DoublePointQual, CP56Time2a)
+	DoublePoint         func(info.DataUnit[COT, Common, Object], Object, info.DoublePointQual)
+	DoublePointWithTime func(info.DataUnit[COT, Common, Object], Object, info.DoublePointQual, CP24Time2a)
+	DoublePointWithDate func(info.DataUnit[COT, Common, Object], Object, info.DoublePointQual, CP56Time2a)
 
-	StepPos         func(info.ID, Addr, info.StepPosQual)
-	StepPosWithTime func(info.ID, Addr, info.StepPosQual, CP24Time2a)
-	StepPosWithDate func(info.ID, Addr, info.StepPosQual, CP56Time2a)
+	StepPos         func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual)
+	StepPosWithTime func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual, CP24Time2a)
+	StepPosWithDate func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual, CP56Time2a)
 
-	Bits         func(info.ID, Addr, info.BitsQual)
-	BitsWithTime func(info.ID, Addr, info.BitsQual, CP24Time2a)
-	BitsWithDate func(info.ID, Addr, info.BitsQual, CP56Time2a)
+	Bits         func(info.DataUnit[COT, Common, Object], Object, info.BitsQual)
+	BitsWithTime func(info.DataUnit[COT, Common, Object], Object, info.BitsQual, CP24Time2a)
+	BitsWithDate func(info.DataUnit[COT, Common, Object], Object, info.BitsQual, CP56Time2a)
 
-	NormUnqual   func(info.ID, Addr, info.Norm)
-	Norm         func(info.ID, Addr, info.NormQual)
-	NormWithTime func(info.ID, Addr, info.NormQual, CP24Time2a)
-	NormWithDate func(info.ID, Addr, info.NormQual, CP56Time2a)
+	NormUnqual   func(info.DataUnit[COT, Common, Object], Object, info.Norm)
+	Norm         func(info.DataUnit[COT, Common, Object], Object, info.NormQual)
+	NormWithTime func(info.DataUnit[COT, Common, Object], Object, info.NormQual, CP24Time2a)
+	NormWithDate func(info.DataUnit[COT, Common, Object], Object, info.NormQual, CP56Time2a)
 
-	Scaled         func(info.ID, Addr, int16, info.Qual)
-	ScaledWithTime func(info.ID, Addr, int16, info.Qual, CP24Time2a)
-	ScaledWithDate func(info.ID, Addr, int16, info.Qual, CP56Time2a)
+	Scaled         func(info.DataUnit[COT, Common, Object], Object, int16, info.Qual)
+	ScaledWithTime func(info.DataUnit[COT, Common, Object], Object, int16, info.Qual, CP24Time2a)
+	ScaledWithDate func(info.DataUnit[COT, Common, Object], Object, int16, info.Qual, CP56Time2a)
 
-	Float         func(info.ID, Addr, float32, info.Qual)
-	FloatWithTime func(info.ID, Addr, float32, info.Qual, CP24Time2a)
-	FloatWithDate func(info.ID, Addr, float32, info.Qual, CP56Time2a)
+	Float         func(info.DataUnit[COT, Common, Object], Object, float32, info.Qual)
+	FloatWithTime func(info.DataUnit[COT, Common, Object], Object, float32, info.Qual, CP24Time2a)
+	FloatWithDate func(info.DataUnit[COT, Common, Object], Object, float32, info.Qual, CP56Time2a)
 }
 
 // NextAddr gets the followup in an info.Sequence.
@@ -51,425 +51,424 @@ var errNotMonitor = errors.New("part5: ASDU type is monitor information")
 
 var errInfoSize = errors.New("part5: ASDU payload size does not match the count of variable structure qualifier")
 
-// OnASDU applies the packet to respective listener.
-// Payload is not retained.
-func (m Monitor[Addr]) OnASDU(header info.ID, payload []byte) error {
-	if header.Type >= 45 {
+// OnDataUnit applies the packet to respective listener. Data is not retained.
+func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Object]) error {
+	if u.Type >= 45 {
 		return errNotMonitor
 	}
 
 	// NOTE: Go can't get the array length from a generic as a constant yet.
-	var addr Addr
+	var addr Object
 
-	switch header.Type {
+	switch u.Type {
 	case info.M_SP_NA_1: // single-point
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count() {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count() {
 				return errInfoSize
 			}
-			addr := Addr(payload[:len(addr)])
-			for _, b := range payload[len(addr):] {
-				m.DoublePoint(header, addr, info.DoublePointQual(b))
+			addr := Object(u.Info[:len(addr)])
+			for _, b := range u.Info[len(addr):] {
+				m.DoublePoint(u, addr, info.DoublePointQual(b))
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+1) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+1) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+1 {
-				m.SinglePoint(header, Addr(payload[:len(addr)]),
-					info.SinglePointQual(payload[len(addr)]),
+			for len(u.Info) >= len(addr)+1 {
+				m.SinglePoint(u, Object(u.Info[:len(addr)]),
+					info.SinglePointQual(u.Info[len(addr)]),
 				)
-				payload = payload[len(addr)+1:]
+				u.Info = u.Info[len(addr)+1:]
 			}
 		}
 
 	case info.M_SP_TA_1: // single-point with 3 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_SP_TA_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+4) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+4) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+4 {
-			m.SinglePointWithTime(header, Addr(payload[:len(addr)]),
-				info.SinglePointQual(payload[len(addr)]),
-				CP24Time2a(payload[len(addr)+1:len(addr)+4]),
+		for len(u.Info) >= len(addr)+4 {
+			m.SinglePointWithTime(u, Object(u.Info[:len(addr)]),
+				info.SinglePointQual(u.Info[len(addr)]),
+				CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
 			)
-			payload = payload[len(addr)+4:]
+			u.Info = u.Info[len(addr)+4:]
 		}
 
 	case info.M_SP_TB_1: // single-point with 7 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_SP_TB_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+8) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(payload) >= (len(addr) + 8) {
-			m.SinglePointWithDate(header, Addr(payload[:len(addr)]),
-				info.SinglePointQual(payload[len(addr)]),
-				CP56Time2a(payload[len(addr)+1:len(addr)+8]),
+		for len(u.Info) >= (len(addr) + 8) {
+			m.SinglePointWithDate(u, Object(u.Info[:len(addr)]),
+				info.SinglePointQual(u.Info[len(addr)]),
+				CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
 			)
-			payload = payload[len(addr)+8:]
+			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_DP_NA_1: // double-point
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count() {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count() {
 				return errInfoSize
 			}
-			addr := Addr(payload[:len(addr)])
-			for _, b := range payload[len(addr):] {
-				m.DoublePoint(header, addr, info.DoublePointQual(b))
+			addr := Object(u.Info[:len(addr)])
+			for _, b := range u.Info[len(addr):] {
+				m.DoublePoint(u, addr, info.DoublePointQual(b))
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+1) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+1) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+1 {
-				m.DoublePoint(header, Addr(payload[:len(addr)]),
-					info.DoublePointQual(payload[len(addr)]),
+			for len(u.Info) >= len(addr)+1 {
+				m.DoublePoint(u, Object(u.Info[:len(addr)]),
+					info.DoublePointQual(u.Info[len(addr)]),
 				)
-				payload = payload[len(addr)+1:]
+				u.Info = u.Info[len(addr)+1:]
 			}
 		}
 
 	case info.M_DP_TA_1: // double-point with 3 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_DP_TA_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+4) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+4) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+4 {
-			m.DoublePointWithTime(header, Addr(payload[:len(addr)]),
-				info.DoublePointQual(payload[len(addr)]),
-				CP24Time2a(payload[len(addr)+1:len(addr)+4]),
+		for len(u.Info) >= len(addr)+4 {
+			m.DoublePointWithTime(u, Object(u.Info[:len(addr)]),
+				info.DoublePointQual(u.Info[len(addr)]),
+				CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
 			)
-			payload = payload[len(addr)+4:]
+			u.Info = u.Info[len(addr)+4:]
 		}
 
 	case info.M_DP_TB_1: // double-point with 7 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_DP_TB_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+8) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+8 {
-			m.DoublePointWithDate(header, Addr(payload[:len(addr)]),
-				info.DoublePointQual(payload[len(addr)]),
-				CP56Time2a(payload[len(addr)+1:len(addr)+8]),
+		for len(u.Info) >= len(addr)+8 {
+			m.DoublePointWithDate(u, Object(u.Info[:len(addr)]),
+				info.DoublePointQual(u.Info[len(addr)]),
+				CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
 			)
-			payload = payload[len(addr)+8:]
+			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_ST_NA_1: // step position
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count()*2 {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count()*2 {
 				return errInfoSize
 			}
-			addr := Addr(payload)
-			for i := len(addr); i+2 <= len(payload); i += 2 {
-				m.StepPos(header, addr, info.StepPosQual(payload[i:i+2]))
+			addr := Object(u.Info)
+			for i := len(addr); i+2 <= len(u.Info); i += 2 {
+				m.StepPos(u, addr, info.StepPosQual(u.Info[i:i+2]))
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+2) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+2) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+2 {
-				m.StepPos(header, Addr(payload[:len(addr)]),
-					info.StepPosQual(payload[len(addr):len(addr)+2]),
+			for len(u.Info) >= len(addr)+2 {
+				m.StepPos(u, Object(u.Info[:len(addr)]),
+					info.StepPosQual(u.Info[len(addr):len(addr)+2]),
 				)
-				payload = payload[len(addr)+2:]
+				u.Info = u.Info[len(addr)+2:]
 			}
 		}
 
 	case info.M_ST_TA_1: // step position with 3 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ST_TA_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+5) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+5) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+5 {
-			m.StepPosWithTime(header, Addr(payload[:len(addr)]),
-				info.StepPosQual(payload[len(addr):len(addr)+2]),
-				CP24Time2a(payload[len(addr)+2:len(addr)+5]),
+		for len(u.Info) >= len(addr)+5 {
+			m.StepPosWithTime(u, Object(u.Info[:len(addr)]),
+				info.StepPosQual(u.Info[len(addr):len(addr)+2]),
+				CP24Time2a(u.Info[len(addr)+2:len(addr)+5]),
 			)
-			payload = payload[len(addr)+5:]
+			u.Info = u.Info[len(addr)+5:]
 		}
 
 	case info.M_ST_TB_1: // step position with 7 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ST_TB_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+9) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+9) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+9 {
-			m.StepPosWithDate(header, Addr(payload[:len(addr)]),
-				info.StepPosQual(payload[len(addr):len(addr)+2]),
-				CP56Time2a(payload[len(addr)+2:len(addr)+9]),
+		for len(u.Info) >= len(addr)+9 {
+			m.StepPosWithDate(u, Object(u.Info[:len(addr)]),
+				info.StepPosQual(u.Info[len(addr):len(addr)+2]),
+				CP56Time2a(u.Info[len(addr)+2:len(addr)+9]),
 			)
-			payload = payload[len(addr)+9:]
+			u.Info = u.Info[len(addr)+9:]
 		}
 
 	case info.M_BO_NA_1: // bitstring
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count()*5 {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count()*5 {
 				return errInfoSize
 			}
-			addr := Addr(payload[:len(addr)])
-			for i := len(addr); i+5 <= len(payload); i += 5 {
-				m.Bits(header, addr, info.BitsQual(payload[i:i+5]))
+			addr := Object(u.Info[:len(addr)])
+			for i := len(addr); i+5 <= len(u.Info); i += 5 {
+				m.Bits(u, addr, info.BitsQual(u.Info[i:i+5]))
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+5) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+5) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+5 {
-				m.Bits(header, Addr(payload),
-					info.BitsQual(payload[len(addr):len(addr)+5]),
+			for len(u.Info) >= len(addr)+5 {
+				m.Bits(u, Object(u.Info),
+					info.BitsQual(u.Info[len(addr):len(addr)+5]),
 				)
-				payload = payload[len(addr)+5:]
+				u.Info = u.Info[len(addr)+5:]
 			}
 		}
 
 	case info.M_BO_TA_1: // bit string with 3 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_BO_TA_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+8) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+8 {
-			m.BitsWithTime(header, Addr(payload[:len(addr)]),
-				info.BitsQual(payload[len(addr):len(addr)+5]),
-				CP24Time2a(payload[len(addr)+5:len(addr)+8]),
+		for len(u.Info) >= len(addr)+8 {
+			m.BitsWithTime(u, Object(u.Info[:len(addr)]),
+				info.BitsQual(u.Info[len(addr):len(addr)+5]),
+				CP24Time2a(u.Info[len(addr)+5:len(addr)+8]),
 			)
-			payload = payload[len(addr)+8:]
+			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_BO_TB_1: // bit string with 7 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_BO_TB_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+12) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+12) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+12 {
-			m.BitsWithDate(header, Addr(payload[:len(addr)]),
-				info.BitsQual(payload[len(addr):len(addr)+5]),
-				CP56Time2a(payload[len(addr)+5:len(addr)+12]),
+		for len(u.Info) >= len(addr)+12 {
+			m.BitsWithDate(u, Object(u.Info[:len(addr)]),
+				info.BitsQual(u.Info[len(addr):len(addr)+5]),
+				CP56Time2a(u.Info[len(addr)+5:len(addr)+12]),
 			)
-			payload = payload[len(addr)+12:]
+			u.Info = u.Info[len(addr)+12:]
 		}
 
 	case info.M_ME_ND_1: // normalized value without quality descriptor
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count()*2 {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count()*2 {
 				return errInfoSize
 			}
-			addr := Addr(payload[:len(addr)])
-			for i := len(addr); i+1 < len(payload); i += 2 {
-				m.NormUnqual(header, addr, info.Norm(payload[i:i+2]))
+			addr := Object(u.Info[:len(addr)])
+			for i := len(addr); i+1 < len(u.Info); i += 2 {
+				m.NormUnqual(u, addr, info.Norm(u.Info[i:i+2]))
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+2) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+2) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+2 {
-				m.NormUnqual(header, Addr(payload[:len(addr)]),
-					info.Norm(payload[len(addr):len(addr)+2]),
+			for len(u.Info) >= len(addr)+2 {
+				m.NormUnqual(u, Object(u.Info[:len(addr)]),
+					info.Norm(u.Info[len(addr):len(addr)+2]),
 				)
-				payload = payload[len(addr)+2:]
+				u.Info = u.Info[len(addr)+2:]
 			}
 		}
 
 	case info.M_ME_NA_1: // normalized value
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count()*3 {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count()*3 {
 				return errInfoSize
 			}
-			addr := Addr(payload)
-			for i := len(addr); i+3 <= len(payload); i += 3 {
-				m.Norm(header, addr, info.NormQual(payload[i:i+3]))
+			addr := Object(u.Info)
+			for i := len(addr); i+3 <= len(u.Info); i += 3 {
+				m.Norm(u, addr, info.NormQual(u.Info[i:i+3]))
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+3) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+3) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+3 {
-				m.Norm(header, Addr(payload[:len(addr)]),
-					info.NormQual(payload[len(addr):len(addr)+3]),
+			for len(u.Info) >= len(addr)+3 {
+				m.Norm(u, Object(u.Info[:len(addr)]),
+					info.NormQual(u.Info[len(addr):len(addr)+3]),
 				)
-				payload = payload[len(addr)+3:]
+				u.Info = u.Info[len(addr)+3:]
 			}
 		}
 
 	case info.M_ME_TA_1: // normalized value with 3 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ME_TA_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+6) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+6) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+6 {
-			m.NormWithTime(header, Addr(payload[:len(addr)]),
-				info.NormQual(payload[len(addr):len(addr)+3]),
-				CP24Time2a(payload[len(addr)+3:len(addr)+6]),
+		for len(u.Info) >= len(addr)+6 {
+			m.NormWithTime(u, Object(u.Info[:len(addr)]),
+				info.NormQual(u.Info[len(addr):len(addr)+3]),
+				CP24Time2a(u.Info[len(addr)+3:len(addr)+6]),
 			)
-			payload = payload[len(addr)+6:]
+			u.Info = u.Info[len(addr)+6:]
 		}
 
 	case info.M_ME_TD_1: // normalized value with 7 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ME_TD_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+10) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+10) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+10 {
-			m.NormWithDate(header, Addr(payload[:len(addr)]),
-				info.NormQual(payload[len(addr):len(addr)+3]),
-				CP56Time2a(payload[len(addr)+3:len(addr)+10]),
+		for len(u.Info) >= len(addr)+10 {
+			m.NormWithDate(u, Object(u.Info[:len(addr)]),
+				info.NormQual(u.Info[len(addr):len(addr)+3]),
+				CP56Time2a(u.Info[len(addr)+3:len(addr)+10]),
 			)
-			payload = payload[len(addr)+10:]
+			u.Info = u.Info[len(addr)+10:]
 		}
 
 	case info.M_ME_NB_1: // scaled value
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count()*3 {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count()*3 {
 				return errInfoSize
 			}
-			addr := Addr(payload)
-			for i := len(addr); i+3 <= len(payload); i += 3 {
-				m.Scaled(header, addr,
-					int16(binary.LittleEndian.Uint16(payload[i:i+2])),
-					info.Qual(payload[i+2]),
+			addr := Object(u.Info)
+			for i := len(addr); i+3 <= len(u.Info); i += 3 {
+				m.Scaled(u, addr,
+					int16(binary.LittleEndian.Uint16(u.Info[i:i+2])),
+					info.Qual(u.Info[i+2]),
 				)
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+3) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+3) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+3 {
-				m.Scaled(header, Addr(payload[:len(addr)]),
-					int16(binary.LittleEndian.Uint16(payload[len(addr):len(addr)+2])),
-					info.Qual(payload[len(addr)+2]),
+			for len(u.Info) >= len(addr)+3 {
+				m.Scaled(u, Object(u.Info[:len(addr)]),
+					int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
+					info.Qual(u.Info[len(addr)+2]),
 				)
-				payload = payload[len(addr)+3:]
+				u.Info = u.Info[len(addr)+3:]
 			}
 		}
 
 	case info.M_ME_TB_1: // scaled value with 3 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ME_TB_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+6) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+6) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+6 {
-			m.ScaledWithTime(header, Addr(payload[:len(addr)]),
-				int16(binary.LittleEndian.Uint16(payload[len(addr):len(addr)+2])),
-				info.Qual(payload[len(addr)+2]),
-				CP24Time2a(payload[len(addr)+3:len(addr)+6]),
+		for len(u.Info) >= len(addr)+6 {
+			m.ScaledWithTime(u, Object(u.Info[:len(addr)]),
+				int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
+				info.Qual(u.Info[len(addr)+2]),
+				CP24Time2a(u.Info[len(addr)+3:len(addr)+6]),
 			)
-			payload = payload[len(addr)+6:]
+			u.Info = u.Info[len(addr)+6:]
 		}
 
 	case info.M_ME_TE_1: // scaled value with 7 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ME_TE_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+10) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+10) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+10 {
-			m.ScaledWithDate(header, Addr(payload[:len(addr)]),
-				int16(binary.LittleEndian.Uint16(payload[len(addr):len(addr)+2])),
-				info.Qual(payload[len(addr)+2]),
-				CP56Time2a(payload[len(addr)+3:len(addr)+10]),
+		for len(u.Info) >= len(addr)+10 {
+			m.ScaledWithDate(u, Object(u.Info[:len(addr)]),
+				int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
+				info.Qual(u.Info[len(addr)+2]),
+				CP56Time2a(u.Info[len(addr)+3:len(addr)+10]),
 			)
-			payload = payload[len(addr)+10:]
+			u.Info = u.Info[len(addr)+10:]
 		}
 
 	case info.M_ME_NC_1: // floating-point
-		if header.Struct&info.Sequence != 0 {
-			if len(payload) != len(addr)+header.Struct.Count()*5 {
+		if u.Struct&info.Sequence != 0 {
+			if len(u.Info) != len(addr)+u.Struct.Count()*5 {
 				return errInfoSize
 			}
-			addr := Addr(payload)
-			for i := len(addr); i+5 <= len(payload); i += 5 {
-				m.Float(header, addr,
-					math.Float32frombits(binary.LittleEndian.Uint32(payload[i:i+4])),
-					info.Qual(payload[i+4]),
+			addr := Object(u.Info)
+			for i := len(addr); i+5 <= len(u.Info); i += 5 {
+				m.Float(u, addr,
+					math.Float32frombits(binary.LittleEndian.Uint32(u.Info[i:i+4])),
+					info.Qual(u.Info[i+4]),
 				)
 				addr = nextAddr(addr)
 			}
 		} else {
-			if len(payload) != header.Struct.Count()*(len(addr)+5) {
+			if len(u.Info) != u.Struct.Count()*(len(addr)+5) {
 				return errInfoSize
 			}
-			for len(payload) >= len(addr)+5 {
-				m.Float(header, Addr(payload[:len(addr)]),
+			for len(u.Info) >= len(addr)+5 {
+				m.Float(u, Object(u.Info[:len(addr)]),
 					math.Float32frombits(
 						binary.LittleEndian.Uint32(
-							payload[len(addr):len(addr)+4],
+							u.Info[len(addr):len(addr)+4],
 						),
 					),
-					info.Qual(payload[len(addr)+4]),
+					info.Qual(u.Info[len(addr)+4]),
 				)
-				payload = payload[len(addr)+5:]
+				u.Info = u.Info[len(addr)+5:]
 			}
 		}
 
 	case info.M_ME_TC_1: // floating point with 3 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ME_TC_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+8) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+8 {
-			m.FloatWithTime(header, Addr(payload[:len(addr)]),
+		for len(u.Info) >= len(addr)+8 {
+			m.FloatWithTime(u, Object(u.Info[:len(addr)]),
 				math.Float32frombits(
 					binary.LittleEndian.Uint32(
-						payload[len(addr):len(addr)+4],
+						u.Info[len(addr):len(addr)+4],
 					),
 				),
-				info.Qual(payload[len(addr)+4]),
-				CP24Time2a(payload[len(addr)+5:len(addr)+8]),
+				info.Qual(u.Info[len(addr)+4]),
+				CP24Time2a(u.Info[len(addr)+5:len(addr)+8]),
 			)
-			payload = payload[len(addr)+8:]
+			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_ME_TF_1: // floating point with 7 octet time-tag
-		if header.Struct&info.Sequence != 0 {
+		if u.Struct&info.Sequence != 0 {
 			return errors.New("part5: ASDU address sequence with M_ME_TF_1 not allowed")
 		}
-		if len(payload) != header.Struct.Count()*(len(addr)+12) {
+		if len(u.Info) != u.Struct.Count()*(len(addr)+12) {
 			return errInfoSize
 		}
-		for len(payload) >= len(addr)+12 {
-			m.FloatWithDate(header, Addr(payload[:len(addr)]),
+		for len(u.Info) >= len(addr)+12 {
+			m.FloatWithDate(u, Object(u.Info[:len(addr)]),
 				math.Float32frombits(
 					binary.LittleEndian.Uint32(
-						payload[len(addr):len(addr)+4],
+						u.Info[len(addr):len(addr)+4],
 					),
 				),
-				info.Qual(payload[len(addr)+4]),
-				CP56Time2a(payload[len(addr)+5:len(addr)+12]),
+				info.Qual(u.Info[len(addr)+4]),
+				CP56Time2a(u.Info[len(addr)+5:len(addr)+12]),
 			)
-			payload = payload[len(addr)+12:]
+			u.Info = u.Info[len(addr)+12:]
 		}
 
 	}

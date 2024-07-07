@@ -1,94 +1,105 @@
 package info
 
-import (
-	"strings"
-	"testing"
-)
+import "testing"
+
+func mustAddr16N(n uint) ComAddr16 {
+	addr, ok := NewComAddrN[ComAddr16](n)
+	if !ok {
+		panic(n)
+	}
+	return addr
+}
 
 var goldenASDUs = []struct {
-	u *ASDU
-	s string
+	unit DataUnit[Cause16, ComAddr16, Addr16]
+	desc string
 }{
 	{
-		&ASDU{
-			Params: Wide,
-			ID: ID{
-				Type:   M_SP_NA_1,
-				Struct: 1,
-				Cause:  Percyc,
-				Orig:   7,
-				Addr:   1001,
-			},
-			Info: []byte{1, 2, 3, 4},
+		DataUnit[Cause16, ComAddr16, Addr16]{
+			Type:   M_SP_NA_1,
+			Struct: 1,
+			Cause:  Cause16{Percyc, 7},
+			Addr:   mustAddr16N(1001),
+			Info:   []byte{1, 2, 3},
 		},
-		"7@1001 M_SP_NA_1 <percyc> 197121:0x04",
+		"M_SP_NA_1 @1001 percyc #7: 513:0x03 .",
 	}, {
-		&ASDU{
-			Params: Narrow,
-			ID: ID{
-				Type:   M_DP_NA_1,
-				Struct: 2,
-				Cause:  Back,
-				Addr:   42,
-			},
-			Info: []byte{1, 2, 3, 4},
+		DataUnit[Cause16, ComAddr16, Addr16]{
+			Type:   M_DP_NA_1,
+			Struct: 2,
+			Cause:  Cause16{Back, 0},
+			Addr:   mustAddr16N(42),
+			Info:   []byte{1, 2, 3, 4, 5, 6},
 		},
-		"@42 M_DP_NA_1 <back> 1:0x02 3:0x04",
+		"M_DP_NA_1 @42 back #0: 513:0x03 1284:0x06 .",
 	}, {
-		&ASDU{
-			Params: Narrow,
-			ID: ID{
-				Type:   M_ST_NA_1,
-				Struct: 2,
-				Cause:  Spont,
-				Addr:   250,
-			},
-			Info: []byte{1, 2, 3, 4, 5},
+		DataUnit[Cause16, ComAddr16, Addr16]{
+			Type:   M_ST_NA_1,
+			Struct: 2,
+			Cause:  Cause16{Spont, 21},
+			Addr:   mustAddr16N(250),
+			Info:   []byte{1, 2, 3, 4, 5},
 		},
-		"@250 M_ST_NA_1 <spont> 1:0x0203 4:0x05 <EOF>",
+		"M_ST_NA_1 @250 spont #21: 513:0x0304 0x05<EOF> !",
 	}, {
-		&ASDU{
-			Params: Narrow,
-			ID: ID{
-				Type:   M_ME_NC_1,
-				Struct: 2 | Sequence,
-				Cause:  Init,
-				Addr:   12,
-			},
-			Info: []byte{99, 0, 1, 2, 3, 4, 5},
+		DataUnit[Cause16, ComAddr16, Addr16]{
+			Type:   M_ST_NA_1,
+			Struct: 1,
+			Cause:  Cause16{Spont, 22},
+			Addr:   mustAddr16N(251),
+			Info:   []byte{1, 2, 3, 4, 5, 6, 7},
 		},
-		"@12 M_ME_NC_1 <init> 99:0x0001020304 100:0x05 <EOF>",
+		"M_ST_NA_1 @251 spont #22: 513:0x0304 0x050607<EOF> 𝚫 +1 !",
+	}, {
+		DataUnit[Cause16, ComAddr16, Addr16]{
+			Type:   M_ME_NC_1,
+			Struct: 2 | Sequence,
+			Cause:  Cause16{Init, 60},
+			Addr:   mustAddr16N(12),
+			Info:   []byte{99, 0, 1, 2, 3, 4, 5, 6},
+		},
+		"M_ME_NC_1 @12 init #60: 99:0x0102030405 100:0x06<EOF> !",
+	}, {
+		DataUnit[Cause16, ComAddr16, Addr16]{
+			Type:   M_ME_NC_1,
+			Struct: 2 | Sequence,
+			Cause:  Cause16{Init, 61},
+			Addr:   mustAddr16N(12),
+			Info:   []byte{99, 0, 1, 2, 3, 4, 5},
+		},
+		"M_ME_NC_1 @12 init #61: 99:0x0102030405 𝚫 −1 !",
 	},
 }
 
-func TestASDUStrings(t *testing.T) {
+// Verify labels for valid and invalid encodings.
+func TestDataUnitString(t *testing.T) {
 	for _, gold := range goldenASDUs {
-		if got := gold.u.String(); got != gold.s {
-			t.Errorf("got %q, want %q", got, gold.s)
+		if got := gold.unit.String(); got != gold.desc {
+			t.Errorf("got %q, want %q", got, gold.desc)
 		}
 	}
 }
 
+// Encode (with Append) and decode (with Adopt) should be lossless.
 func TestASDUEncoding(t *testing.T) {
 	for _, gold := range goldenASDUs {
-		if strings.Contains(gold.s, " <EOF>") {
-			continue
-		}
+		asdu := gold.unit.Append(nil)
+		t.Logf("%s got encoded as %#x", gold.desc, asdu)
 
-		bytes, err := gold.u.MarshalBinary()
-		if err != nil {
-			t.Error(gold.s, "marshal error:", err)
-			continue
-		}
+		var got DataUnit[Cause16, ComAddr16, Addr16]
+		err := got.Adopt(asdu)
+		switch {
+		case err != nil:
+			t.Errorf("encoding of %s got parse error: %s",
+				gold.desc, err)
 
-		u := NewASDU(gold.u.Params, ID{})
-		if err = u.UnmarshalBinary(bytes); err != nil {
-			t.Error(gold.s, "unmarshal error:", err)
-			continue
-		}
-
-		if got := u.String(); got != gold.s {
-			t.Errorf("got %q, want %q", got, gold.s)
+		case got.Type != gold.unit.Type,
+			got.Struct != gold.unit.Struct,
+			got.Cause != gold.unit.Cause,
+			got.Addr != gold.unit.Addr,
+			string(got.Info) != string(gold.unit.Info):
+			t.Errorf("%+v became %+v after codec cycle",
+				gold.unit, got)
 		}
 	}
 }
