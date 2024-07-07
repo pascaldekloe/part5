@@ -219,66 +219,51 @@ const (
 	OK = 0 // no remarks
 )
 
-// StepPos is a measured value with a transient state indication.
-// See companion standard 101, subclause 7.2.6.5.
-type StepPos uint
+// Step contains a step position, which is a numeric value with transient state
+// indication. See companion standard 101, subclause 7.2.6.5.
+type Step uint8
 
-// NewStepPos returns a new step position.
-// Values out of [-64, 63] oveflow silently.
-func NewStepPos(value int, transient bool) StepPos {
-	pos := StepPos(value & 0x7f)
-	if transient {
-		pos |= 0x80
-	}
-	return pos
-}
+// NewStep returns a new step position for equipment not in transient state.
+// Values out of [-64, 63] overflow silently.
+func NewStep(value int) Step { return Step(value & 0x7f) }
+
+// NewTransientStep returns a new step position for equipment in transient state.
+// Values out of [-64, 63] overflow silently.
+func NewTransientStep(value int) Step { return Step(value&0x7f) | 0x80 }
 
 // Pos returns the value in [-64, 63] plus whether the equipment is transient state.
-func (pos StepPos) Pos() (value int, transient bool) {
-	u := uint(pos)
-	if u&0x40 == 0 {
-		// trim rest
-		value = int(u & 0x3f)
-	} else {
-		// sign extend
-		value = int(u) | (-1 &^ 0x3f)
-	}
-	transient = u&0x80 != 0
-	return
-}
-
-// StepPosQual is a measured value with transient state indication,
-// and with a quality descriptor.
-// See companion standard 101, subclause 7.2.6.5.
-type StepPosQual [2]uint8
-
-// NewStepPosQual returns a new step position, with quality descriptor OK.
-// Values out of [-64, 63] oveflow silently.
-func NewStepPosQual(value int, flags Qual) StepPosQual {
-	return StepPosQual{uint8(value & 0x7f), uint8(flags)}
-}
-
-// NewTransientStepPosQual sets the transient flag.
-func NewTransientStepPosQual(value int, flags Qual) StepPosQual {
-	return StepPosQual{uint8(value&0x7f) | 0x80, uint8(flags)}
-}
-
-// Value returns the step position value in range [-64, 63], plus whether the
-// equipment is in a transient state.
-func (pos StepPosQual) Value() (value int, transient bool) {
-	value = int(pos[0] & 0x7f)
+func (p Step) Pos() (value int, transient bool) {
+	value = int(p & 0x7f)
 	signBit := value >> 6
 	signExt := 0 - signBit
 	value |= signExt << 6
-	return value, pos[0]&0x80 != 0
+	return value, p&0x80 != 0
 }
 
+// SetpQual is a step position with a quality descriptor.
+type StepQual [2]uint8
+
+// NewStepQual returns a new step position for equipment not in transient state.
+// Values out of [-64, 63] oveflow silently.
+func NewStepQual(value int, flags Qual) StepQual {
+	return StepQual{uint8(value & 0x7f), uint8(flags)}
+}
+
+// NewTransientStepQual returns a new step position for equipment in transient
+// state. Values out of [-64, 63] oveflow silently.
+func NewTransientStepQual(value int, flags Qual) StepQual {
+	return StepQual{uint8(value | 0x80), uint8(flags)}
+}
+
+// Value loses the quality descriptor.
+func (p StepQual) Value() Step { return Step(p[0]) }
+
 // Qual returns the quality descriptor. EllapesTimeInvalid does not apply.
-func (pos StepPosQual) Qual() Qual { return Qual(pos[1]) }
+func (p StepQual) Qual() Qual { return Qual(p[1]) }
 
 // FlagQual sets [logical OR] the quality descriptor bits from flags.
-func (pos *StepPosQual) FlagQual(flags Qual) {
-	pos[1] |= uint8(flags)
+func (p *StepQual) FlagQual(flags Qual) {
+	p[1] |= uint8(flags)
 }
 
 // BitsQual is a four octet bitstring with a quality descriptor.

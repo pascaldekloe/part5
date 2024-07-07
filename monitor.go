@@ -18,9 +18,9 @@ type Monitor[COT info.Cause, Common info.ComAddr, Object info.Addr] struct {
 	DoublePtWithTime func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual, CP24Time2a)
 	DoublePtWithDate func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual, CP56Time2a)
 
-	StepPos         func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual)
-	StepPosWithTime func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual, CP24Time2a)
-	StepPosWithDate func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual, CP56Time2a)
+	Step         func(info.DataUnit[COT, Common, Object], Object, info.StepQual)
+	StepWithTime func(info.DataUnit[COT, Common, Object], Object, info.StepQual, CP24Time2a)
+	StepWithDate func(info.DataUnit[COT, Common, Object], Object, info.StepQual, CP56Time2a)
 
 	Bits         func(info.DataUnit[COT, Common, Object], Object, info.BitsQual)
 	BitsWithTime func(info.DataUnit[COT, Common, Object], Object, info.BitsQual, CP24Time2a)
@@ -172,7 +172,7 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			}
 			addr := Object(u.Info)
 			for i := len(addr); i+2 <= len(u.Info); i += 2 {
-				m.StepPos(u, addr, info.StepPosQual(u.Info[i:i+2]))
+				m.Step(u, addr, info.StepQual(u.Info[i:i+2]))
 				addr = nextAddr(addr)
 			}
 		} else {
@@ -180,8 +180,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+2 {
-				m.StepPos(u, Object(u.Info[:len(addr)]),
-					info.StepPosQual(u.Info[len(addr):len(addr)+2]),
+				m.Step(u, Object(u.Info[:len(addr)]),
+					info.StepQual(u.Info[len(addr):len(addr)+2]),
 				)
 				u.Info = u.Info[len(addr)+2:]
 			}
@@ -195,8 +195,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+5 {
-			m.StepPosWithTime(u, Object(u.Info[:len(addr)]),
-				info.StepPosQual(u.Info[len(addr):len(addr)+2]),
+			m.StepWithTime(u, Object(u.Info[:len(addr)]),
+				info.StepQual(u.Info[len(addr):len(addr)+2]),
 				CP24Time2a(u.Info[len(addr)+2:len(addr)+5]),
 			)
 			u.Info = u.Info[len(addr)+5:]
@@ -210,8 +210,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+9 {
-			m.StepPosWithDate(u, Object(u.Info[:len(addr)]),
-				info.StepPosQual(u.Info[len(addr):len(addr)+2]),
+			m.StepWithDate(u, Object(u.Info[:len(addr)]),
+				info.StepQual(u.Info[len(addr):len(addr)+2]),
 				CP56Time2a(u.Info[len(addr)+2:len(addr)+9]),
 			)
 			u.Info = u.Info[len(addr)+9:]
