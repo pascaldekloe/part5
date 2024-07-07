@@ -6,9 +6,9 @@ import (
 	"io"
 )
 
-// A VarStructQual (short for variable structure qualifier) defines the payload
+// Var is the variable structure qualifier, which defines the payload
 // layout with an object Count and a Sequence flag.
-type VarStructQual uint8
+type Var uint8
 
 // Variable Structure Qualifier Flags
 const (
@@ -19,7 +19,7 @@ const (
 )
 
 // Count returns the number of information objects, which can be zero.
-func (q VarStructQual) Count() int { return int(q & 0x7f) }
+func (v Var) Count() int { return int(v & 0x7f) }
 
 // A DataUnit is a transmission packet called ASDU, short for Application
 // Service Data Unit. The generics embody all system-specific parameters.
@@ -27,14 +27,14 @@ func (q VarStructQual) Count() int { return int(q & 0x7f) }
 // originator address, Common defines the address width for stations, and
 // Object defines the address width for information objects.
 type DataUnit[COT Cause, Common ComAddr, Object Addr] struct {
-	Type   TypeID
-	Struct VarStructQual
-	Cause  COT    // cause of transmission
-	Addr   Common // station address
+	Type  TypeID
+	Var   Var
+	Cause COT    // cause of transmission
+	Addr  Common // station address
 
 	// Information objects are encoded conform the TypeID and
-	// and VarStructQual values. Encoding is likely to contain
-	// one or more Object addresses.
+	// and Var values. Encoding is likely to contain one or more
+	// Object addresses.
 	Info []byte
 }
 
@@ -60,7 +60,7 @@ func (u *DataUnit[COT, Common, Object]) InroDeactGroup(group uint) {
 
 func (u *DataUnit[COT, Common, Object]) inroGroup(group uint) {
 	u.Type = C_IC_NA_1
-	u.Struct = 0x01
+	u.Var = 0x01
 
 	// information object address is fixed to zero
 	var addr Object
@@ -101,7 +101,7 @@ func (u *DataUnit[COT, Common, Object]) Adopt(asdu []byte) error {
 
 	// copy header
 	u.Type = TypeID(asdu[0])
-	u.Struct = VarStructQual(asdu[1])
+	u.Var = Var(asdu[1])
 	for i := 0; i < len(u.Cause); i++ {
 		u.Cause[i] = asdu[i+2]
 	}
@@ -126,7 +126,7 @@ func (u *DataUnit[COT, Common, Object]) Adopt(asdu []byte) error {
 
 // Append the ASDU encoding to buf.
 func (u DataUnit[COT, Common, Object]) Append(buf []byte) []byte {
-	buf = append(buf, byte(u.Type), byte(u.Struct))
+	buf = append(buf, byte(u.Type), byte(u.Var))
 	for i := 0; i < len(u.Cause); i++ {
 		buf = append(buf, u.Cause[i])
 	}
@@ -149,7 +149,7 @@ func (u DataUnit[COT, Common, Object]) String() string {
 		// structure unknown
 		fmt.Fprintf(&buf, " %#x ?", u.Info)
 
-	case u.Struct&Sequence == 0:
+	case u.Var&Sequence == 0:
 		// objects paired with an address each
 		var i int // read index
 		for obj_n := 0; ; obj_n++ {
@@ -160,7 +160,7 @@ func (u DataUnit[COT, Common, Object]) String() string {
 					obj_n++
 				}
 
-				diff := obj_n - u.Struct.Count()
+				diff := obj_n - u.Var.Count()
 				switch {
 				case diff < 0:
 					fmt.Fprintf(&buf, " 𝚫 −%d !", -diff)
@@ -204,7 +204,7 @@ func (u DataUnit[COT, Common, Object]) String() string {
 					obj_n++
 				}
 
-				diff := obj_n - u.Struct.Count()
+				diff := obj_n - u.Var.Count()
 				switch {
 				case diff < 0:
 					fmt.Fprintf(&buf, " 𝚫 −%d !", -diff)
