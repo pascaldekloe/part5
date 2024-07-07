@@ -128,8 +128,9 @@ func (addr Addr24) MiddleOctet() uint8 { return addr[1] }
 // HighOctet provides an alternative to numeric addressing.
 func (addr Addr24) HighOctet() uint8 { return addr[2] }
 
-// A SinglePoint information object (IEV 371-02-07) is either On or Off.
-type SinglePoint uint8
+// SinglePt has a single-point information object (IEV 371-02-07),
+// which is either On or Off.
+type SinglePt uint8
 
 // Single-Point States
 const (
@@ -137,22 +138,23 @@ const (
 	On
 )
 
-// SinglePointQual has a single-point information-object (IEV 371-02-07)
+// SinglePtQual has a single-point information-object (IEV 371-02-07)
 // with a quality descriptor. If the octet does not equal On or Off, then
 // it has quality remarks.
-type SinglePointQual uint8
+type SinglePtQual uint8
 
 // Value loses the quality descriptor.
-func (pt SinglePointQual) Value() SinglePoint { return SinglePoint(pt & 1) }
+func (pt SinglePtQual) Value() SinglePt { return SinglePt(pt & 1) }
 
 // Qual returns the quality descriptor flags. Overflow is always zero and
 // EllapesTimeInvalid does not apply.
-func (pt SinglePointQual) Qual() Qual { return Qual(pt & 0xfe) }
+func (pt SinglePtQual) Qual() Qual { return Qual(pt & 0xfe) }
 
-// A DoublePoint information object (IEV 371-02-08) is either DeterminatedOn,
-// DeterminatedOff, Indeterminated, or IndeterminateOrIntermediate.
+// DoublePt has a double-point information object (IEV 371-02-08),
+// which is either DeterminatedOn, DeterminatedOff, Indeterminated,
+// or IndeterminateOrIntermediate.
 // http://blog.iec61850.com/2009/04/why-do-we-need-single-point-and-double.html
-type DoublePoint uint8
+type DoublePt uint8
 
 // Double-Point States
 const (
@@ -162,17 +164,17 @@ const (
 	Indeterminate
 )
 
-// DoublePointQual has a double-point information-object (IEV 371-02-08)
+// DoublePtQual has a double-point information-object (IEV 371-02-08)
 // with a quality descriptor. If the octet does not equal any of the four
 // states, then it has quality remarks.
-type DoublePointQual uint8
+type DoublePtQual uint8
 
 // Value loses the quality descriptor.
-func (pt DoublePointQual) Value() DoublePoint { return DoublePoint(pt & 3) }
+func (pt DoublePtQual) Value() DoublePt { return DoublePt(pt & 3) }
 
 // Qual returns the quality descriptor. Overflow is always zero and
 // EllapesTimeInvalid does not apply.
-func (pt DoublePointQual) Qual() Qual { return Qual(pt & 0xfc) }
+func (pt DoublePtQual) Qual() Qual { return Qual(pt & 0xfc) }
 
 // Qual holds flags about an information object, a.k.a. the quality descriptor.
 type Qual uint8
@@ -385,17 +387,17 @@ func (c Cmd) Qual() uint { return uint((c >> 2) & 31) }
 // See section 5, subclause 6.8.
 func (c Cmd) Exec() bool { return c&128 == 0 }
 
-// SetpointCmd is the qualifier of a set-point command.
+// SetptCmd is the qualifier of a set-point command.
 // See companion standard 101, subclause 7.2.6.39.
-type SetpointCmd uint
+type SetptCmd uint
 
 // Qual returns the qualifier of set-point command.
 //
 //	0: default
 //	0‥63: reserved for standard definitions of this companion standard (compatible range)
 //	64‥127: reserved for special use (private range)
-func (c SetpointCmd) Qual() uint { return uint(c & 127) }
+func (c SetptCmd) Qual() uint { return uint(c & 127) }
 
 // Exec returns whether the command executes (or selects).
 // See section 5, subclause 6.8.
-func (c SetpointCmd) Exec() bool { return c&128 == 0 }
+func (c SetptCmd) Exec() bool { return c&128 == 0 }

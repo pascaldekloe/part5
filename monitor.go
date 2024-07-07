@@ -10,13 +10,13 @@ import (
 
 // Monitor listens for measured value updates.
 type Monitor[COT info.Cause, Common info.ComAddr, Object info.Addr] struct {
-	SinglePoint         func(info.DataUnit[COT, Common, Object], Object, info.SinglePointQual)
-	SinglePointWithTime func(info.DataUnit[COT, Common, Object], Object, info.SinglePointQual, CP24Time2a)
-	SinglePointWithDate func(info.DataUnit[COT, Common, Object], Object, info.SinglePointQual, CP56Time2a)
+	SinglePt         func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual)
+	SinglePtWithTime func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual, CP24Time2a)
+	SinglePtWithDate func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual, CP56Time2a)
 
-	DoublePoint         func(info.DataUnit[COT, Common, Object], Object, info.DoublePointQual)
-	DoublePointWithTime func(info.DataUnit[COT, Common, Object], Object, info.DoublePointQual, CP24Time2a)
-	DoublePointWithDate func(info.DataUnit[COT, Common, Object], Object, info.DoublePointQual, CP56Time2a)
+	DoublePt         func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual)
+	DoublePtWithTime func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual, CP24Time2a)
+	DoublePtWithDate func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual, CP56Time2a)
 
 	StepPos         func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual)
 	StepPosWithTime func(info.DataUnit[COT, Common, Object], Object, info.StepPosQual, CP24Time2a)
@@ -68,7 +68,7 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			}
 			addr := Object(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
-				m.DoublePoint(u, addr, info.DoublePointQual(b))
+				m.DoublePt(u, addr, info.DoublePtQual(b))
 				addr = nextAddr(addr)
 			}
 		} else {
@@ -76,8 +76,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+1 {
-				m.SinglePoint(u, Object(u.Info[:len(addr)]),
-					info.SinglePointQual(u.Info[len(addr)]),
+				m.SinglePt(u, Object(u.Info[:len(addr)]),
+					info.SinglePtQual(u.Info[len(addr)]),
 				)
 				u.Info = u.Info[len(addr)+1:]
 			}
@@ -91,8 +91,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+4 {
-			m.SinglePointWithTime(u, Object(u.Info[:len(addr)]),
-				info.SinglePointQual(u.Info[len(addr)]),
+			m.SinglePtWithTime(u, Object(u.Info[:len(addr)]),
+				info.SinglePtQual(u.Info[len(addr)]),
 				CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
 			)
 			u.Info = u.Info[len(addr)+4:]
@@ -106,8 +106,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			return errInfoSize
 		}
 		for len(u.Info) >= (len(addr) + 8) {
-			m.SinglePointWithDate(u, Object(u.Info[:len(addr)]),
-				info.SinglePointQual(u.Info[len(addr)]),
+			m.SinglePtWithDate(u, Object(u.Info[:len(addr)]),
+				info.SinglePtQual(u.Info[len(addr)]),
 				CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
 			)
 			u.Info = u.Info[len(addr)+8:]
@@ -120,7 +120,7 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			}
 			addr := Object(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
-				m.DoublePoint(u, addr, info.DoublePointQual(b))
+				m.DoublePt(u, addr, info.DoublePtQual(b))
 				addr = nextAddr(addr)
 			}
 		} else {
@@ -128,8 +128,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+1 {
-				m.DoublePoint(u, Object(u.Info[:len(addr)]),
-					info.DoublePointQual(u.Info[len(addr)]),
+				m.DoublePt(u, Object(u.Info[:len(addr)]),
+					info.DoublePtQual(u.Info[len(addr)]),
 				)
 				u.Info = u.Info[len(addr)+1:]
 			}
@@ -143,8 +143,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+4 {
-			m.DoublePointWithTime(u, Object(u.Info[:len(addr)]),
-				info.DoublePointQual(u.Info[len(addr)]),
+			m.DoublePtWithTime(u, Object(u.Info[:len(addr)]),
+				info.DoublePtQual(u.Info[len(addr)]),
 				CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
 			)
 			u.Info = u.Info[len(addr)+4:]
@@ -158,8 +158,8 @@ func (m Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Ob
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+8 {
-			m.DoublePointWithDate(u, Object(u.Info[:len(addr)]),
-				info.DoublePointQual(u.Info[len(addr)]),
+			m.DoublePtWithDate(u, Object(u.Info[:len(addr)]),
+				info.DoublePtQual(u.Info[len(addr)]),
 				CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
 			)
 			u.Info = u.Info[len(addr)+8:]
