@@ -35,9 +35,9 @@ type DataUnit[COT Cause, Common ComAddr, Object Addr] struct {
 	Info  []byte // encoded payload
 }
 
-// NewDataUnit returns an ASDU directed to a common address.
-func (p Params[COT, Common, Object]) NewDataUnit(addr Common) DataUnit[COT, Common, Object] {
-	return DataUnit[COT, Common, Object]{Addr: addr}
+// NewDataUnit returns a new ASDU.
+func (p Params[COT, Common, Object]) NewDataUnit() DataUnit[COT, Common, Object] {
+	return DataUnit[COT, Common, Object]{}
 }
 
 // InroAct sets an interrogation [C_IC_NA_1] activation request.
