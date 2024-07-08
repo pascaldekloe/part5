@@ -38,7 +38,7 @@ func TestSeq(t *testing.T) {
 	t.Parallel()
 
 	connA, connB := net.Pipe()
-	ping, pong, exitGroup := newTCPTestDuo(t, connA, connB, new(TCPConf))
+	ping, pong, exitGroup := newTCPTestDuo(t, connA, connB, TCPConfig{})
 	defer exitGroup.Wait()
 
 	// overflow sequence numbers
@@ -103,7 +103,7 @@ func TestBringDown(t *testing.T) {
 	Trace = true
 
 	connA, connB := net.Pipe()
-	a, b, exitGroup := newTCPTestDuo(t, connA, connB, new(TCPConf))
+	a, b, exitGroup := newTCPTestDuo(t, connA, connB, TCPConfig{})
 	defer exitGroup.Wait()
 
 	a.Launch <- Down
@@ -163,7 +163,7 @@ func TestBringDown(t *testing.T) {
 
 func TestUnackThreashold(t *testing.T) {
 	connA, connB := net.Pipe()
-	a, b, exitGroup := newTCPTestDuo(t, connA, connB, &TCPConf{
+	a, b, exitGroup := newTCPTestDuo(t, connA, connB, TCPConfig{
 		// send acknowledge on third pending
 		RecvUnackMax: 3,
 	})
@@ -254,7 +254,7 @@ func TestFastAckOnIdle(t *testing.T) {
 	t.Parallel()
 
 	connA, connB := net.Pipe()
-	a, b, exitGroup := newTCPTestDuo(t, connA, connB, new(TCPConf))
+	a, b, exitGroup := newTCPTestDuo(t, connA, connB, TCPConfig{})
 	defer func() {
 		a.Launch <- Exit
 		exitGroup.Wait()
@@ -335,7 +335,7 @@ func TestBadConn(t *testing.T) {
 
 	// get data transfer Up dispite temporary errors
 	connA, connB := net.Pipe()
-	a, _, exitGroup := newTCPTestDuo(t, badConn{connA}, badConn{connB}, &TCPConf{
+	a, _, exitGroup := newTCPTestDuo(t, badConn{connA}, badConn{connB}, TCPConfig{
 		SendUnackTimeout: time.Second,
 	})
 	defer exitGroup.Wait()
@@ -386,7 +386,7 @@ func TestBadConn(t *testing.T) {
 // BenchmarkFlood tests one-sided data push.
 func BenchmarkFlood(bench *testing.B) {
 	connA, connB := net.Pipe()
-	a, b, exitGroup := newTCPTestDuo(bench, connA, connB, &TCPConf{
+	a, b, exitGroup := newTCPTestDuo(bench, connA, connB, TCPConfig{
 		RecvUnackTimeout: time.Second,
 	})
 	defer func() {
@@ -422,7 +422,7 @@ func BenchmarkFlood(bench *testing.B) {
 }
 
 // NewTCPTestDuo initiates a session with two stations.
-func newTCPTestDuo(t testing.TB, connA, connB net.Conn, conf *TCPConf) (a, b *Station, exitGroup *sync.WaitGroup) {
+func newTCPTestDuo(t testing.TB, connA, connB net.Conn, config TCPConfig) (a, b *Station, exitGroup *sync.WaitGroup) {
 	exitGroup = new(sync.WaitGroup)
 
 	// fail test on expiry and free exitGroup
@@ -450,8 +450,8 @@ func newTCPTestDuo(t testing.TB, connA, connB net.Conn, conf *TCPConf) (a, b *St
 		}
 	}
 
-	a = TCP(conf, connA)
-	b = TCP(conf, connB)
+	a = TCP(config, connA)
+	b = TCP(config, connB)
 
 	// fail test on error; reselase exitGroup on channel close
 	exitGroup.Add(2)

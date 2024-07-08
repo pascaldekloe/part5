@@ -30,8 +30,8 @@ var (
 )
 
 type tcp struct {
-	TCPConf
-	conn net.Conn
+	TCPConfig // read only
+	conn      net.Conn
 
 	// Transport counterparts
 	in     chan<- []byte
@@ -63,8 +63,8 @@ type tcp struct {
 }
 
 // TCP returns a session with status Down.
-func TCP(conf *TCPConf, conn net.Conn) *Station {
-	conf.check()
+func TCP(config TCPConfig, conn net.Conn) *Station {
+	config.check()
 
 	class1Chan := make(chan *Outbound)
 	class2Chan := make(chan *Outbound)
@@ -74,18 +74,18 @@ func TCP(conf *TCPConf, conn net.Conn) *Station {
 	levelChan := make(chan Level)
 
 	t := tcp{
-		TCPConf: *conf,
-		conn:    conn,
-		level:   levelChan,
-		launch:  launchChan,
+		TCPConfig: config,
+		conn:      conn,
+		level:     levelChan,
+		launch:    launchChan,
 
 		in:     inChan,
 		class1: class1Chan,
 		class2: class2Chan,
 		err:    errChan,
 
-		recv:     make(chan apdu, conf.RecvUnackMax),
-		send:     make(chan apdu, conf.SendUnackMax), // may not block!
+		recv:     make(chan apdu, config.RecvUnackMax),
+		send:     make(chan apdu, config.SendUnackMax), // may not block!
 		sendQuit: make(chan struct{}),
 
 		idleSince: time.Now(),

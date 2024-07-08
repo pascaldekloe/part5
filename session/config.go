@@ -10,16 +10,16 @@ const (
 	TCPPortSecure = 19998
 )
 
-// TCPConf defines an IEC 60870-5-104 configuration.
+// TCPConfig defines an IEC 60870-5-104 configuration.
 // The default is applied for each unspecified value.
-type TCPConf struct {
+type TCPConfig struct {
 	// Maximum amount of time for TCP connection establishment. The standard
 	// specifies "t₀" in [1, 255] seconds with a default of 30.
 	ConnectTimeout time.Duration
 
 	// Upper limit for the number of I-frames send without reception of a
 	// confiramation. Transmission stops once this number has been reached.
-	// The standard specifies "k" in [1, 32767] with a default of 12.
+	// The standard specifies "𝑘" in [1, 32767] with a default of 12.
 	// See IEC 60870-5-104, subclause 5.5.
 	SendUnackMax uint
 
@@ -31,7 +31,7 @@ type TCPConf struct {
 
 	// Upper limit for the number of I-frames received without sending a
 	// receival confirmation. It is recommended that RecvUnackMax should not
-	// exceed two thirds of SendUnackMax. The standard specifies "w" in [1,
+	// exceed two thirds of SendUnackMax. The standard specifies "𝑤" in [1,
 	// 32767] with a default of 8.
 	// See IEC 60870-5-104, subclause 5.5.
 	RecvUnackMax uint
@@ -52,7 +52,7 @@ type TCPConf struct {
 
 // Check applies the default (defined by IEC) for each unspecified value.
 // A panic is raised for values out of range.
-func (c *TCPConf) check() *TCPConf {
+func (c *TCPConfig) check() *TCPConfig {
 	if c.ConnectTimeout == 0 {
 		c.ConnectTimeout = 30 * time.Second
 	} else if c.ConnectTimeout < 1*time.Second || c.ConnectTimeout > 255*time.Second {
