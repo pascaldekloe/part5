@@ -7,6 +7,12 @@ import (
 	"math"
 )
 
+// Params define the system-specific parameters. Specifically, the Cause of
+// transmission (COT) sets the presence or absense of an originator address.
+// The address generics set the numeric width for stations and information
+// objects respectively.
+type Params[COT Cause, Common ComAddr, Object Addr] struct{}
+
 // ErrComAddrZero denies zero as an address.
 var errComAddrZero = errors.New("part5: common address 0 is not used")
 
@@ -21,6 +27,10 @@ type (
 		// N gets the address as a numeric value.
 		N() uint
 
+		// SetN updates the address as a numeric
+		// value. The return is false on overflow.
+		SetN(uint) bool
+
 		// The global address is a broadcast address,
 		// directed to all stations of a specific system.
 		// Use is restricted to type C_IC_NA_1, C_CI_NA_1,
@@ -32,10 +42,10 @@ type (
 	ComAddr16 [2]uint8
 )
 
-// NewComAddrN returns the numeric address mapping. The return is false
-// when the numeric value does not fit in the width of address type T.
-func NewComAddrN[T ComAddr](n uint) (T, bool) {
-	var addr T
+// NewComAddr returns either a numeric match, or false when the value exceeds
+// the address width.
+func (p Params[COT, Common, Object]) NewComAddr(n uint) (Common, bool) {
+	var addr Common
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
 		n >>= 8
@@ -51,6 +61,19 @@ func (addr ComAddr8) N() uint {
 // N implements the ComAddr interface.
 func (addr ComAddr16) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8
+}
+
+// SetN implements the ComAddr interface.
+func (addr ComAddr8) SetN(n uint) bool {
+	addr[0] = byte(n)
+	return n < 0x100
+}
+
+// SetN implements the ComAddr interface.
+func (addr ComAddr16) SetN(n uint) bool {
+	addr[0] = byte(n)
+	addr[1] = byte(n)
+	return n < 0x10000
 }
 
 // IsGlobal implements the ComAddr interface.
@@ -80,6 +103,10 @@ type (
 		// N gets the address as a numeric value.
 		// Zero marks the address as irrelevant.
 		N() uint
+
+		// SetN updates the address as a numeric
+		// value. The return is false on overflow.
+		SetN(uint) bool
 	}
 
 	Addr8  [1]uint8
@@ -87,10 +114,10 @@ type (
 	Addr24 [3]uint8
 )
 
-// NewAddrN returns the numeric address mapping. The return is false
-// when the numeric value does not fit in the width of address type T.
-func NewAddrN[T Addr](n uint) (T, bool) {
-	var addr T
+// NewAddr returns either the numeric match, or false when the value exceeds the
+// address width.
+func (p Params[COT, Common, Object]) NewAddr(n uint) (Object, bool) {
+	var addr Object
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
 		n >>= 8
@@ -111,6 +138,27 @@ func (addr Addr16) N() uint {
 // N implements the Addr interface.
 func (addr Addr24) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8 | uint(addr[2])<<16
+}
+
+// SetN implements the Addr interface.
+func (addr Addr8) SetN(n uint) bool {
+	addr[0] = byte(n)
+	return n < 0x100
+}
+
+// SetN implements the Addr interface.
+func (addr Addr16) SetN(n uint) bool {
+	addr[0] = byte(n)
+	addr[1] = byte(n >> 8)
+	return n < 0x10000
+}
+
+// SetN implements the Addr interface.
+func (addr Addr24) SetN(n uint) bool {
+	addr[0] = byte(n)
+	addr[1] = byte(n >> 8)
+	addr[2] = byte(n >> 16)
+	return n < 0x100_0000
 }
 
 // LowOctet provides an alternative to numeric addressing.

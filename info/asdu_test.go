@@ -2,8 +2,9 @@ package info
 
 import "testing"
 
-func mustAddr16N(n uint) ComAddr16 {
-	addr, ok := NewComAddrN[ComAddr16](n)
+func mustAddr16(n uint) ComAddr16 {
+	var p Params[Cause16, ComAddr16, Addr16]
+	addr, ok := p.NewComAddr(n)
 	if !ok {
 		panic(n)
 	}
@@ -19,7 +20,7 @@ var goldenASDUs = []struct {
 			Type:  M_SP_NA_1,
 			Var:   1,
 			Cause: Cause16{Percyc, 7},
-			Addr:  mustAddr16N(1001),
+			Addr:  mustAddr16(1001),
 			Info:  []byte{1, 2, 3},
 		},
 		"M_SP_NA_1 @1001 percyc #7: 513:0x03 .",
@@ -28,7 +29,7 @@ var goldenASDUs = []struct {
 			Type:  M_DP_NA_1,
 			Var:   2,
 			Cause: Cause16{Back, 0},
-			Addr:  mustAddr16N(42),
+			Addr:  mustAddr16(42),
 			Info:  []byte{1, 2, 3, 4, 5, 6},
 		},
 		"M_DP_NA_1 @42 back #0: 513:0x03 1284:0x06 .",
@@ -37,7 +38,7 @@ var goldenASDUs = []struct {
 			Type:  M_ST_NA_1,
 			Var:   2,
 			Cause: Cause16{Spont, 21},
-			Addr:  mustAddr16N(250),
+			Addr:  mustAddr16(250),
 			Info:  []byte{1, 2, 3, 4, 5},
 		},
 		"M_ST_NA_1 @250 spont #21: 513:0x0304 0x05<EOF> !",
@@ -46,7 +47,7 @@ var goldenASDUs = []struct {
 			Type:  M_ST_NA_1,
 			Var:   1,
 			Cause: Cause16{Spont, 22},
-			Addr:  mustAddr16N(251),
+			Addr:  mustAddr16(251),
 			Info:  []byte{1, 2, 3, 4, 5, 6, 7},
 		},
 		"M_ST_NA_1 @251 spont #22: 513:0x0304 0x050607<EOF> 𝚫 +1 !",
@@ -55,7 +56,7 @@ var goldenASDUs = []struct {
 			Type:  M_ME_NC_1,
 			Var:   2 | Sequence,
 			Cause: Cause16{Init, 60},
-			Addr:  mustAddr16N(12),
+			Addr:  mustAddr16(12),
 			Info:  []byte{99, 0, 1, 2, 3, 4, 5, 6},
 		},
 		"M_ME_NC_1 @12 init #60: 99:0x0102030405 100:0x06<EOF> !",
@@ -64,7 +65,7 @@ var goldenASDUs = []struct {
 			Type:  M_ME_NC_1,
 			Var:   2 | Sequence,
 			Cause: Cause16{Init, 61},
-			Addr:  mustAddr16N(12),
+			Addr:  mustAddr16(12),
 			Info:  []byte{99, 0, 1, 2, 3, 4, 5},
 		},
 		"M_ME_NC_1 @12 init #61: 99:0x0102030405 𝚫 −1 !",

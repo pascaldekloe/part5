@@ -21,21 +21,23 @@ const (
 // Count returns the number of information objects, which can be zero.
 func (v Var) Count() int { return int(v & 0x7f) }
 
-// A DataUnit is a transmission packet called ASDU, short for Application
-// Service Data Unit. The generics embody all system-specific parameters.
-// Specifically, COT (Cause Of Transmission) defines the presence of the
-// originator address, Common defines the address width for stations, and
-// Object defines the address width for information objects.
+// A DataUnit has a transmission packet called ASDU, short for Application
+// Service Data Unit. Information objects are encoded conform the TypeID and
+// and Var values. Encoding is likely to contain one or more Object addresses.
 type DataUnit[COT Cause, Common ComAddr, Object Addr] struct {
-	Type  TypeID
-	Var   Var
+	// configuration inherited from generics
+	Params[COT, Common, Object]
+
+	Type  TypeID // payload class
+	Var   Var    // payload layout
 	Cause COT    // cause of transmission
 	Addr  Common // station address
+	Info  []byte // encoded payload
+}
 
-	// Information objects are encoded conform the TypeID and
-	// and Var values. Encoding is likely to contain one or more
-	// Object addresses.
-	Info []byte
+// NewDataUnit returns an ASDU directed to a common address.
+func (p Params[COT, Common, Object]) NewDataUnit(addr Common) DataUnit[COT, Common, Object] {
+	return DataUnit[COT, Common, Object]{Addr: addr}
 }
 
 // InroAct sets an interrogation [C_IC_NA_1] activation request.
@@ -222,7 +224,7 @@ func (u DataUnit[COT, Common, Object]) String() string {
 			fmt.Fprintf(&buf, " %d:%#x",
 				addr.N(), u.Info[i:i+dataSize])
 			i += dataSize
-			addr, _ = NewAddrN[Object](addr.N() + 1)
+			addr, _ = u.NewAddr(addr.N() + 1)
 		}
 	}
 
