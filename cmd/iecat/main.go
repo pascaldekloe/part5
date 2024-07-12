@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pascaldekloe/part5"
 	"github.com/pascaldekloe/part5/info"
 	"github.com/pascaldekloe/part5/session"
 )
@@ -170,6 +170,8 @@ func (sys system[COT, Common, Object]) streamInbound(client *session.Station) {
 	u := sys.NewDataUnit() // reusable
 	var n uint64
 
+	monitor := part5.NewLog[COT, Common, Object](os.Stdout)
+
 	for p := range client.In {
 		n++
 
@@ -177,7 +179,7 @@ func (sys system[COT, Common, Object]) streamInbound(client *session.Station) {
 		if err != nil {
 			CmdLog.Print("payload from inbound APDU dropped: ", err)
 		} else {
-			fmt.Println(u)
+			monitor.OnDataUnit(u)
 		}
 
 		if n == *inCapFlag {

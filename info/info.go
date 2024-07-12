@@ -4,7 +4,10 @@ package info
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math"
+	"strconv"
+	"strings"
 )
 
 // Params define the system-specific parameters. Specifically, the Cause of
@@ -186,6 +189,14 @@ const (
 	On
 )
 
+// String returns either "On" or "Off".
+func (pt SinglePt) String() string {
+	if pt&On == 0 {
+		return "Off"
+	}
+	return "On"
+}
+
 // SinglePtQual has a single-point information-object (IEV 371-02-07)
 // with a quality descriptor. If the octet does not equal On or Off, then
 // it has quality remarks.
@@ -207,10 +218,25 @@ type DoublePt uint8
 // Double-Point States
 const (
 	IndeterminateOrIntermediate = iota
-	DeterminedOff
-	DeterminedOn
+	DeterminatedOff
+	DeterminatedOn
 	Indeterminate
 )
+
+// String returns either "DeterminedOn", "DeterminedOff", "Indeterminate",
+// or "IndeterminateOrIntermediate"
+func (pt DoublePt) String() string {
+	switch pt & 3 {
+	case IndeterminateOrIntermediate:
+		return "IndeterminateOrIntermediate"
+	case DeterminatedOff:
+		return "DeterminatedOff"
+	case DeterminatedOn:
+		return "DeterminatedOn"
+	default:
+		return "Indeterminate"
+	}
+}
 
 // DoublePtQual has a double-point information-object (IEV 371-02-08)
 // with a quality descriptor. If the octet does not equal any of the four
@@ -240,7 +266,7 @@ const (
 	// The EI flag signals that the acquisition function recognized abnormal
 	// conditions. The elapsed time of the information object is not defined
 	// under this condition.
-	EllapsedTimeInvalid
+	ElapsedTimeInvalid
 
 	// The BL flag signals that the value of the information object is
 	// blocked for transmission. The value remains in the state that was
@@ -267,6 +293,54 @@ const (
 	OK = 0 // no remarks
 )
 
+// String returns the flag tokens separated by comma, with "OK" for no flags.
+func (q Qual) String() string {
+	switch q {
+	case OK: // no flags
+		return "OK"
+	case Overflow:
+		return "OV"
+	case ElapsedTimeInvalid:
+		return "EI"
+	case Blocked:
+		return "BL"
+	case Substituted:
+		return "SB"
+	case NotTopical:
+		return "NT"
+	case Invalid:
+		return "IV"
+	}
+	// got multiple flags
+
+	var buf strings.Builder
+	if q&Overflow != 0 {
+		buf.WriteString(",OV")
+	}
+	if q&2 != 0 {
+		buf.WriteString(",RES2")
+	}
+	if q&4 != 0 {
+		buf.WriteString(",RES3")
+	}
+	if q&ElapsedTimeInvalid != 0 {
+		buf.WriteString(",EI")
+	}
+	if q&Blocked != 0 {
+		buf.WriteString(",BL")
+	}
+	if q&Substituted != 0 {
+		buf.WriteString(",SB")
+	}
+	if q&NotTopical != 0 {
+		buf.WriteString(",NT")
+	}
+	if q&Invalid != 0 {
+		buf.WriteString(",IV")
+	}
+	return buf.String()[1:]
+}
+
 // Step contains a step position, which is a numeric value with transient state
 // indication. See companion standard 101, subclause 7.2.6.5.
 type Step uint8
@@ -286,6 +360,15 @@ func (p Step) Pos() (value int, transient bool) {
 	signExt := 0 - signBit
 	value |= signExt << 6
 	return value, p&0x80 != 0
+}
+
+// String gets the decimal value, including a "#T" suffix when transient.
+func (p Step) String() string {
+	v, t := p.Pos()
+	if !t {
+		return strconv.Itoa(v)
+	}
+	return fmt.Sprintf("%d#T", v)
 }
 
 // SetpQual is a step position with a quality descriptor.
@@ -316,6 +399,9 @@ func (p *StepQual) FlagQual(flags Qual) {
 
 // BitsQual is a four octet bitstring with a quality descriptor.
 type BitsQual [5]uint8
+
+// Array gets a copy of the bitstring.
+func (bits *BitsQual) Array() [4]uint8 { return ([4]byte)(bits[:4]) }
 
 // Slice gets a reference to the data.
 func (bits *BitsQual) Slice() []uint8 { return bits[:4] }
