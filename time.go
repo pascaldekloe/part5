@@ -10,6 +10,11 @@ import "time"
 // time”
 type CP56Time2a [7]byte
 
+// Invalid returns the IV flag.
+func (c *CP56Time2a) Invalid() bool {
+	return c[2]&0x80 != 0
+}
+
 // Set marshals the time. Reserved bits can be set afterwards.
 // The zero value marks the time as invalid (with the IV flag).
 // Digits beyond milliseconds are dropped (without rounding).
@@ -63,8 +68,7 @@ func (c *CP56Time2a) setAll(t time.Time, all bool) {
 // The return is zero when the invalid flag [IV] is set. Otherwise the return is
 // in range [2000-01-01 00:00:00.000, 2099-12-31 23:59:59.999].
 func (c *CP56Time2a) Within20thCentury(loc *time.Location) time.Time {
-	// check invalid flag
-	if c[2]&0x80 != 0 {
+	if c.Invalid() {
 		return time.Time{}
 	}
 
@@ -144,6 +148,11 @@ func (c *CP56Time2a) FlagReserve3(bits uint) {
 // time”
 type CP24Time2a [3]byte
 
+// Invalid returns the IV flag.
+func (c *CP24Time2a) Invalid() bool {
+	return c[2]&0x80 != 0
+}
+
 // Set marshals the time. Reserved bits can be set afterwards.
 // The zero value marks the time as invalid (with the IV flag).
 // Digits beyond milliseconds are dropped (without rounding).
@@ -198,11 +207,6 @@ func (c *CP24Time2a) WithinHourBefore(t time.Time) time.Time {
 	return time.Date(year, month, day, hour, minEnc,
 		secInMilliEnc/1000, (secInMilliEnc%1000)*1e6,
 		t.Location())
-}
-
-// Invalid returns the IV flag.
-func (c *CP24Time2a) Invalid() bool {
-	return c[2]&0x80 != 0
 }
 
 // Reserve1 returns the RES1 bit.
