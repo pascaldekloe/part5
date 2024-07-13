@@ -179,8 +179,8 @@ func (addr Addr24) MiddleOctet() uint8 { return addr[1] }
 // HighOctet provides an alternative to numeric addressing.
 func (addr Addr24) HighOctet() uint8 { return addr[2] }
 
-// SinglePt has a single-point information object (IEV 371-02-07),
-// which is either On or Off.
+// SinglePt has single-point information (IEV 371-02-07), which should be either
+// Off or On.
 type SinglePt uint8
 
 // Single-Point States
@@ -189,29 +189,32 @@ const (
 	On
 )
 
-// String returns either "On" or "Off".
+// String returns the label, which is either "Off", "On" or "<illegal>".
 func (pt SinglePt) String() string {
-	if pt&On == 0 {
+	switch pt {
+	case Off:
 		return "Off"
+	case On:
+		return "On"
+	default:
+		return "<illegal>"
 	}
-	return "On"
 }
 
-// SinglePtQual has a single-point information-object (IEV 371-02-07)
-// with a quality descriptor. If the octet does not equal On or Off, then
-// it has quality remarks.
+// SinglePtQual has single-point information (IEV 371-02-07) with a quality
+// descriptor. If the octet does not equal Off or On, then it has quality
+// remarks.
 type SinglePtQual uint8
 
-// Value loses the quality descriptor.
+// Value loses the quality descriptor. The return is either Off or On.
 func (pt SinglePtQual) Value() SinglePt { return SinglePt(pt & 1) }
 
 // Qual returns the quality descriptor flags. Overflow is always zero and
-// EllapesTimeInvalid does not apply.
+// EllapedTimeInvalid does not apply.
 func (pt SinglePtQual) Qual() Qual { return Qual(pt & 0xfe) }
 
-// DoublePt has a double-point information object (IEV 371-02-08),
-// which is either DeterminatedOn, DeterminatedOff, Indeterminated,
-// or IndeterminateOrIntermediate.
+// DoublePt is double-point information (IEV 371-02-08), which should be either
+// IndeterminateOrIntermediate, DeterminatedOff, DeterminatedOn or Indeterminate.
 // http://blog.iec61850.com/2009/04/why-do-we-need-single-point-and-double.html
 type DoublePt uint8
 
@@ -223,18 +226,20 @@ const (
 	Indeterminate
 )
 
-// String returns either "DeterminedOn", "DeterminedOff", "Indeterminate",
-// or "IndeterminateOrIntermediate"
+// String returns the label which is either "IndeterminateOrIntermediate",
+// "DeterminedOff", "DeterminedOn", "Indeterminate" or "<illegal>".
 func (pt DoublePt) String() string {
-	switch pt & 3 {
+	switch pt {
 	case IndeterminateOrIntermediate:
 		return "IndeterminateOrIntermediate"
 	case DeterminatedOff:
 		return "DeterminatedOff"
 	case DeterminatedOn:
 		return "DeterminatedOn"
-	default:
+	case Indeterminate:
 		return "Indeterminate"
+	default:
+		return "<illegal>"
 	}
 }
 
@@ -243,17 +248,43 @@ func (pt DoublePt) String() string {
 // states, then it has quality remarks.
 type DoublePtQual uint8
 
-// Value loses the quality descriptor.
+// Value loses the quality descriptor. The return is either
+// IndeterminateOrIntermediate, DeterminatedOff, DeterminatedOn or
+// Indeterminate.
 func (pt DoublePtQual) Value() DoublePt { return DoublePt(pt & 3) }
 
 // Qual returns the quality descriptor. Overflow is always zero and
 // EllapesTimeInvalid does not apply.
 func (pt DoublePtQual) Qual() Qual { return Qual(pt & 0xfc) }
 
+// Regul is a regulating-step command (IEV 371-03-13) state, which should be
+// either Lower or Higher. State/value 0 and 3 are not permitted.
+type Regul uint8
+
+// Regulating-Step States
+const (
+	_ = iota // not permitted
+	Lower
+	Higher
+	_ // not permitted
+)
+
+// String returns the label, which is either "Lower", "Higher" or "<illegal>".
+func (r Regul) String() string {
+	switch r {
+	case Lower:
+		return "Lower"
+	case Higher:
+		return "Higher"
+	default:
+		return "<illegal>"
+	}
+}
+
 // Qual holds flags about an information object, a.k.a. the quality descriptor.
 type Qual uint8
 
-// Quality Descriptor Flags
+// Quality-Descriptor Flags
 const (
 	// The OV flag signals that the value of the information object is
 	// beyond a predefined range of value (mainly applicable to analog
@@ -480,8 +511,8 @@ const (
 	LowLimit          // 3: low limit for transmission of measured values
 	HighLimit         // 4: high limit for transmission of measured values
 
-	// 5‥31: reserved for standard definitions of this companion standard (compatible range)
-	// 32‥63: reserved for special use (private range)
+	// 5..31: reserved for standard definitions of this companion standard (compatible range)
+	// 32..63: reserved for special use (private range)
 
 	ChangeFlag      = 64  // marks local parameter change
 	InOperationFlag = 128 // marks parameter operation
@@ -489,34 +520,56 @@ const (
 
 // Cmd is a command.
 // See companion standard 101, subclause 7.2.6.26.
-type Cmd uint
+type Cmd uint8
 
-// Qual returns the qualifier of command.
+// Select flags the command to select (instead of execute).
+// See “Command transmission” in section 5, subclause 6.8.
+const Select = 128
+
+func NewSingleCmd(p SinglePt) Cmd { return Cmd(p & 1) }
+func NewDoubleCmd(p DoublePt) Cmd { return Cmd(p & 3) }
+func NewRegulCmd(r Regul) Cmd     { return Cmd(r & 3) }
+
+// SinglePt returns the value assuming a single-point command.
+// The return is either Off or On.
+func (c Cmd) SinglePt() SinglePt { return SinglePt(c & 1) }
+
+// DoublePt returns the value assuming a double-point command.
+// The return is either IndeterminateOrIntermediate, DeterminatedOff,
+// DeterminatedOn or Indeterminate.
+func (c Cmd) DoublePt() DoublePt { return DoublePt(c & 3) }
+
+// Regul returns the value assuming a regulating-step command. The return should
+// be either Lower or Higher. The other two states (0 and 3) are not permitted.
+func (c Cmd) Regul() Regul { return Regul(c & 3) }
+
+// Def returns the additional definition in the qualifier of command, if any.
 //
 //	0: no additional definition
 //	1: short pulse duration (circuit-breaker), duration determined by a system parameter in the outstation
 //	2: long pulse duration, duration determined by a system parameter in the outstation
 //	3: persistent output
-//	4‥8: reserved for standard definitions of this companion standard
-//	9‥15: reserved for the selection of other predefined functions
-//	16‥31: reserved for special use (private range)
-func (c Cmd) Qual() uint { return uint((c >> 2) & 31) }
+//	4..8: reserved for standard definitions of the IEC companion standard
+//	9..15: reserved for the selection of other predefined functions
+//	16..31: reserved for special use (private range)
+func (c Cmd) Def() uint { return uint((c >> 2) & 31) }
 
-// Exec returns whether the command executes (or selects).
-// See section 5, subclause 6.8.
-func (c Cmd) Exec() bool { return c&128 == 0 }
+// SetDef replaces the additional definition in the qualifier of command.
+// Any bits from q values over 31 get discarded silently.
+func (c *Cmd) SetDef(q uint) {
+	// discard current additional definition, if any
+	*c &^= 31 << 2
+	// trim additional-definition range, and merge
+	*c |= Cmd((q & 31) << 2)
+}
 
-// SetptCmd is the qualifier of a set-point command.
-// See companion standard 101, subclause 7.2.6.39.
-type SetptCmd uint
+// SetPtQual is the qualifier of a set-point command, which includes the Select
+// flag. See companion standard 101, subclause 7.2.6.39.
+type SetPtQual uint8
 
-// Qual returns the qualifier of set-point command.
+// N returns the qualifier code.
 //
 //	0: default
-//	0‥63: reserved for standard definitions of this companion standard (compatible range)
-//	64‥127: reserved for special use (private range)
-func (c SetptCmd) Qual() uint { return uint(c & 127) }
-
-// Exec returns whether the command executes (or selects).
-// See section 5, subclause 6.8.
-func (c SetptCmd) Exec() bool { return c&128 == 0 }
+//	1..63: reserved for standard definitions of the IEC companion standard (compatible range)
+//	64..127: reserved for special use (private range)
+func (c SetPtQual) N() uint { return uint(c & 127) }

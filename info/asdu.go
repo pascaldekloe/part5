@@ -2,8 +2,10 @@ package info
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 )
 
 // Var is the variable structure qualifier, which defines the payload
@@ -32,7 +34,22 @@ type DataUnit[COT Cause, Common ComAddr, Object Addr] struct {
 	Var   Var    // payload layout
 	Cause COT    // cause of transmission
 	Addr  Common // station address
-	Info  []byte // encoded payload
+
+	// The previous causes 2 to 4 bytes of padding.
+	bootstrap [10]byte
+
+	Info []byte // encoded payload
+}
+
+func (u *DataUnit[COT, Common, Object]) setAddr(addr Object) {
+	u.Info = u.bootstrap[:0]
+	u.addAddr(addr)
+}
+
+func (u *DataUnit[COT, Common, Object]) addAddr(addr Object) {
+	for i := 0; i < len(addr); i++ {
+		u.Info = append(u.Info, addr[i])
+	}
 }
 
 // NewDataUnit returns a new ASDU.
@@ -40,44 +57,116 @@ func (p Params[COT, Common, Object]) NewDataUnit() DataUnit[COT, Common, Object]
 	return DataUnit[COT, Common, Object]{}
 }
 
-// InroAct sets an interrogation [C_IC_NA_1] activation request.
-// Use either range [1..16], or 0 for station interrogation (global).
-//
-// The Common address and the originator address (if any) both
-// remain unchanged. TestFlag can be set afterwards when applicable.
-func (u *DataUnit[COT, Common, Object]) InroActGroup(group uint) {
-	u.inroGroup(group)
+// InroAct sets Type, Var, Cause and Info with an interrogation activation
+// [C_IC_NA_1 act] conform companion standard 101, subsection 7.3.4.1.
+// Use either group 0 for (global) station interrogation, or range [1..16].
+func (p Params[COT, Common, Object]) InroActGroup(group uint) DataUnit[COT, Common, Object] {
+	u := p.inroGroup(group)
 	u.Cause[0] = Act
+	return u
 }
 
-// InroDeact sets an interrogation [C_IC_NA_1] deactivation request.
-// Use either range [1..16], or 0 for station interrogation (global).
-//
-// The (common) address and the originator address (if any) both
-// remain unchanged. TestFlag can be set afterwards when applicable.
-func (u *DataUnit[COT, Common, Object]) InroDeactGroup(group uint) {
-	u.inroGroup(group)
+// InroAct sets Type, Var, Cause and Info with an interrogation deactivation
+// [C_IC_NA_1 deact] conform companion standard 101, subsection 7.3.4.1.
+// Use either group 0 for (global) station interrogation, or range [1..16].
+func (p Params[COT, Common, Object]) InroDeactGroup(group uint) DataUnit[COT, Common, Object] {
+	u := p.inroGroup(group)
 	u.Cause[0] = Deact
+	return u
 }
 
-func (u *DataUnit[COT, Common, Object]) inroGroup(group uint) {
+func (p Params[COT, Common, Object]) inroGroup(group uint) DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
 	u.Type = C_IC_NA_1
-	u.Var = 0x01
+	u.Var = 1 // fixed
 
-	// information object address is fixed to zero
-	var addr Object
-	if cap(u.Info) < len(addr)+1 {
-		u.Info = make([]byte, len(addr), len(addr)+1)
-	} else {
-		u.Info = append(u.Info[:len(addr)])
-		for i := range u.Info {
-			u.Info[i] = 0
-		}
-	}
+	var addr Object // fixed to zero
+	u.setAddr(addr)
 
 	// qualifier of interrogation is described in
 	// companion standard 101, section 7.2.6.22
 	u.Info = append(u.Info, byte(group+20))
+	return u
+}
+
+// SingleCmd sets Type, Var and Info with a single command conform companion
+// standard 101, subsection 7.3.2.1, type identifier 45: C_SC_NA_1.
+func (p Params[COT, Common, Object]) SingleCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
+	u := p.cmd(addr, c)
+	u.Type = C_SC_NA_1
+	return u
+}
+
+// DoubleCmd sets Type, Var and Info with a double command conform companion
+// standard 101, subsection 7.3.2.2, type identifier 46: C_DC_NA_1.
+func (p Params[COT, Common, Object]) DoubleCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
+	u := p.cmd(addr, c)
+	u.Type = C_DC_NA_1
+	return u
+}
+
+// RegulCmd sets Type, Var and Info with a regulating-step command conform
+// companion standard 101, subsection 7.3.2.3, type identifier 47: C_RC_NA_1.
+func (p Params[COT, Common, Object]) RegulCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
+	u := p.cmd(addr, c)
+	u.Type = C_RC_NA_1
+	return u
+}
+
+func (p Params[COT, Common, Object]) cmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Var = 1 // fixed
+	u.setAddr(addr)
+	u.Info = append(u.Info, byte(c))
+	return u
+}
+
+// StepCmd sets Type, Var and Info with a regulating step command conform
+// companion standard 101, subsection 7.3.2.3, type identifier 47: C_RC_NA_1.
+func (p Params[COT, Common, Object]) StepCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Type = C_RC_NA_1
+	u.Var = 1 // fixed
+	u.setAddr(addr)
+	u.Info = append(u.Info, byte(c))
+	return u
+}
+
+// NormSetPt sets Type, Var and Info with a set-point command conform
+// companion standard 101, subsection 7.3.2.4, type identifier 48: C_SE_NA_1.
+func (p Params[COT, Common, Object]) NormSetPt(addr Object, value Norm, q SetPtQual) DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Type = C_SE_NA_1
+	u.Var = 1 // fixed
+	u.setAddr(addr)
+	u.Info = append(u.Info, value[0], value[1])
+	u.Info = append(u.Info, byte(q))
+	return u
+}
+
+// NormSetPt sets Type, Var and Info with a set-point command conform
+// companion standard 101, subsection 7.3.2.5, type identifier 49: C_SE_NB_1.
+func (p Params[COT, Common, Object]) ScaledSetPt(addr Object, value int16, q SetPtQual) DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Type = C_SE_NB_1
+	u.Var = 1 // fixed
+	u.setAddr(addr)
+	u.Info = append(u.Info, byte(value), byte(value>>8))
+	u.Info = append(u.Info, byte(q))
+	return u
+}
+
+// FloatSetPt sets Type, Var and Info with a set-point command conform
+// companion standard 101, subsection 7.3.2.6, type identifier 50: C_SE_NC_1.
+func (p Params[COT, Common, Object]) FloatSetPt(addr Object, value float32, q SetPtQual) DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Type = C_SE_NC_1
+	u.Var = 1 // fixed
+	u.setAddr(addr)
+	u.Info = binary.LittleEndian.AppendUint32(u.Info,
+		math.Float32bits(value))
+	u.Info = append(u.Info, byte(q))
+	return u
 }
 
 // Respond returns a new "responding" ASDU which addresses "initiating" ASDU u.
