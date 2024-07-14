@@ -1,16 +1,15 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/pascaldekloe/part5.svg)](https://pkg.go.dev/github.com/pascaldekloe/part5)
 [![Build Status](https://github.com/pascaldekloe/part5/actions/workflows/go.yml/badge.svg)](https://github.com/pascaldekloe/part5/actions/workflows/go.yml)
 
-# Part5 With The Go Programming Language
+# Part 5 With The Go Programming Language
 
 The International Electrotechnical Commission standard 870 part 5 (IEC 870-5) is
-a set of transmission procedures intended for SCADA systems. Prefix 60 was added
-later as in IEC 60870. For serial communication please refer to **60870-5-101**
-and **60870-5-104** is the TCP-based evolution.
+a set of transmission procedures intended for SCADA systems. The publication got
+reissued with a designation in the 60000 series as of the year 1997. Refer to
+IEC 60870-5-101 for serial communication, and IEC 60870-5-104 for the TCP-based
+evolution. The two are commonly abbreviated as IEC 101 and IEC 104 respectively.
 
-The project consists of a high-level framework, including a low-level library,
-and tooling for network exploration and automated testing.
-**Incomplete**! About 95% of the work has been published; see issue #1.
+The project consists of a Go library and a command-line tool called iecat(8).
 
 This is free and unencumbered software released into the
 [public domain](http://creativecommons.org/publicdomain/zero/1.0).
@@ -30,7 +29,7 @@ of the primary and a destination address points to (something on) the secondary,
 regardless of the message direction.
 
 A *common address* can be seen as a data set wherein each data element has its
-own predefined *information object address*. The set may be downloaded with an
+own predefined *information object address*. The set may be retreived with an
 [interrogation command](http://godoc.org/github.com/pascaldekloe/part5/info#C_IC_NA_1).
 
 The standard provides commands that operate on data and they may trigger remote
@@ -44,11 +43,6 @@ Some commands can be preceded with a *select*
 [directive](http://godoc.org/github.com/pascaldekloe/part5/info#Cmd.Exec)
 which locks down processing to one at a time.
 
-To get started please see the API documentation of
-[Dial](http://godoc.org/github.com/pascaldekloe/part5#Dial) [serial],
-[DialTCP](http://godoc.org/github.com/pascaldekloe/part5#DialTCP) or
-[ListenTCP](http://godoc.org/github.com/pascaldekloe/part5#ListenTCP).
-
 
 ## TODO
 
@@ -57,10 +51,7 @@ To get started please see the API documentation of
 * complete ASDU encoding types
 
 
-## iechbin
+## iecat
 
-The project comes with a test tool. Download a
-[prebuilt binary](https://github.com/pascaldekloe/part5/releases)
-or run `go get -u github.com/pascaldekloe/part5/cmd/iechbin`
-to make one yourself.
-Without arguments the command opens a browser UI.
+Run `go install github.com/pascaldekloe/part5/cmd/iecat@latest` to build the
+command into the bin directory of `go env GOPATH`.
