@@ -57,6 +57,21 @@ func (p Params[COT, Common, Object]) NewDataUnit() DataUnit[COT, Common, Object]
 	return DataUnit[COT, Common, Object]{}
 }
 
+// TestCmd sets Type, Var, Cause and Info with a test activation command
+// [C_TS_NA_1] conform companion standard 101, subsection 7.3.4.5
+func (p Params[COT, Common, Object]) TestCmd() DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Type = C_TS_NA
+	u.Var = 1        // fixed
+	u.Cause[0] = Act // fixed
+	var addr Object  // fixed to zero
+	u.setAddr(addr)
+	// fixed test bit pattern defined in companion
+	// standard 101, subsection 7.2.6.14
+	u.Info = append(u.Info, 0b1010_1010, 0b0101_0101)
+	return u
+}
+
 // InroAct sets Type, Var, Cause and Info with an interrogation activation
 // [C_IC_NA_1 act] conform companion standard 101, subsection 7.3.4.1.
 // Use either group 0 for (global) station interrogation, or range [1..16].
