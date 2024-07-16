@@ -57,71 +57,24 @@ func (p Params[COT, Common, Object]) NewDataUnit() DataUnit[COT, Common, Object]
 	return DataUnit[COT, Common, Object]{}
 }
 
-// TestCmd sets Type, Var, Cause and Info with a test activation command
-// [C_TS_NA_1] conform companion standard 101, subsection 7.3.4.5
-func (p Params[COT, Common, Object]) TestCmd() DataUnit[COT, Common, Object] {
-	u := p.NewDataUnit()
-	u.Type = C_TS_NA
-	u.Var = 1        // fixed
-	u.Cause[0] = Act // fixed
-	var addr Object  // fixed to zero
-	u.setAddr(addr)
-	// fixed test bit pattern defined in companion
-	// standard 101, subsection 7.2.6.14
-	u.Info = append(u.Info, 0b1010_1010, 0b0101_0101)
-	return u
-}
-
-// InroAct sets Type, Var, Cause and Info with an interrogation activation
-// [C_IC_NA_1 act] conform companion standard 101, subsection 7.3.4.1.
-// Use either group 0 for (global) station interrogation, or range [1..16].
-func (p Params[COT, Common, Object]) InroActGroup(group uint) DataUnit[COT, Common, Object] {
-	u := p.inroGroup(group)
-	u.Cause[0] = Act
-	return u
-}
-
-// InroAct sets Type, Var, Cause and Info with an interrogation deactivation
-// [C_IC_NA_1 deact] conform companion standard 101, subsection 7.3.4.1.
-// Use either group 0 for (global) station interrogation, or range [1..16].
-func (p Params[COT, Common, Object]) InroDeactGroup(group uint) DataUnit[COT, Common, Object] {
-	u := p.inroGroup(group)
-	u.Cause[0] = Deact
-	return u
-}
-
-func (p Params[COT, Common, Object]) inroGroup(group uint) DataUnit[COT, Common, Object] {
-	u := p.NewDataUnit()
-	u.Type = C_IC_NA_1
-	u.Var = 1 // fixed
-
-	var addr Object // fixed to zero
-	u.setAddr(addr)
-
-	// qualifier of interrogation is described in
-	// companion standard 101, section 7.2.6.22
-	u.Info = append(u.Info, byte(group+20))
-	return u
-}
-
-// SingleCmd sets Type, Var and Info with a single command conform companion
-// standard 101, subsection 7.3.2.1, type identifier 45: C_SC_NA_1.
+// SingleCmd sets Type, Var, Cause and Info with single command C_SC_NA_1 Act
+// conform companion standard 101, subsection 7.3.2.1.
 func (p Params[COT, Common, Object]) SingleCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
 	u := p.cmd(addr, c)
 	u.Type = C_SC_NA_1
 	return u
 }
 
-// DoubleCmd sets Type, Var and Info with a double command conform companion
-// standard 101, subsection 7.3.2.2, type identifier 46: C_DC_NA_1.
+// DoubleCmd sets Type, Var, Cause and Info with double command C_DC_NA_1 Oct
+// conform companion standard 101, subsection 7.3.2.2.
 func (p Params[COT, Common, Object]) DoubleCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
 	u := p.cmd(addr, c)
 	u.Type = C_DC_NA_1
 	return u
 }
 
-// RegulCmd sets Type, Var and Info with a regulating-step command conform
-// companion standard 101, subsection 7.3.2.3, type identifier 47: C_RC_NA_1.
+// RegulCmd sets Type, Var, Cause and Info with regulating-step command
+// C_RC_NA_1 Act conform companion standard 101, subsection 7.3.2.3.
 func (p Params[COT, Common, Object]) RegulCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
 	u := p.cmd(addr, c)
 	u.Type = C_RC_NA_1
@@ -130,53 +83,46 @@ func (p Params[COT, Common, Object]) RegulCmd(addr Object, c Cmd) DataUnit[COT, 
 
 func (p Params[COT, Common, Object]) cmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
 	u := p.NewDataUnit()
-	u.Var = 1 // fixed
+	u.Var = 1        // fixed
+	u.Cause[0] = Act // could Deact
 	u.setAddr(addr)
 	u.Info = append(u.Info, byte(c))
 	return u
 }
 
-// StepCmd sets Type, Var and Info with a regulating step command conform
-// companion standard 101, subsection 7.3.2.3, type identifier 47: C_RC_NA_1.
-func (p Params[COT, Common, Object]) StepCmd(addr Object, c Cmd) DataUnit[COT, Common, Object] {
-	u := p.NewDataUnit()
-	u.Type = C_RC_NA_1
-	u.Var = 1 // fixed
-	u.setAddr(addr)
-	u.Info = append(u.Info, byte(c))
-	return u
-}
-
-// NormSetPt sets Type, Var and Info with a set-point command conform
-// companion standard 101, subsection 7.3.2.4, type identifier 48: C_SE_NA_1.
+// NormSetPt sets Type, Var, Cause and Info with a set-point command C_SE_NA_1
+// Act conform companion standard 101, subsection 7.3.2.4.
 func (p Params[COT, Common, Object]) NormSetPt(addr Object, value Norm, q SetPtQual) DataUnit[COT, Common, Object] {
 	u := p.NewDataUnit()
 	u.Type = C_SE_NA_1
-	u.Var = 1 // fixed
+	u.Var = 1        // fixed
+	u.Cause[0] = Act // could Deact
 	u.setAddr(addr)
 	u.Info = append(u.Info, value[0], value[1])
 	u.Info = append(u.Info, byte(q))
 	return u
 }
 
-// NormSetPt sets Type, Var and Info with a set-point command conform
-// companion standard 101, subsection 7.3.2.5, type identifier 49: C_SE_NB_1.
+// ScaledSetPt sets Type, Var, Cause and Info with set-point command C_SE_NB_1
+// Act conform companion standard 101, subsection 7.3.2.5.
 func (p Params[COT, Common, Object]) ScaledSetPt(addr Object, value int16, q SetPtQual) DataUnit[COT, Common, Object] {
 	u := p.NewDataUnit()
 	u.Type = C_SE_NB_1
-	u.Var = 1 // fixed
+	u.Var = 1        // fixed
+	u.Cause[0] = Act // could Deact
 	u.setAddr(addr)
 	u.Info = append(u.Info, byte(value), byte(value>>8))
 	u.Info = append(u.Info, byte(q))
 	return u
 }
 
-// FloatSetPt sets Type, Var and Info with a set-point command conform
-// companion standard 101, subsection 7.3.2.6, type identifier 50: C_SE_NC_1.
+// FloatSetPt sets Type, Var, Cause and Info with set-point command C_SE_NC_1
+// Act conform companion standard 101, subsection 7.3.2.6.
 func (p Params[COT, Common, Object]) FloatSetPt(addr Object, value float32, q SetPtQual) DataUnit[COT, Common, Object] {
 	u := p.NewDataUnit()
 	u.Type = C_SE_NC_1
-	u.Var = 1 // fixed
+	u.Var = 1        // fixed
+	u.Cause[0] = Act // could Deact
 	u.setAddr(addr)
 	u.Info = binary.LittleEndian.AppendUint32(u.Info,
 		math.Float32bits(value))
@@ -184,14 +130,42 @@ func (p Params[COT, Common, Object]) FloatSetPt(addr Object, value float32, q Se
 	return u
 }
 
-// Respond returns a new "responding" ASDU which addresses "initiating" ASDU u.
-// The response includes the TestFlag from u.
-func (u DataUnit[COT, Common, Object]) Respond(t TypeID, cause uint8) DataUnit[COT, Common, Object] {
-	// u is a copy allready—no pointer receiver
-	u.Type = t
-	u.Cause[0] &= TestFlag
-	u.Cause[0] |= cause
-	u.Info = nil
+// Inro sets Type, Var, Cause and Info with interrogation-command C_IC_NA_1 Act
+// conform companion standard 101, subsection 7.3.4.1.
+func (p Params[COT, Common, Object]) Inro() DataUnit[COT, Common, Object] {
+	return p.InroGroup(0)
+}
+
+// InroGroup sets Type, Var, Cause and Info with interrogation-command C_IC_NA_1
+// Act conform companion standard 101, subsection 7.3.4.1. Group can be disabled
+// with 0 for (global) station interrogation. Otherwise, use a group identifier
+// in range [1..16].
+func (p Params[COT, Common, Object]) InroGroup(group uint) DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Type = C_IC_NA_1
+	u.Var = 1        // fixed
+	u.Cause[0] = Act // could Deact
+	var addr Object  // fixed to zero
+	u.setAddr(addr)
+
+	// qualifier of interrogation is described in
+	// companion standard 101, section 7.2.6.22
+	u.Info = append(u.Info, byte(group+20))
+	return u
+}
+
+// TestCmd sets Type, Var, Cause and Info with test-command C_TS_NA_1 Act
+// conform companion standard 101, subsection 7.3.4.5.
+func (p Params[COT, Common, Object]) TestCmd() DataUnit[COT, Common, Object] {
+	u := p.NewDataUnit()
+	u.Type = C_TS_NA_1
+	u.Var = 1        // fixed
+	u.Cause[0] = Act // fixed
+	var addr Object  // fixed to zero
+	u.setAddr(addr)
+	// fixed test bit pattern defined in companion
+	// standard 101, subsection 7.2.6.14
+	u.Info = append(u.Info, 0b1010_1010, 0b0101_0101)
 	return u
 }
 

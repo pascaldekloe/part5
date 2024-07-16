@@ -205,7 +205,7 @@ func (sys system[COT, Common, Object]) streamOutbound(client *session.Station) {
 			CmdLog.Fatalf("common address %d for interrogation does not fit in %d-octet width of system",
 				addr, *comAddrFlag)
 		}
-		u.InroActGroup(0)
+		u.Inro()
 		client.Class2 <- session.NewOutbound(u.Append(nil))
 	}
 
