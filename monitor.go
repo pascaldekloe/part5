@@ -10,35 +10,57 @@ import (
 	"github.com/pascaldekloe/part5/info"
 )
 
-// A Monitor listens to events with measured values.
+// Monitor processes information in monitor direction,
+// as listed in table 8 from companion standard 101.
 type Monitor[COT info.Cause, Common info.ComAddr, Object info.Addr] struct {
-	SinglePt         func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual)
+	// SinglePt gets called for type identifier 1: M_SP_NA_1.
+	SinglePt func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual)
+	// SinglePtWithTime gets called for type identifier 2: M_SP_TA_1.
 	SinglePtWithTime func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual, CP24Time2a)
+	// SinglePtWithDate gets called for type identifier 30: M_SP_TB_1.
 	SinglePtWithDate func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual, CP56Time2a)
 
-	DoublePt         func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual)
+	// DoublePt gets called for type identifier 3: M_DP_NA_1.
+	DoublePt func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual)
+	// DoublePtWithTime gets called for type identifier 4: M_DP_TA_1.
 	DoublePtWithTime func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual, CP24Time2a)
+	// DoublePtWithDate gets called for type identifier 31: M_DP_TB_1.
 	DoublePtWithDate func(info.DataUnit[COT, Common, Object], Object, info.DoublePtQual, CP56Time2a)
 
-	Step         func(info.DataUnit[COT, Common, Object], Object, info.StepQual)
+	// Step gets called for type identifier 5: M_ST_NA_1.
+	Step func(info.DataUnit[COT, Common, Object], Object, info.StepQual)
+	// StepWithTime gets called for type identifier 6: M_ST_TA_1.
 	StepWithTime func(info.DataUnit[COT, Common, Object], Object, info.StepQual, CP24Time2a)
+	// StepWithDate gets called for type identifier 32: M_ST_TB_1.
 	StepWithDate func(info.DataUnit[COT, Common, Object], Object, info.StepQual, CP56Time2a)
 
-	Bits         func(info.DataUnit[COT, Common, Object], Object, info.BitsQual)
+	// Bits gets called for type identifier 7: M_BO_NA_1.
+	Bits func(info.DataUnit[COT, Common, Object], Object, info.BitsQual)
+	// BitsWithTime gets called for type identifier 8: M_BO_TA_1.
 	BitsWithTime func(info.DataUnit[COT, Common, Object], Object, info.BitsQual, CP24Time2a)
+	// BitsWithDate gets called for type identifier 33: M_BO_TB_1.
 	BitsWithDate func(info.DataUnit[COT, Common, Object], Object, info.BitsQual, CP56Time2a)
 
-	NormUnqual   func(info.DataUnit[COT, Common, Object], Object, info.Norm)
-	Norm         func(info.DataUnit[COT, Common, Object], Object, info.NormQual)
+	NormUnqual func(info.DataUnit[COT, Common, Object], Object, info.Norm)
+	// Norm gets called for type identifier 9: M_ME_NA_1.
+	Norm func(info.DataUnit[COT, Common, Object], Object, info.NormQual)
+	// NormWithTime gets called for type identifier 10: M_ME_TA_1.
 	NormWithTime func(info.DataUnit[COT, Common, Object], Object, info.NormQual, CP24Time2a)
+	// NormWithDate gets called for type identifier 34: M_ME_TD_1.
 	NormWithDate func(info.DataUnit[COT, Common, Object], Object, info.NormQual, CP56Time2a)
 
-	Scaled         func(info.DataUnit[COT, Common, Object], Object, int16, info.Qual)
+	// Scaled gets called for type identifier 11: M_ME_NB_1.
+	Scaled func(info.DataUnit[COT, Common, Object], Object, int16, info.Qual)
+	// ScaledWithTime gets called for type identifier 12: M_ME_TB_1.
 	ScaledWithTime func(info.DataUnit[COT, Common, Object], Object, int16, info.Qual, CP24Time2a)
+	// ScaledWithDate gets called for type identifier 35: M_ME_TE_1.
 	ScaledWithDate func(info.DataUnit[COT, Common, Object], Object, int16, info.Qual, CP56Time2a)
 
-	Float         func(info.DataUnit[COT, Common, Object], Object, float32, info.Qual)
+	// Float gets called for type identifier 13: M_ME_NC_1.
+	Float func(info.DataUnit[COT, Common, Object], Object, float32, info.Qual)
+	// FloatWithTime gets called for type identifier 14: M_ME_TC_1.
 	FloatWithTime func(info.DataUnit[COT, Common, Object], Object, float32, info.Qual, CP24Time2a)
+	// FloatWithDate gets called for type identifier 36: M_ME_TF_1.
 	FloatWithDate func(info.DataUnit[COT, Common, Object], Object, float32, info.Qual, CP56Time2a)
 }
 
@@ -219,14 +241,20 @@ func nextAddr[T info.Addr](addr T) T {
 	return sum
 }
 
-var errNotMonitor = errors.New("part5: ASDU type is not monitor information")
+// ErrNotMonitor rejects an info.DataUnit based on its type identifier.
+var ErrNotMonitor = errors.New("part5: ASDU type identifier not in monitor information range 1..44")
 
-var errInfoSize = errors.New("part5: ASDU payload size does not match the count of variable structure qualifier")
+var errInfoSize = errors.New("part5: size of ASDU payload doesn't match the variable structure qualifier")
 
-// OnDataUnit applies the packet to respective listener. Data is not retained.
+// OnDataUnit applies the payload to the respective listener. Note that one
+// DataUnit can have multiple information elements, in which case the listener
+// is invoked once for each element in order of appearance. DataUnits with zero
+// information elements do not cause any listener invocation. Errors other than
+// ErrNotMonitor reject malformed content in the DataUnit.
 func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Object]) error {
-	if u.Type >= 45 {
-		return errNotMonitor
+	// monitor type identifiers (M_*) are in range 1..44
+	if u.Type-1 > 43 {
+		return ErrNotMonitor
 	}
 
 	// NOTE: Go can't get the array length from a generic as a constant yet.
