@@ -1,4 +1,12 @@
 // Package info provides the OSI presentation layer.
+//
+// Common addresses and information-object addresses (ComAddr and Addr) can be
+// formatted with the standard fmt package. The numeric notation in hexadecimal
+// "%x" and its upper-casing "%X" do not omit any leading zeroes. Decimals can
+// fixed in width too with leading space "% d". The “alternated format” is an
+// octet listing in big-endian order. Decimal octets "%#d" get sepatared by the
+// dot character ".", while hexadecimals "%#x" and "%#X" get separated by the
+// colon character ":".
 package info
 
 import (
@@ -26,6 +34,9 @@ type (
 	// The address length is fixed per system.
 	ComAddr interface {
 		ComAddr8 | ComAddr16
+
+		// See package documentation for options.
+		fmt.Formatter
 
 		// N gets the address as a numeric value.
 		N() uint
@@ -102,6 +113,9 @@ type (
 	// The address length is fixed per system.
 	Addr interface {
 		Addr8 | Addr16 | Addr24
+
+		// See package documentation for options.
+		fmt.Formatter
 
 		// N gets the address as a numeric value.
 		// Zero marks the address as irrelevant.
