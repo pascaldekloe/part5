@@ -1,9 +1,7 @@
 package info
 
 import (
-	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"math"
 )
@@ -215,96 +213,4 @@ func (u DataUnit[COT, Common, Object]) Append(buf []byte) []byte {
 	}
 	buf = append(buf, u.Info...)
 	return buf
-}
-
-// String returns a full description.
-func (u DataUnit[COT, Common, Object]) String() string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "%s @%d %s:",
-		u.Type, u.Addr.N(), u.Cause)
-
-	dataSize := ObjSize[u.Type]
-	switch {
-	case dataSize == 0:
-		// structure unknown
-		fmt.Fprintf(&buf, " %#x ?", u.Info)
-
-	case u.Var&Sequence == 0:
-		// objects paired with an address each
-		var i int // read index
-		for obj_n := 0; ; obj_n++ {
-			var addr Object
-			if i+len(addr)+dataSize > len(u.Info) {
-				if i < len(u.Info) {
-					fmt.Fprintf(&buf, " %#x<EOF>", u.Info[i:])
-					obj_n++
-				}
-
-				diff := obj_n - u.Var.Count()
-				switch {
-				case diff < 0:
-					fmt.Fprintf(&buf, " 𝚫 −%d !", -diff)
-				case diff > 0:
-					fmt.Fprintf(&buf, " 𝚫 +%d !", diff)
-				case i < len(u.Info):
-					buf.WriteString(" !")
-				default:
-					buf.WriteString(" .")
-				}
-
-				break
-			}
-
-			for j := 0; j < len(addr); j++ {
-				addr[j] = u.Info[i+j]
-			}
-			i += len(addr)
-			fmt.Fprintf(&buf, " %d:%#x",
-				addr.N(), u.Info[i:i+dataSize])
-			i += dataSize
-		}
-
-	default:
-		// offset address in Sequence
-		var addr Object
-		if len(addr) > len(u.Info) {
-			fmt.Fprintf(&buf, " %#x<EOF> !", u.Info)
-			break
-		}
-		for i := 0; i < len(addr); i++ {
-			addr[i] = u.Info[i]
-		}
-		i := len(addr) // read index
-
-		for obj_n := 0; ; obj_n++ {
-			if i+dataSize > len(u.Info) {
-				if i < len(u.Info) {
-					fmt.Fprintf(&buf, " %d:%#x<EOF>",
-						addr.N(), u.Info[i:])
-					obj_n++
-				}
-
-				diff := obj_n - u.Var.Count()
-				switch {
-				case diff < 0:
-					fmt.Fprintf(&buf, " 𝚫 −%d !", -diff)
-				case diff > 0:
-					fmt.Fprintf(&buf, " 𝚫 +%d !", diff)
-				case i < len(u.Info):
-					buf.WriteString(" !")
-				default:
-					buf.WriteString(" .")
-				}
-
-				break
-			}
-
-			fmt.Fprintf(&buf, " %d:%#x",
-				addr.N(), u.Info[i:i+dataSize])
-			i += dataSize
-			addr, _ = u.NewAddr(addr.N() + 1)
-		}
-	}
-
-	return buf.String()
 }

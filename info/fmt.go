@@ -1,6 +1,9 @@
 package info
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 // Format implements the fmt.Formatter interface.
 func (addr ComAddr8) Format(f fmt.State, verb rune) { format8(addr, f, verb) }
@@ -97,5 +100,119 @@ func format24(addr [3]uint8, f fmt.State, verb rune) {
 
 	default:
 		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
+	}
+}
+
+// Format implements the fmt.Formatter interface. Verb must be 's'. Flag '#'
+// switches to the alternated address format rather than the decimal default.
+// See the package documentation for details.
+func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
+	if verb != 's' {
+		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
+		return
+	}
+
+	if f.Flag('#') {
+		fmt.Fprintf(f, "%s @%#x %s:", u.Type, u.Addr, u.Cause)
+	} else {
+		fmt.Fprintf(f, "%s @%d %s:", u.Type, u.Addr, u.Cause)
+	}
+
+	dataSize := ObjSize[u.Type]
+	switch {
+	case dataSize == 0:
+		// structure unknown
+		fmt.Fprintf(f, " %#x ?", u.Info)
+
+	case u.Var&Sequence == 0:
+		// objects paired with an address each
+		var i int // read index
+		for obj_n := 0; ; obj_n++ {
+			var addr Object
+			if i+len(addr)+dataSize > len(u.Info) {
+				if i < len(u.Info) {
+					fmt.Fprintf(f, " %#x<EOF>", u.Info[i:])
+					obj_n++
+				}
+
+				diff := obj_n - u.Var.Count()
+				switch {
+				case diff < 0:
+					fmt.Fprintf(f, " 𝚫 −%d !", -diff)
+				case diff > 0:
+					fmt.Fprintf(f, " 𝚫 +%d !", diff)
+				case i < len(u.Info):
+					io.WriteString(f, " !")
+				default:
+					io.WriteString(f, " .")
+				}
+
+				break
+			}
+
+			for j := 0; j < len(addr); j++ {
+				addr[j] = u.Info[i+j]
+			}
+			i += len(addr)
+			info := u.Info[i : i+dataSize]
+			i += dataSize
+
+			if f.Flag('#') {
+				fmt.Fprintf(f, " %#x@%#x ", info, addr)
+			} else {
+				fmt.Fprintf(f, " %#x@%d", info, addr)
+			}
+		}
+
+	default:
+		// offset address in Sequence
+		var addr Object
+		if len(addr) > len(u.Info) {
+			fmt.Fprintf(f, " %#x<EOF> !", u.Info)
+			break
+		}
+		for i := 0; i < len(addr); i++ {
+			addr[i] = u.Info[i]
+		}
+		i := len(addr) // read index
+
+		for obj_n := 0; ; obj_n++ {
+			if i+dataSize > len(u.Info) {
+				if i < len(u.Info) {
+					info := u.Info[i:]
+					if f.Flag('#') {
+						fmt.Fprintf(f, " %#x<EOF>@%#x ", info, addr)
+					} else {
+						fmt.Fprintf(f, " %#x<EOF>@%d", info, addr)
+					}
+					obj_n++
+				}
+
+				diff := obj_n - u.Var.Count()
+				switch {
+				case diff < 0:
+					fmt.Fprintf(f, " 𝚫 −%d !", -diff)
+				case diff > 0:
+					fmt.Fprintf(f, " 𝚫 +%d !", diff)
+				case i < len(u.Info):
+					io.WriteString(f, " !")
+				default:
+					io.WriteString(f, " .")
+				}
+
+				break
+			}
+
+			info := u.Info[i : i+dataSize]
+			i += dataSize
+
+			if f.Flag('#') {
+				fmt.Fprintf(f, " %#x@%#x ", info, addr)
+			} else {
+				fmt.Fprintf(f, " %#x@%d", info, addr)
+			}
+
+			addr, _ = u.NewAddr(addr.N() + 1)
+		}
 	}
 }
