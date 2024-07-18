@@ -20,8 +20,10 @@ var errTypeZero = errors.New("part5: type identification 0 is not used")
 
 // The compatible codes are defined in table 8 from companion standard 101.
 // More compatible codes are defined in table 1 from companion standard 104.
+// The security extension are defined in table 2 from section 7.
 // Prefix M_ is for monitored information, C_ is for control information,
-// P_ is for parameter information, and _F is for file transfer.
+// P_ is for parameter information, F_ is for file transfer, and S_ is for
+// security.
 const (
 	_ TypeID = iota // 0: not used
 
@@ -69,7 +71,7 @@ const (
 	M_EP_TE_1 // packed start events of protection equipment with time tag CP56Time2a
 	M_EP_TF_1 // packed output circuit information of protection equipment with time tag CP56Time2a
 
-	S_IT_TC_1 // integrated totals containing time-tagged security statistics
+	S_IT_TC_1 // integrated totals containing security statistics with time tag CP56Time2a
 	_         // 42: reserved for further compatible definitions
 	_         // 43: reserved for further compatible definitions
 	_         // 44: reserved for further compatible definitions
@@ -126,8 +128,8 @@ const (
 
 	S_UQ_NA_1 // update key change request
 	S_UR_NA_1 // update key change reply
-	S_UK_NA_1 // update key change — symetric
-	S_UA_NA_1 // update key change — asymetric
+	S_UK_NA_1 // update key change symetric
+	S_UA_NA_1 // update key change asymetric
 	S_UC_NA_1 // update key change confirmation
 	_         // 96: reserved for further compatible definitions
 	_         // 97: reserved for further compatible definitions
