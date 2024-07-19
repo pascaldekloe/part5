@@ -170,7 +170,7 @@ func (sys system[COT, Common, Object]) streamInbound(client *session.Station) {
 	u := sys.NewDataUnit() // reusable
 	var n uint64
 
-	monitor := part5.NewLog[COT, Common, Object](os.Stdout)
+	mon := part5.NewLog[COT, Common, Object](os.Stdout)
 
 	for p := range client.In {
 		n++
@@ -179,7 +179,7 @@ func (sys system[COT, Common, Object]) streamInbound(client *session.Station) {
 		if err != nil {
 			CmdLog.Print("payload from inbound APDU dropped: ", err)
 		} else {
-			monitor.OnDataUnit(u)
+			mon.OnDataUnit(u)
 		}
 
 		if n == *inCapFlag {

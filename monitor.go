@@ -98,7 +98,7 @@ func NewMonitor[COT info.Cause, Common info.ComAddr, Object info.Addr]() Monitor
 	}
 }
 
-// NewLog writes each measurement event as a text line in a human readable form.
+// NewLog writes each measurement event as a text line in a human readable formon.
 func NewLog[COT info.Cause, Common info.ComAddr, Object info.Addr](w io.Writer) Monitor[COT, Common, Object] {
 	return Monitor[COT, Common, Object]{
 		SinglePt: func(u info.DataUnit[COT, Common, Object], addr Object, p info.SinglePtQual) {
@@ -243,7 +243,7 @@ var errInfoSize = errors.New("part5: size of ASDU payload doesn't match the vari
 // is invoked once for each element in order of appearance. DataUnits with zero
 // information elements do not cause any listener invocation. Errors other than
 // ErrNotMonitor reject malformed content in the DataUnit.
-func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Object]) error {
+func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Object]) error {
 	// monitor type identifiers (M_*) are in range 1..44
 	if u.Type-1 > 43 {
 		return ErrNotMonitor
@@ -260,7 +260,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
-				m.SinglePt(u, addr, info.SinglePtQual(b))
+				mon.SinglePt(u, addr, info.SinglePtQual(b))
 				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
@@ -268,7 +268,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+1 {
-				m.SinglePt(u, Object(u.Info[:len(addr)]),
+				mon.SinglePt(u, Object(u.Info[:len(addr)]),
 					info.SinglePtQual(u.Info[len(addr)]),
 				)
 				u.Info = u.Info[len(addr)+1:]
@@ -283,7 +283,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+4 {
-			m.SinglePtWithTime(u, Object(u.Info[:len(addr)]),
+			mon.SinglePtWithTime(u, Object(u.Info[:len(addr)]),
 				info.SinglePtQual(u.Info[len(addr)]),
 				CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
 			)
@@ -298,7 +298,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= (len(addr) + 8) {
-			m.SinglePtWithDate(u, Object(u.Info[:len(addr)]),
+			mon.SinglePtWithDate(u, Object(u.Info[:len(addr)]),
 				info.SinglePtQual(u.Info[len(addr)]),
 				CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
 			)
@@ -312,7 +312,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
-				m.DoublePt(u, addr, info.DoublePtQual(b))
+				mon.DoublePt(u, addr, info.DoublePtQual(b))
 				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
@@ -320,7 +320,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+1 {
-				m.DoublePt(u, Object(u.Info[:len(addr)]),
+				mon.DoublePt(u, Object(u.Info[:len(addr)]),
 					info.DoublePtQual(u.Info[len(addr)]),
 				)
 				u.Info = u.Info[len(addr)+1:]
@@ -335,7 +335,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+4 {
-			m.DoublePtWithTime(u, Object(u.Info[:len(addr)]),
+			mon.DoublePtWithTime(u, Object(u.Info[:len(addr)]),
 				info.DoublePtQual(u.Info[len(addr)]),
 				CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
 			)
@@ -350,7 +350,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+8 {
-			m.DoublePtWithDate(u, Object(u.Info[:len(addr)]),
+			mon.DoublePtWithDate(u, Object(u.Info[:len(addr)]),
 				info.DoublePtQual(u.Info[len(addr)]),
 				CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
 			)
@@ -364,7 +364,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+2 <= len(u.Info); i += 2 {
-				m.Step(u, addr, info.StepQual(u.Info[i:i+2]))
+				mon.Step(u, addr, info.StepQual(u.Info[i:i+2]))
 				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
@@ -372,7 +372,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+2 {
-				m.Step(u, Object(u.Info[:len(addr)]),
+				mon.Step(u, Object(u.Info[:len(addr)]),
 					info.StepQual(u.Info[len(addr):len(addr)+2]),
 				)
 				u.Info = u.Info[len(addr)+2:]
@@ -387,7 +387,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+5 {
-			m.StepWithTime(u, Object(u.Info[:len(addr)]),
+			mon.StepWithTime(u, Object(u.Info[:len(addr)]),
 				info.StepQual(u.Info[len(addr):len(addr)+2]),
 				CP24Time2a(u.Info[len(addr)+2:len(addr)+5]),
 			)
@@ -402,7 +402,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+9 {
-			m.StepWithDate(u, Object(u.Info[:len(addr)]),
+			mon.StepWithDate(u, Object(u.Info[:len(addr)]),
 				info.StepQual(u.Info[len(addr):len(addr)+2]),
 				CP56Time2a(u.Info[len(addr)+2:len(addr)+9]),
 			)
@@ -416,7 +416,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
-				m.Bits(u, addr, info.BitsQual(u.Info[i:i+5]))
+				mon.Bits(u, addr, info.BitsQual(u.Info[i:i+5]))
 				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
@@ -424,7 +424,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+5 {
-				m.Bits(u, Object(u.Info),
+				mon.Bits(u, Object(u.Info),
 					info.BitsQual(u.Info[len(addr):len(addr)+5]),
 				)
 				u.Info = u.Info[len(addr)+5:]
@@ -439,7 +439,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+8 {
-			m.BitsWithTime(u, Object(u.Info[:len(addr)]),
+			mon.BitsWithTime(u, Object(u.Info[:len(addr)]),
 				info.BitsQual(u.Info[len(addr):len(addr)+5]),
 				CP24Time2a(u.Info[len(addr)+5:len(addr)+8]),
 			)
@@ -454,7 +454,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+12 {
-			m.BitsWithDate(u, Object(u.Info[:len(addr)]),
+			mon.BitsWithDate(u, Object(u.Info[:len(addr)]),
 				info.BitsQual(u.Info[len(addr):len(addr)+5]),
 				CP56Time2a(u.Info[len(addr)+5:len(addr)+12]),
 			)
@@ -468,7 +468,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+1 < len(u.Info); i += 2 {
-				m.NormUnqual(u, addr, info.Norm(u.Info[i:i+2]))
+				mon.NormUnqual(u, addr, info.Norm(u.Info[i:i+2]))
 				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
@@ -476,7 +476,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+2 {
-				m.NormUnqual(u, Object(u.Info[:len(addr)]),
+				mon.NormUnqual(u, Object(u.Info[:len(addr)]),
 					info.Norm(u.Info[len(addr):len(addr)+2]),
 				)
 				u.Info = u.Info[len(addr)+2:]
@@ -490,7 +490,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+3 <= len(u.Info); i += 3 {
-				m.Norm(u, addr, info.NormQual(u.Info[i:i+3]))
+				mon.Norm(u, addr, info.NormQual(u.Info[i:i+3]))
 				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
@@ -498,7 +498,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+3 {
-				m.Norm(u, Object(u.Info[:len(addr)]),
+				mon.Norm(u, Object(u.Info[:len(addr)]),
 					info.NormQual(u.Info[len(addr):len(addr)+3]),
 				)
 				u.Info = u.Info[len(addr)+3:]
@@ -513,7 +513,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+6 {
-			m.NormWithTime(u, Object(u.Info[:len(addr)]),
+			mon.NormWithTime(u, Object(u.Info[:len(addr)]),
 				info.NormQual(u.Info[len(addr):len(addr)+3]),
 				CP24Time2a(u.Info[len(addr)+3:len(addr)+6]),
 			)
@@ -528,7 +528,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+10 {
-			m.NormWithDate(u, Object(u.Info[:len(addr)]),
+			mon.NormWithDate(u, Object(u.Info[:len(addr)]),
 				info.NormQual(u.Info[len(addr):len(addr)+3]),
 				CP56Time2a(u.Info[len(addr)+3:len(addr)+10]),
 			)
@@ -542,7 +542,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+3 <= len(u.Info); i += 3 {
-				m.Scaled(u, addr,
+				mon.Scaled(u, addr,
 					int16(binary.LittleEndian.Uint16(u.Info[i:i+2])),
 					info.Qual(u.Info[i+2]),
 				)
@@ -553,7 +553,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+3 {
-				m.Scaled(u, Object(u.Info[:len(addr)]),
+				mon.Scaled(u, Object(u.Info[:len(addr)]),
 					int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
 					info.Qual(u.Info[len(addr)+2]),
 				)
@@ -569,7 +569,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+6 {
-			m.ScaledWithTime(u, Object(u.Info[:len(addr)]),
+			mon.ScaledWithTime(u, Object(u.Info[:len(addr)]),
 				int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
 				info.Qual(u.Info[len(addr)+2]),
 				CP24Time2a(u.Info[len(addr)+3:len(addr)+6]),
@@ -585,7 +585,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+10 {
-			m.ScaledWithDate(u, Object(u.Info[:len(addr)]),
+			mon.ScaledWithDate(u, Object(u.Info[:len(addr)]),
 				int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
 				info.Qual(u.Info[len(addr)+2]),
 				CP56Time2a(u.Info[len(addr)+3:len(addr)+10]),
@@ -600,7 +600,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
-				m.Float(u, addr,
+				mon.Float(u, addr,
 					math.Float32frombits(binary.LittleEndian.Uint32(u.Info[i:i+4])),
 					info.Qual(u.Info[i+4]),
 				)
@@ -611,7 +611,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 				return errInfoSize
 			}
 			for len(u.Info) >= len(addr)+5 {
-				m.Float(u, Object(u.Info[:len(addr)]),
+				mon.Float(u, Object(u.Info[:len(addr)]),
 					math.Float32frombits(
 						binary.LittleEndian.Uint32(
 							u.Info[len(addr):len(addr)+4],
@@ -631,7 +631,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+8 {
-			m.FloatWithTime(u, Object(u.Info[:len(addr)]),
+			mon.FloatWithTime(u, Object(u.Info[:len(addr)]),
 				math.Float32frombits(
 					binary.LittleEndian.Uint32(
 						u.Info[len(addr):len(addr)+4],
@@ -651,7 +651,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			return errInfoSize
 		}
 		for len(u.Info) >= len(addr)+12 {
-			m.FloatWithDate(u, Object(u.Info[:len(addr)]),
+			mon.FloatWithDate(u, Object(u.Info[:len(addr)]),
 				math.Float32frombits(
 					binary.LittleEndian.Uint32(
 						u.Info[len(addr):len(addr)+4],
