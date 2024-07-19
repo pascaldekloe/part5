@@ -233,14 +233,6 @@ func NewLog[COT info.Cause, Common info.ComAddr, Object info.Addr](w io.Writer) 
 	}
 }
 
-// NextAddr gets the followup in an info.Sequence.
-func nextAddr[T info.Addr](addr T) T {
-	var sum T
-	// overflow ignored (as unspecified behaviour)
-	sum.SetN(addr.N() + 1)
-	return sum
-}
-
 // ErrNotMonitor rejects an info.DataUnit based on its type identifier.
 var ErrNotMonitor = errors.New("part5: ASDU type identifier not in monitor information range 1..44")
 
@@ -268,8 +260,8 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			}
 			addr := Object(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
-				m.DoublePt(u, addr, info.DoublePtQual(b))
-				addr = nextAddr(addr)
+				m.SinglePt(u, addr, info.SinglePtQual(b))
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+1) {
@@ -321,7 +313,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			addr := Object(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
 				m.DoublePt(u, addr, info.DoublePtQual(b))
-				addr = nextAddr(addr)
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+1) {
@@ -373,7 +365,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+2 <= len(u.Info); i += 2 {
 				m.Step(u, addr, info.StepQual(u.Info[i:i+2]))
-				addr = nextAddr(addr)
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+2) {
@@ -425,7 +417,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
 				m.Bits(u, addr, info.BitsQual(u.Info[i:i+5]))
-				addr = nextAddr(addr)
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+5) {
@@ -477,7 +469,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+1 < len(u.Info); i += 2 {
 				m.NormUnqual(u, addr, info.Norm(u.Info[i:i+2]))
-				addr = nextAddr(addr)
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+2) {
@@ -499,7 +491,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 			addr := Object(u.Info[:len(addr)])
 			for i := len(addr); i+3 <= len(u.Info); i += 3 {
 				m.Norm(u, addr, info.NormQual(u.Info[i:i+3]))
-				addr = nextAddr(addr)
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+3) {
@@ -554,7 +546,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 					int16(binary.LittleEndian.Uint16(u.Info[i:i+2])),
 					info.Qual(u.Info[i+2]),
 				)
-				addr = nextAddr(addr)
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+3) {
@@ -612,7 +604,7 @@ func (m *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, O
 					math.Float32frombits(binary.LittleEndian.Uint32(u.Info[i:i+4])),
 					info.Qual(u.Info[i+4]),
 				)
-				addr = nextAddr(addr)
+				addr, _ = u.Params.AddrOf(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Var.Count()*(len(addr)+5) {

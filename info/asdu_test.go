@@ -5,14 +5,8 @@ import (
 	"testing"
 )
 
-func mustAddr16(n uint) ComAddr16 {
-	var p Params[Cause16, ComAddr16, Addr16]
-	addr, ok := p.NewComAddr(n)
-	if !ok {
-		panic(n)
-	}
-	return addr
-}
+// Wide tests multi-byte addressing.
+var Wide Params[Cause16, ComAddr16, Addr16]
 
 var goldenDataUnits = []struct {
 	unit DataUnit[Cause16, ComAddr16, Addr16]
@@ -23,7 +17,7 @@ var goldenDataUnits = []struct {
 			Type:  M_SP_NA_1,
 			Var:   1,
 			Cause: Cause16{Percyc, 7},
-			Addr:  mustAddr16(1001),
+			Addr:  Wide.MustComAddrOf(1001),
 			Info:  []byte{1, 2, 3},
 		},
 		"M_SP_NA_1 @1001 percyc #7: 0x03@513 .",
@@ -32,7 +26,7 @@ var goldenDataUnits = []struct {
 			Type:  M_DP_NA_1,
 			Var:   2,
 			Cause: Cause16{Back, 0},
-			Addr:  mustAddr16(42),
+			Addr:  Wide.MustComAddrOf(42),
 			Info:  []byte{1, 2, 3, 4, 5, 6},
 		},
 		"M_DP_NA_1 @42 back #0: 0x03@513 0x06@1284 .",
@@ -41,7 +35,7 @@ var goldenDataUnits = []struct {
 			Type:  M_ST_NA_1,
 			Var:   2,
 			Cause: Cause16{Spont, 21},
-			Addr:  mustAddr16(250),
+			Addr:  Wide.MustComAddrOf(250),
 			Info:  []byte{1, 2, 3, 4, 5},
 		},
 		"M_ST_NA_1 @250 spont #21: 0x0304@513 0x05<EOF> !",
@@ -50,7 +44,7 @@ var goldenDataUnits = []struct {
 			Type:  M_ST_NA_1,
 			Var:   1,
 			Cause: Cause16{Spont, 22},
-			Addr:  mustAddr16(251),
+			Addr:  Wide.MustComAddrOf(251),
 			Info:  []byte{1, 2, 3, 4, 5, 6, 7},
 		},
 		"M_ST_NA_1 @251 spont #22: 0x0304@513 0x050607<EOF> 𝚫 +1 !",
@@ -59,7 +53,7 @@ var goldenDataUnits = []struct {
 			Type:  M_ME_NC_1,
 			Var:   2 | Sequence,
 			Cause: Cause16{Init, 60},
-			Addr:  mustAddr16(12),
+			Addr:  Wide.MustComAddrOf(12),
 			Info:  []byte{99, 0, 1, 2, 3, 4, 5, 6},
 		},
 		"M_ME_NC_1 @12 init #60: 0x0102030405@99 0x06<EOF>@100 !",
@@ -68,7 +62,7 @@ var goldenDataUnits = []struct {
 			Type:  M_ME_NC_1,
 			Var:   2 | Sequence,
 			Cause: Cause16{Init, 61},
-			Addr:  mustAddr16(12),
+			Addr:  Wide.MustComAddrOf(12),
 			Info:  []byte{99, 0, 1, 2, 3, 4, 5},
 		},
 		"M_ME_NC_1 @12 init #61: 0x0102030405@99 𝚫 −1 !",

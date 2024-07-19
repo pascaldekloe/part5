@@ -6,18 +6,23 @@ import (
 )
 
 // Format implements the fmt.Formatter interface.
+// See the package documentation of info for options.
 func (addr ComAddr8) Format(f fmt.State, verb rune) { format8(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
+// See the package documentation of info for options.
 func (addr ComAddr16) Format(f fmt.State, verb rune) { format16(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
+// See the package documentation of info for options.
 func (addr Addr8) Format(f fmt.State, verb rune) { format8(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
+// See the package documentation of info for options.
 func (addr Addr16) Format(f fmt.State, verb rune) { format16(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
+// See the package documentation of info for options.
 func (addr Addr24) Format(f fmt.State, verb rune) { format24(addr, f, verb) }
 
 func format8(addr [1]uint8, f fmt.State, verb rune) {
@@ -105,7 +110,7 @@ func format24(addr [3]uint8, f fmt.State, verb rune) {
 
 // Format implements the fmt.Formatter interface. Verb must be 's'. Flag '#'
 // switches to the alternated address format rather than the decimal default.
-// See the package documentation for details.
+// See the package documentation of info for details.
 func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 	if verb != 's' {
 		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
@@ -212,7 +217,8 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 				fmt.Fprintf(f, " %#x@%d", info, addr)
 			}
 
-			addr, _ = u.NewAddr(addr.N() + 1)
+			// silent overflow
+			addr, _ = u.AddrOf(addr.N() + 1)
 		}
 	}
 }

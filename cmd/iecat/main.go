@@ -195,17 +195,18 @@ func (sys system[COT, Common, Object]) streamOutbound(client *session.Station) {
 
 	if *inroFlag != "<none>" {
 		// send interrogation activation
-		addr, err := strconv.ParseUint(*inroFlag, 0, 32)
+		addrN, err := strconv.ParseUint(*inroFlag, 0, 32)
 		if err != nil {
 			CmdLog.Fatal("illegal interrogation address: ", err)
 		}
-
-		u := sys.NewDataUnit()
-		if !u.Addr.SetN(uint(addr)) {
-			CmdLog.Fatalf("common address %d for interrogation does not fit in %d-octet width of system",
-				addr, *comAddrFlag)
+		addr, ok := sys.ComAddrOf(uint(addrN))
+		if !ok {
+			CmdLog.Fatalf("common address %d for interrogation exceeds %d-octet width of system",
+				addrN, len(addr))
 		}
-		u.Inro()
+
+		u := sys.Inro()
+		u.Addr = addr
 		client.Class2 <- session.NewOutbound(u.Append(nil))
 	}
 

@@ -31,19 +31,13 @@ var errComAddrZero = errors.New("part5: common address 0 is not used")
 // All information objects/addresses reside in a common address.
 // See companion standard 101, subclause 7.2.4.
 type (
-	// The address length is fixed per system.
+	// A ComAddr can be instantiated with ComAddrOf of Params.
 	ComAddr interface {
+		// The address width is fixed per system.
 		ComAddr8 | ComAddr16
-
-		// See package documentation for options.
-		fmt.Formatter
 
 		// N gets the address as a numeric value.
 		N() uint
-
-		// SetN updates the address as a numeric
-		// value. The return is false on overflow.
-		SetN(uint) bool
 
 		// The global address is a broadcast address,
 		// directed to all stations of a specific system.
@@ -56,15 +50,24 @@ type (
 	ComAddr16 [2]uint8
 )
 
-// NewComAddr returns either a numeric match, or false when the value exceeds
-// the address width.
-func (p Params[COT, Common, Object]) NewComAddr(n uint) (Common, bool) {
+// ComAddrOf returns either a numeric match, or false when n exceeds the address
+// width of Common.
+func (p Params[COT, Common, Object]) ComAddrOf(n uint) (Common, bool) {
 	var addr Common
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
 		n >>= 8
 	}
 	return addr, n == 0
+}
+
+// MustComAddrOf is like CommAddrOf, yet it panics on overflow.
+func (p Params[COT, Common, Object]) MustComAddrOf(n uint) Common {
+	addr, ok := p.ComAddrOf(n)
+	if !ok {
+		panic("overflow of common address")
+	}
+	return addr
 }
 
 // N implements the ComAddr interface.
@@ -75,19 +78,6 @@ func (addr ComAddr8) N() uint {
 // N implements the ComAddr interface.
 func (addr ComAddr16) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8
-}
-
-// SetN implements the ComAddr interface.
-func (addr ComAddr8) SetN(n uint) bool {
-	addr[0] = byte(n)
-	return n < 0x100
-}
-
-// SetN implements the ComAddr interface.
-func (addr ComAddr16) SetN(n uint) bool {
-	addr[0] = byte(n)
-	addr[1] = byte(n)
-	return n < 0x10000
 }
 
 // IsGlobal implements the ComAddr interface.
@@ -110,20 +100,14 @@ func (addr ComAddr16) HighOctet() uint8 { return addr[1] }
 // control direction and a source address in the monitor direction.”
 // — companion standard 101, subclause 7.2.5.
 type (
-	// The address length is fixed per system.
+	// An Addr can be instantiated with AddrOf of Params.
 	Addr interface {
+		// The address width is fixed per system.
 		Addr8 | Addr16 | Addr24
-
-		// See package documentation for options.
-		fmt.Formatter
 
 		// N gets the address as a numeric value.
 		// Zero marks the address as irrelevant.
 		N() uint
-
-		// SetN updates the address as a numeric
-		// value. The return is false on overflow.
-		SetN(uint) bool
 	}
 
 	Addr8  [1]uint8
@@ -131,15 +115,24 @@ type (
 	Addr24 [3]uint8
 )
 
-// NewAddr returns either the numeric match, or false when the value exceeds the
-// address width.
-func (p Params[COT, Common, Object]) NewAddr(n uint) (Object, bool) {
+// AddrOf returns either a numeric match, or false when n exceeds the address
+// width of Object.
+func (p Params[COT, Common, Object]) AddrOf(n uint) (Object, bool) {
 	var addr Object
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
 		n >>= 8
 	}
 	return addr, n == 0
+}
+
+// MustAddrOf is like AddrOf, yet it panics on overflow.
+func (p Params[COT, Common, Object]) MustAddrOf(n uint) Object {
+	addr, ok := p.AddrOf(n)
+	if !ok {
+		panic("overflow of information-object")
+	}
+	return addr
 }
 
 // N implements the Addr interface.
@@ -155,27 +148,6 @@ func (addr Addr16) N() uint {
 // N implements the Addr interface.
 func (addr Addr24) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8 | uint(addr[2])<<16
-}
-
-// SetN implements the Addr interface.
-func (addr Addr8) SetN(n uint) bool {
-	addr[0] = byte(n)
-	return n < 0x100
-}
-
-// SetN implements the Addr interface.
-func (addr Addr16) SetN(n uint) bool {
-	addr[0] = byte(n)
-	addr[1] = byte(n >> 8)
-	return n < 0x10000
-}
-
-// SetN implements the Addr interface.
-func (addr Addr24) SetN(n uint) bool {
-	addr[0] = byte(n)
-	addr[1] = byte(n >> 8)
-	addr[2] = byte(n >> 16)
-	return n < 0x100_0000
 }
 
 // LowOctet provides an alternative to numeric addressing.
