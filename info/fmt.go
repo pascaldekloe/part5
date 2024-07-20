@@ -166,7 +166,7 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 		// structure unknown
 		fmt.Fprintf(f, " %#x ?", u.Info)
 
-	case u.Var&Sequence == 0:
+	case !u.Var.IsSeq():
 		// objects paired with an address each
 		var i int // read index
 		for obj_n := 0; ; obj_n++ {

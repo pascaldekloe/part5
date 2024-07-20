@@ -51,7 +51,7 @@ var goldenDataUnits = []struct {
 	}, {
 		DataUnit[COT16, ComAddr16, Addr16]{
 			Type: M_ME_NC_1,
-			Var:  2 | Sequence,
+			Var:  2 | 128,
 			COT:  Wide.MustCOTOrigOf(Init, 60),
 			Addr: Wide.MustComAddrOf(12),
 			Info: []byte{99, 0, 1, 2, 3, 4, 5, 6},
@@ -60,7 +60,7 @@ var goldenDataUnits = []struct {
 	}, {
 		DataUnit[COT16, ComAddr16, Addr16]{
 			Type: M_ME_NC_1,
-			Var:  2 | Sequence,
+			Var:  2 | 128,
 			COT:  Wide.MustCOTOrigOf(Init, 61),
 			Addr: Wide.MustComAddrOf(12),
 			Info: []byte{99, 0, 1, 2, 3, 4, 5},

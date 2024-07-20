@@ -254,7 +254,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 
 	switch u.Type {
 	case info.M_SP_NA_1: // single-point
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count() {
 				return errInfoSize
 			}
@@ -276,7 +276,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_SP_TA_1: // single-point with 3 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_SP_TA_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+4) {
@@ -291,7 +291,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_SP_TB_1: // single-point with 7 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_SP_TB_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+8) {
@@ -306,7 +306,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_DP_NA_1: // double-point
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count() {
 				return errInfoSize
 			}
@@ -328,7 +328,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_DP_TA_1: // double-point with 3 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_DP_TA_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+4) {
@@ -343,7 +343,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_DP_TB_1: // double-point with 7 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_DP_TB_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+8) {
@@ -358,7 +358,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ST_NA_1: // step position
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count()*2 {
 				return errInfoSize
 			}
@@ -380,7 +380,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ST_TA_1: // step position with 3 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ST_TA_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+5) {
@@ -395,7 +395,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ST_TB_1: // step position with 7 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ST_TB_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+9) {
@@ -410,7 +410,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_BO_NA_1: // bitstring
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count()*5 {
 				return errInfoSize
 			}
@@ -432,7 +432,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_BO_TA_1: // bit string with 3 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_BO_TA_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+8) {
@@ -447,7 +447,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_BO_TB_1: // bit string with 7 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_BO_TB_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+12) {
@@ -462,7 +462,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_ND_1: // normalized value without quality descriptor
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count()*2 {
 				return errInfoSize
 			}
@@ -484,7 +484,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_NA_1: // normalized value
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count()*3 {
 				return errInfoSize
 			}
@@ -506,7 +506,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_TA_1: // normalized value with 3 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ME_TA_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+6) {
@@ -521,7 +521,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_TD_1: // normalized value with 7 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ME_TD_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+10) {
@@ -536,7 +536,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_NB_1: // scaled value
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count()*3 {
 				return errInfoSize
 			}
@@ -562,7 +562,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_TB_1: // scaled value with 3 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ME_TB_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+6) {
@@ -578,7 +578,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_TE_1: // scaled value with 7 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ME_TE_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+10) {
@@ -594,7 +594,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_NC_1: // floating-point
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			if len(u.Info) != len(addr)+u.Var.Count()*5 {
 				return errInfoSize
 			}
@@ -624,7 +624,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_TC_1: // floating point with 3 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ME_TC_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+8) {
@@ -644,7 +644,7 @@ func (mon *Monitor[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common,
 		}
 
 	case info.M_ME_TF_1: // floating point with 7 octet time-tag
-		if u.Var&info.Sequence != 0 {
+		if u.Var.IsSeq() {
 			return errors.New("part5: ASDU address sequence with M_ME_TF_1 not allowed")
 		}
 		if len(u.Info) != u.Var.Count()*(len(addr)+12) {

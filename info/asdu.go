@@ -6,20 +6,16 @@ import (
 	"math"
 )
 
-// Variable Structure Qualifier Flags
-const (
-	// The SQ flag signals that the information applies to a consecutive
-	// sequence of addresses, in which each information-object address is
-	// one higher than the previous element.
-	Sequence = 0x80
-)
-
 // Var is the variable structure qualifier, which defines the payload
 // layout with an object Count and a Sequence flag.
 type Var uint8
 
 // Count returns the number of information objects, which can be zero.
 func (v Var) Count() int { return int(v & 0x7f) }
+
+// IsSeq returns the SQ flag, which signals that the information applies to a
+// consecutive sequence of addresses, each address incremented by one.
+func (v Var) IsSeq() bool { return v&0x80 != 0 }
 
 // Cause Of Transmission Flags
 const (
