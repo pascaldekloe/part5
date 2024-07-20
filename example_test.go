@@ -21,10 +21,10 @@ func TestMain(m *testing.M) {
 
 // Time tag reconstruction with some leeway comes recommended.
 func ExampleCP24Time2a_WithinHourBefore() {
-	m := part5.NewMonitor[info.Cause8, info.ComAddr16, info.Addr16]()
+	m := part5.NewMonitor[info.COT8, info.ComAddr16, info.Addr16]()
 
 	// Listener to short floating-points with time tag.
-	m.FloatWithTime = func(u info.DataUnit[info.Cause8, info.ComAddr16, info.Addr16],
+	m.FloatWithTime = func(u info.DataUnit[info.COT8, info.ComAddr16, info.Addr16],
 		addr info.Addr16, f float32, q info.Qual, tag part5.CP24Time2a) {
 		// The time tag is relative to the now.
 		received := time.Now()

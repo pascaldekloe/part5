@@ -7,6 +7,44 @@ import (
 
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
+func (c COT8) Format(f fmt.State, verb rune) {
+	formatCauseFlagOrig(f, verb, c[0], 0)
+}
+
+// Format implements the fmt.Formatter interface.
+// See the package documentation of info for options.
+func (c COT16) Format(f fmt.State, verb rune) {
+	formatCauseFlagOrig(f, verb, c[0], c[1])
+}
+
+func formatCauseFlagOrig(f fmt.State, verb rune, c, orig uint8) {
+	if verb != 's' {
+		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
+		return
+	}
+
+	io.WriteString(f, causeLabels[c&63])
+
+	switch c & (negFlag | testFlag) {
+	case negFlag:
+		io.WriteString(f, ",neg")
+	case testFlag:
+		io.WriteString(f, ",test")
+	case negFlag | testFlag:
+		io.WriteString(f, ",neg,test")
+	}
+
+	if orig != 0 {
+		format := " #%d"
+		if f.Flag('#') {
+			format = " #%02x"
+		}
+		fmt.Fprintf(f, format, orig)
+	}
+}
+
+// Format implements the fmt.Formatter interface.
+// See the package documentation of info for options.
 func (addr ComAddr8) Format(f fmt.State, verb rune) { format8(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
@@ -108,8 +146,7 @@ func format24(addr [3]uint8, f fmt.State, verb rune) {
 	}
 }
 
-// Format implements the fmt.Formatter interface. Verb must be 's'. Flag '#'
-// switches to the alternated address format rather than the decimal default.
+// Format implements the fmt.Formatter interface.
 // See the package documentation of info for details.
 func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 	if verb != 's' {
@@ -117,11 +154,11 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 		return
 	}
 
+	format := "%s @%d %s:"
 	if f.Flag('#') {
-		fmt.Fprintf(f, "%s @%#x %s:", u.Type, u.Addr, u.Cause)
-	} else {
-		fmt.Fprintf(f, "%s @%d %s:", u.Type, u.Addr, u.Cause)
+		format = "%s @%#x %s:"
 	}
+	fmt.Fprintf(f, format, u.Type, u.Addr, u.COT)
 
 	dataSize := ObjSize[u.Type]
 	switch {

@@ -12,7 +12,7 @@ import (
 
 // Monitor processes information in monitor direction,
 // as listed in table 8 from companion standard 101.
-type Monitor[COT info.Cause, Common info.ComAddr, Object info.Addr] struct {
+type Monitor[COT info.COT, Common info.ComAddr, Object info.Addr] struct {
 	// SinglePt gets called for type identifier 1: M_SP_NA_1.
 	SinglePt func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual)
 	// SinglePtWithTime gets called for type identifier 2: M_SP_TA_1.
@@ -65,7 +65,7 @@ type Monitor[COT info.Cause, Common info.ComAddr, Object info.Addr] struct {
 }
 
 // NewMonitor instantiatiates all listener functions with a no-op placeholder.
-func NewMonitor[COT info.Cause, Common info.ComAddr, Object info.Addr]() Monitor[COT, Common, Object] {
+func NewMonitor[COT info.COT, Common info.ComAddr, Object info.Addr]() Monitor[COT, Common, Object] {
 	return Monitor[COT, Common, Object]{
 		SinglePt:         func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual) {},
 		SinglePtWithTime: func(info.DataUnit[COT, Common, Object], Object, info.SinglePtQual, CP24Time2a) {},
@@ -99,135 +99,135 @@ func NewMonitor[COT info.Cause, Common info.ComAddr, Object info.Addr]() Monitor
 }
 
 // NewLog writes each measurement event as a text line in a human readable formon.
-func NewLog[COT info.Cause, Common info.ComAddr, Object info.Addr](w io.Writer) Monitor[COT, Common, Object] {
+func NewLog[COT info.COT, Common info.ComAddr, Object info.Addr](w io.Writer) Monitor[COT, Common, Object] {
 	return Monitor[COT, Common, Object]{
 		SinglePt: func(u info.DataUnit[COT, Common, Object], addr Object, p info.SinglePtQual) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual())
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual())
 		},
 		SinglePtWithTime: func(u info.DataUnit[COT, Common, Object], addr Object, p info.SinglePtQual, t CP24Time2a) {
 			min, secInMilli := t.MinuteAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual(),
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual(),
 				min, secInMilli/1000, secInMilli%1000)
 		},
 		SinglePtWithDate: func(u info.DataUnit[COT, Common, Object], addr Object, p info.SinglePtQual, t CP56Time2a) {
 			y, m, d := t.Calendar()
 			H, M, secInMilli := t.ClockAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual(),
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual(),
 				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 		},
 
 		DoublePt: func(u info.DataUnit[COT, Common, Object], addr Object, p info.DoublePtQual) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual())
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual())
 		},
 		DoublePtWithTime: func(u info.DataUnit[COT, Common, Object], addr Object, p info.DoublePtQual, t CP24Time2a) {
 			min, secInMilli := t.MinuteAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual(),
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual(),
 				min, secInMilli/1000, secInMilli%1000)
 		},
 		DoublePtWithDate: func(u info.DataUnit[COT, Common, Object], addr Object, p info.DoublePtQual, t CP56Time2a) {
 			y, m, d := t.Calendar()
 			H, M, secInMilli := t.ClockAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual(),
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual(),
 				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 		},
 
 		Step: func(u info.DataUnit[COT, Common, Object], addr Object, p info.StepQual) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual())
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual())
 		},
 		StepWithTime: func(u info.DataUnit[COT, Common, Object], addr Object, p info.StepQual, t CP24Time2a) {
 			min, secInMilli := t.MinuteAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual(),
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual(),
 				min, secInMilli/1000, secInMilli%1000)
 		},
 		StepWithDate: func(u info.DataUnit[COT, Common, Object], addr Object, p info.StepQual, t CP56Time2a) {
 			y, m, d := t.Calendar()
 			H, M, secInMilli := t.ClockAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, p.Value(), p.Qual(),
+				u.Type, u.COT, u.Addr, addr, p.Value(), p.Qual(),
 				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 		},
 
 		Bits: func(u info.DataUnit[COT, Common, Object], addr Object, b info.BitsQual) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %#x %s\n",
-				u.Type, u.Cause, u.Addr, addr, b.Array(), b.Qual())
+				u.Type, u.COT, u.Addr, addr, b.Array(), b.Qual())
 		},
 		BitsWithTime: func(u info.DataUnit[COT, Common, Object], addr Object, b info.BitsQual, t CP24Time2a) {
 			min, secInMilli := t.MinuteAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %#x %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, b.Array(), b.Qual(),
+				u.Type, u.COT, u.Addr, addr, b.Array(), b.Qual(),
 				min, secInMilli/1000, secInMilli%1000)
 		},
 		BitsWithDate: func(u info.DataUnit[COT, Common, Object], addr Object, b info.BitsQual, t CP56Time2a) {
 			y, m, d := t.Calendar()
 			H, M, secInMilli := t.ClockAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %#x %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, b.Array(), b.Qual(),
+				u.Type, u.COT, u.Addr, addr, b.Array(), b.Qual(),
 				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 		},
 
 		NormUnqual: func(u info.DataUnit[COT, Common, Object], addr Object, n info.Norm) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %f\n",
-				u.Type, u.Cause, u.Addr, addr, n.Float64())
+				u.Type, u.COT, u.Addr, addr, n.Float64())
 		},
 		Norm: func(u info.DataUnit[COT, Common, Object], addr Object, n info.NormQual) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %f %s\n",
-				u.Type, u.Cause, u.Addr, addr, n.Link().Float64(), n.Qual())
+				u.Type, u.COT, u.Addr, addr, n.Link().Float64(), n.Qual())
 		},
 		NormWithTime: func(u info.DataUnit[COT, Common, Object], addr Object, n info.NormQual, t CP24Time2a) {
 			min, secInMilli := t.MinuteAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %f %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, n.Link().Float64(), n.Qual(),
+				u.Type, u.COT, u.Addr, addr, n.Link().Float64(), n.Qual(),
 				min, secInMilli/1000, secInMilli%1000)
 		},
 		NormWithDate: func(u info.DataUnit[COT, Common, Object], addr Object, n info.NormQual, t CP56Time2a) {
 			y, m, d := t.Calendar()
 			H, M, secInMilli := t.ClockAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %f %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, n.Link().Float64(), n.Qual(),
+				u.Type, u.COT, u.Addr, addr, n.Link().Float64(), n.Qual(),
 				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 		},
 
 		Scaled: func(u info.DataUnit[COT, Common, Object], addr Object, v int16, q info.Qual) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %d %s\n",
-				u.Type, u.Cause, u.Addr, addr, v, q)
+				u.Type, u.COT, u.Addr, addr, v, q)
 		},
 		ScaledWithTime: func(u info.DataUnit[COT, Common, Object], addr Object, v int16, q info.Qual, t CP24Time2a) {
 			min, secInMilli := t.MinuteAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %d %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, v, q,
+				u.Type, u.COT, u.Addr, addr, v, q,
 				min, secInMilli/1000, secInMilli%1000)
 		},
 		ScaledWithDate: func(u info.DataUnit[COT, Common, Object], addr Object, v int16, q info.Qual, t CP56Time2a) {
 			y, m, d := t.Calendar()
 			H, M, secInMilli := t.ClockAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %d %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, v, q,
+				u.Type, u.COT, u.Addr, addr, v, q,
 				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 		},
 
 		Float: func(u info.DataUnit[COT, Common, Object], addr Object, f float32, q info.Qual) {
 			fmt.Fprintf(w, "%s %s %#x/%#x %g %s\n",
-				u.Type, u.Cause, u.Addr, addr, f, q)
+				u.Type, u.COT, u.Addr, addr, f, q)
 		},
 		FloatWithTime: func(u info.DataUnit[COT, Common, Object], addr Object, f float32, q info.Qual, t CP24Time2a) {
 			min, secInMilli := t.MinuteAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %g %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, f, q,
+				u.Type, u.COT, u.Addr, addr, f, q,
 				min, secInMilli/1000, secInMilli%1000)
 		},
 		FloatWithDate: func(u info.DataUnit[COT, Common, Object], addr Object, f float32, q info.Qual, t CP56Time2a) {
 			y, m, d := t.Calendar()
 			H, M, secInMilli := t.ClockAndMillis()
 			fmt.Fprintf(w, "%s %s %#x/%#x %g %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Addr, addr, f, q,
+				u.Type, u.COT, u.Addr, addr, f, q,
 				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 		},
 	}

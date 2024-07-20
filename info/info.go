@@ -7,6 +7,9 @@
 // octet listing in big-endian order. Decimal octets "%#d" get sepatared by the
 // dot character ".", while hexadecimals "%#x" and "%#X" get separated by the
 // colon character ":".
+//
+// Descriptions of COT and DataUnit can be formatted with "%s". Flag '#' applies
+// the alternated address format rather than the decimal default.
 package info
 
 import (
@@ -22,7 +25,7 @@ import (
 // transmission (COT) sets the presence or absense of an originator address.
 // The address generics set the numeric width for stations and information
 // objects respectively.
-type Params[COT Cause, Common ComAddr, Object Addr] struct{}
+type Params[C COT, Common ComAddr, Object Addr] struct{}
 
 // ErrComAddrZero denies zero as an address.
 var errComAddrZero = errors.New("part5: common address 0 is not used")

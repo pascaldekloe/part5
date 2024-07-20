@@ -1,9 +1,6 @@
 package info
 
-import (
-	"errors"
-	"fmt"
-)
+import "errors"
 
 //go:generate stringer -type TypeID -output code_string.go code.go
 
@@ -240,14 +237,17 @@ var builtins = [256]int{
 	F_DR_TA_1: 13,
 }
 
-// ErrCauseZero denies zero as a cause of transmission.
-var errCauseZero = errors.New("part5: cause of transmission 0 is not used")
+// Cause (of transmission) does not include the Neg nor Test flags.
+type Cause uint8
+
+// ErrCauseZero denies Cause zero.
+var errCauseZero = errors.New("part5: cause of transmission 0 is not defined")
 
 // The cause of transmission codes are defined in table 14 from companion
-// standard 101. Auth, Seskey and Usrkey are defined in section 7, table 1,
+// standard 101. Auth, Seskey and Usrkey are defined in table 1 from section 7,
 // “Additional cause of transmission”.
 const (
-	_ = iota // 0: not used
+	_ Cause = iota // 0: not defined
 
 	Percyc   // periodic, cyclic
 	Back     // background scan
@@ -317,71 +317,15 @@ const (
 	_ // 61: for special use (private range)
 	_ // 62: for special use (private range)
 	_ // 63: for special use (private range)
-
-	// NegFlag indicates the negative (or positive) confirmation
-	// of activation requested by the primary application function.
-	// In case of irrelevance, the bit is zero.
-	NegFlag = 0x40
-
-	// TestFlag marks the cause of transmission for testing.
-	TestFlag = 0x80
 )
 
-// Cause of transmission is a code to justify emission. The 2-octet extension
-// includes an originator address, which is optional per system.
-// See companion standard 101, subclause 7.2.3.
-type (
-	// The Cause size is fixed per system.
-	Cause interface {
-		Cause8 | Cause16
-
-		// Value gets the cause of transmission together
-		// with the NegFlag and TestFlag.
-		Value() (codeAndFlags uint8)
-	}
-
-	Cause8  [1]uint8
-	Cause16 [2]uint8
-)
-
-// Value implements the Cause interface.
-func (cause Cause8) Value() uint8 { return cause[0] }
-
-// Value implements the Cause interface.
-func (cause Cause16) Value() uint8 { return cause[0] }
-
-// OrigAddr returns either the originator address in range [1..255], or it
-// returns zero for default.
-func (cause Cause16) OrigAddr() uint8 { return cause[1] }
-
-// String returns a compact description.
-func (cause Cause8) String() string {
-	return causeLabel(cause[0])
+// String returns a label token.
+func (c Cause) String() string {
+	return causeLabels[c&0x3f]
 }
 
-// String returns a compact description.
-func (cause Cause16) String() string {
-	return fmt.Sprintf("%s #%d", causeLabel(cause[0]), cause[1])
-}
-
-func causeLabel(cause uint8) string {
-	s := causeLabels[cause&^(NegFlag|TestFlag)]
-
-	switch cause & (NegFlag | TestFlag) {
-	case NegFlag:
-		s += ",neg"
-	case TestFlag:
-		s += ",test"
-	case NegFlag | TestFlag:
-		s += ",neg,test"
-	}
-
-	return s
-}
-
-// Can't use stringer: need lowercase, init reserved name & flags.
 var causeLabels = [64]string{
-	"nocause",
+	"notdef",
 	"percyc",
 	"back",
 	"spont",
