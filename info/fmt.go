@@ -255,7 +255,7 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 			}
 
 			// silent overflow
-			addr, _ = u.AddrOf(addr.N() + 1)
+			addr, _ = u.ObjAddrN(addr.N() + 1)
 		}
 	}
 }

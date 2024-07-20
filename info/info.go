@@ -25,7 +25,7 @@ import (
 // transmission (COT) sets the presence or absense of an originator address.
 // The address generics set the numeric width for stations and information
 // objects respectively.
-type Params[C COT, Common ComAddr, Object Addr] struct{}
+type Params[T COT, Com ComAddr, Obj Addr] struct{}
 
 // ErrComAddrZero denies zero as an address.
 var errComAddrZero = errors.New("part5: common address 0 is not used")
@@ -34,7 +34,7 @@ var errComAddrZero = errors.New("part5: common address 0 is not used")
 // All information objects/addresses reside in a common address.
 // See companion standard 101, subclause 7.2.4.
 type (
-	// A ComAddr can be instantiated with ComAddrOf of Params.
+	// A ComAddr can be instantiated with ComAddrN of Params.
 	ComAddr interface {
 		// The address width is fixed per system.
 		ComAddr8 | ComAddr16
@@ -53,10 +53,10 @@ type (
 	ComAddr16 [2]uint8
 )
 
-// ComAddrOf returns either a numeric match, or false when n exceeds the address
-// width of Common.
-func (p Params[COT, Common, Object]) ComAddrOf(n uint) (Common, bool) {
-	var addr Common
+// ComAddrN returns either a numeric match, or false when n overflows the
+// address width of Com.
+func (p Params[T, Com, Obj]) ComAddrN(n uint) (Com, bool) {
+	var addr Com
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
 		n >>= 8
@@ -64,9 +64,9 @@ func (p Params[COT, Common, Object]) ComAddrOf(n uint) (Common, bool) {
 	return addr, n == 0
 }
 
-// MustComAddrOf is like CommAddrOf, yet it panics on overflow.
-func (p Params[COT, Common, Object]) MustComAddrOf(n uint) Common {
-	addr, ok := p.ComAddrOf(n)
+// MustComAddrN is like CommAddrN, yet it panics on overflow.
+func (p Params[T, Com, Obj]) MustComAddrN(n uint) Com {
+	addr, ok := p.ComAddrN(n)
 	if !ok {
 		panic("overflow of common address")
 	}
@@ -103,7 +103,7 @@ func (addr ComAddr16) HighOctet() uint8 { return addr[1] }
 // control direction and a source address in the monitor direction.”
 // — companion standard 101, subclause 7.2.5.
 type (
-	// An Addr can be instantiated with AddrOf of Params.
+	// An Addr can be instantiated with ObjAddrN of Params.
 	Addr interface {
 		// The address width is fixed per system.
 		Addr8 | Addr16 | Addr24
@@ -118,10 +118,10 @@ type (
 	Addr24 [3]uint8
 )
 
-// AddrOf returns either a numeric match, or false when n exceeds the address
-// width of Object.
-func (p Params[COT, Common, Object]) AddrOf(n uint) (Object, bool) {
-	var addr Object
+// ObjAddrN returns either a numeric match, or false when n overflows the
+// address width of Obj.
+func (p Params[T, Com, Obj]) ObjAddrN(n uint) (Obj, bool) {
+	var addr Obj
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
 		n >>= 8
@@ -129,9 +129,9 @@ func (p Params[COT, Common, Object]) AddrOf(n uint) (Object, bool) {
 	return addr, n == 0
 }
 
-// MustAddrOf is like AddrOf, yet it panics on overflow.
-func (p Params[COT, Common, Object]) MustAddrOf(n uint) Object {
-	addr, ok := p.AddrOf(n)
+// MustObjAddrN is like ObjAddrN, yet it panics on overflow.
+func (p Params[T, Com, Obj]) MustObjAddrN(n uint) Obj {
+	addr, ok := p.ObjAddrN(n)
 	if !ok {
 		panic("overflow of information-object")
 	}

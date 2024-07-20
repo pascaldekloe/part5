@@ -161,17 +161,16 @@ func mustPacketStream() packetStream {
 }
 
 // System has a network setup.
-type system[COT info.COT, Common info.ComAddr, Object info.Addr] struct {
-	info.Params[COT, Common, Object]
+type system[T info.COT, Com info.ComAddr, Obj info.Addr] struct {
+	info.Params[T, Com, Obj]
 }
 
 // StreamInbound implements the packetStream interface.
-func (sys system[COT, Common, Object]) streamInbound(client *session.Station) {
+func (sys system[T, Com, Obj]) streamInbound(client *session.Station) {
+	mon := part5.NewLog(sys.Params, os.Stdout)
+
 	u := sys.NewDataUnit() // reusable
 	var n uint64
-
-	mon := part5.NewLog[COT, Common, Object](os.Stdout)
-
 	for p := range client.In {
 		n++
 
@@ -190,7 +189,7 @@ func (sys system[COT, Common, Object]) streamInbound(client *session.Station) {
 }
 
 // StreamOutbound implements the packetStream interface.
-func (sys system[COT, Common, Object]) streamOutbound(client *session.Station) {
+func (sys system[T, Com, Obj]) streamOutbound(client *session.Station) {
 	client.Launch <- session.Up
 
 	if *inroFlag != "<none>" {
@@ -199,7 +198,7 @@ func (sys system[COT, Common, Object]) streamOutbound(client *session.Station) {
 		if err != nil {
 			CmdLog.Fatal("illegal interrogation address: ", err)
 		}
-		addr, ok := sys.ComAddrOf(uint(addrN))
+		addr, ok := sys.ComAddrN(uint(addrN))
 		if !ok {
 			CmdLog.Fatalf("common address %d for interrogation exceeds %d-octet width of system",
 				addrN, len(addr))
