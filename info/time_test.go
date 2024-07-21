@@ -1,19 +1,32 @@
-package part5
+package info_test
 
 import (
+	"io"
+	"log"
+	"os"
 	"testing"
 	"time"
+
+	"github.com/pascaldekloe/part5/info"
 )
 
-var goldenCP24Time2as = []struct {
-	enc            CP24Time2a
-	min, sec, nsec int
-}{
-	{CP24Time2a{1, 2, 3}, 3, 0, 513000000},
-	{CP24Time2a{11, 12, 13}, 13, 3, 83000000},
+func TestMain(m *testing.M) {
+	// Logging documents intend in examples.
+	// Not interested in the output though.
+	log.SetOutput(io.Discard)
+
+	os.Exit(m.Run())
 }
 
-var brokenCP24Time2as = []CP24Time2a{
+var goldenCP24Time2as = []struct {
+	enc            info.CP24Time2a
+	min, sec, nsec int
+}{
+	{info.CP24Time2a{1, 2, 3}, 3, 0, 513000000},
+	{info.CP24Time2a{11, 12, 13}, 13, 3, 83000000},
+}
+
+var brokenCP24Time2as = []info.CP24Time2a{
 	{1, 2, 131},
 }
 
@@ -43,14 +56,14 @@ func TestWithinHourBefore(t *testing.T) {
 }
 
 var goldenCP56Time2as = []struct {
-	enc  CP56Time2a
+	enc  info.CP56Time2a
 	time time.Time
 }{
-	{CP56Time2a{1, 2, 3, 4, 5, 6, 7},
+	{info.CP56Time2a{1, 2, 3, 4, 5, 6, 7},
 		time.Date(2007, 6, 5, 4, 3, 0, 513000000, time.UTC)},
-	{CP56Time2a{1, 2, 131, 4, 5, 6, 7},
+	{info.CP56Time2a{1, 2, 131, 4, 5, 6, 7},
 		time.Time{}},
-	{CP56Time2a{11, 12, 13, 14, 15, 16, 17},
+	{info.CP56Time2a{11, 12, 13, 14, 15, 16, 17},
 		time.Date(2016, 12, 15, 14, 13, 3, 83000000, time.UTC)},
 }
 
@@ -61,4 +74,20 @@ func TestWithin20thCentury(t *testing.T) {
 			t.Errorf("%#x got %s, want %s", gold.enc, got, gold.time)
 		}
 	}
+}
+
+// Time tag reconstruction with some leeway comes recommended.
+func ExampleCP24Time2a_WithinHourBefore() {
+	// Suppose a measured value with time information.
+	var tag info.CP24Time2a
+
+	// The time tag is relative to the now.
+	received := time.Now()
+
+	// Allow up to 5 seconds into the future to
+	// account for time synchronisation issues.
+	const leeway = 5 * time.Second
+
+	t := tag.WithinHourBefore(received.Add(leeway))
+	log.Println("timestamp reconstructed to", t)
 }

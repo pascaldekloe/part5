@@ -1,4 +1,4 @@
-package part5
+package info
 
 import "time"
 
@@ -11,32 +11,33 @@ import "time"
 type CP56Time2a [7]byte
 
 // Invalid returns the IV flag.
-func (c *CP56Time2a) Invalid() bool {
-	return c[2]&0x80 != 0
+func (t2a *CP56Time2a) Invalid() bool {
+	return t2a[2]&0x80 != 0
 }
 
 // Set marshals the time. Reserved bits can be set afterwards.
 // The zero value marks the time as invalid (with the IV flag).
 // Digits beyond milliseconds are dropped (without rounding).
 // ⚠️ Encoding loses the time-zone context.
-func (c *CP56Time2a) Set(t time.Time) {
-	c.setAll(t, true)
+func (t2a *CP56Time2a) Set(t time.Time) {
+	t2a.setAll(t, true)
 }
 
 // SetNotAll skips both the day-of-the-week field and the summer-time flag.
-func (c *CP56Time2a) SetNotAll(t time.Time) {
-	c.setAll(t, false)
+func (t2a *CP56Time2a) SetNotAll(t time.Time) {
+	t2a.setAll(t, false)
 }
 
-func (c *CP56Time2a) setAll(t time.Time, all bool) {
+func (t2a *CP56Time2a) setAll(t time.Time, all bool) {
 	if t.IsZero() {
-		c[0] = 0
-		c[1] = 0
-		c[2] = 0x80 // invalid flag [IV]
-		c[3] = 0
-		c[4] = 0
-		c[5] = 0
-		c[6] = 0
+		t2a[0] = 0
+		t2a[1] = 0
+		t2a[2] = 0x80 // invalid flag [IV]
+		t2a[3] = 0
+		t2a[4] = 0
+		t2a[5] = 0
+		t2a[6] = 0
+
 		return
 	}
 
@@ -52,14 +53,14 @@ func (c *CP56Time2a) setAll(t time.Time, all bool) {
 	}
 
 	millis := uint(second*1000) + uint(t.Nanosecond()/1e6)
-	c[0] = byte(millis)
-	c[1] = byte(millis >> 8)
+	t2a[0] = byte(millis)
+	t2a[1] = byte(millis >> 8)
 
-	c[2] = byte(minute)
-	c[3] = byte(hour)
-	c[4] = byte(day)
-	c[5] = byte(month)
-	c[6] = byte(year % 100)
+	t2a[2] = byte(minute)
+	t2a[3] = byte(hour)
+	t2a[4] = byte(day)
+	t2a[5] = byte(month)
+	t2a[6] = byte(year % 100)
 }
 
 // Within20thCentury unmarshals the time without any validation, and it then
@@ -67,15 +68,15 @@ func (c *CP56Time2a) setAll(t time.Time, all bool) {
 // 20th century, and that encoding applied an equivalent of the time.Location.
 // The return is zero when the invalid flag [IV] is set. Otherwise the return is
 // in range [2000-01-01 00:00:00.000, 2099-12-31 23:59:59.999].
-func (c *CP56Time2a) Within20thCentury(loc *time.Location) time.Time {
-	if c.Invalid() {
+func (t2a *CP56Time2a) Within20thCentury(loc *time.Location) time.Time {
+	if t2a.Invalid() {
 		return time.Time{}
 	}
 
-	yearInCentury, month, day := c.Calendar()
+	yearInCentury, month, day := t2a.Calendar()
 	year := yearInCentury + 2000
 
-	hour, min, secInMilli := c.ClockAndMillis()
+	hour, min, secInMilli := t2a.ClockAndMillis()
 	// split millisecond count
 	sec := secInMilli / 1000
 	nanos := (secInMilli % 1000) * 1e6
@@ -84,20 +85,20 @@ func (c *CP56Time2a) Within20thCentury(loc *time.Location) time.Time {
 }
 
 // Calendar unmarshals the day counts without any validation.
-// Note that the year count range [0..99] excludes the century.
-func (c *CP56Time2a) Calendar() (yearInCentury int, _ time.Month, day int) {
-	return int(uint(c[6]) & 0x7f),
-		time.Month(uint(c[5]) & 0x0f),
-		int(uint(c[4]) & 0x1f)
+// Note that the year count excludes the century, range [0..99].
+func (t2a *CP56Time2a) Calendar() (yearInCentury int, _ time.Month, day int) {
+	return int(uint(t2a[6]) & 0x7f),
+		time.Month(uint(t2a[5]) & 0x0f),
+		int(uint(t2a[4]) & 0x1f)
 }
 
 // ClockAndMillis unmarshals the time of the day without any validation.
 // Note that the seconds and the milliseconds are combined in one count,
 // range [0..59999].
-func (c *CP56Time2a) ClockAndMillis() (hour, min, secInMilli int) {
-	return int(uint(c[3]) & 0x1f),
-		int(uint(c[2]) & 0x3f),
-		int(uint(c[1])<<8 | uint(c[0]))
+func (t2a *CP56Time2a) ClockAndMillis() (hour, min, secInMilli int) {
+	return int(uint(t2a[3]) & 0x1f),
+		int(uint(t2a[2]) & 0x3f),
+		int(uint(t2a[1])<<8 | uint(t2a[0]))
 }
 
 // Reserve1 returns the RES1 bit.
@@ -109,35 +110,35 @@ func (c *CP56Time2a) ClockAndMillis() (hour, min, secInMilli int) {
 // as concentrator stations or by the controlling station itself (substituted
 // time).”
 // — companion standard 101, subsection 7.2.6.18
-func (c *CP56Time2a) Reserve1() bool {
-	return c[2]&0x40 != 0
+func (t2a *CP56Time2a) Reserve1() bool {
+	return t2a[2]&0x40 != 0
 }
 
 // FlagReserve1 sets the RES1 bit.
-func (c *CP56Time2a) FlagReserve1() {
-	c[2] |= 0x40
+func (t2a *CP56Time2a) FlagReserve1() {
+	t2a[2] |= 0x40
 }
 
-// Reserve2 returns the RES2 bits, range [0x00..0x03].
-func (c *CP56Time2a) Reserve2() uint {
-	return uint(c[3]>>5) & 0x03
+// Reserve2 returns the RES2 bits, range [0..3].
+func (t2a *CP56Time2a) Reserve2() uint {
+	return uint(t2a[3]>>5) & 0x03
 }
 
 // FlagReserve2 sets [logical OR] the RES2 bits from any of the two
 // least-significant bits given.
-func (c *CP56Time2a) FlagReserve2(bits uint) {
-	c[3] |= byte(bits&0x03) << 5
+func (t2a *CP56Time2a) FlagReserve2(bits uint) {
+	t2a[3] |= byte(bits&0x03) << 5
 }
 
-// Reserve3 returns the RES3 bits, range [0x00..0x0f].
-func (c *CP56Time2a) Reserve3() uint {
-	return uint(c[5]>>4) & 0x0f
+// Reserve3 returns the RES3 bits, range [0..15].
+func (t2a *CP56Time2a) Reserve3() uint {
+	return uint(t2a[5]>>4) & 0x0f
 }
 
 // FlagReserve3 sets [logical OR] the RES3 bits from any of the four
 // least-significant bits given.
-func (c *CP56Time2a) FlagReserve3(bits uint) {
-	c[5] |= byte(bits) << 4
+func (t2a *CP56Time2a) FlagReserve3(bits uint) {
+	t2a[5] |= byte(bits) << 4
 }
 
 // CP24Time2a, a.k.a. the three octet “Binary Time 2a”, provides millisecond
@@ -149,19 +150,19 @@ func (c *CP56Time2a) FlagReserve3(bits uint) {
 type CP24Time2a [3]byte
 
 // Invalid returns the IV flag.
-func (c *CP24Time2a) Invalid() bool {
-	return c[2]&0x80 != 0
+func (t2a *CP24Time2a) Invalid() bool {
+	return t2a[2]&0x80 != 0
 }
 
 // Set marshals the time. Reserved bits can be set afterwards.
 // The zero value marks the time as invalid (with the IV flag).
 // Digits beyond milliseconds are dropped (without rounding).
 // ⚠️ Note that encoding loses the time-zone context.
-func (c *CP24Time2a) Set(t time.Time) {
+func (t2a *CP24Time2a) Set(t time.Time) {
 	if t.IsZero() {
-		c[0] = 0
-		c[1] = 0
-		c[2] = 0x80 // invalid flag [IV]
+		t2a[0] = 0
+		t2a[1] = 0
+		t2a[2] = 0x80 // invalid flag [IV]
 
 		return
 	}
@@ -169,17 +170,17 @@ func (c *CP24Time2a) Set(t time.Time) {
 	_, minute, second := t.Clock()
 	millis := uint(second*1000) + uint(t.Nanosecond()/1e6)
 
-	c[0] = byte(millis)
-	c[1] = byte(millis >> 8)
-	c[2] = byte(minute)
+	t2a[0] = byte(millis)
+	t2a[1] = byte(millis >> 8)
+	t2a[2] = byte(minute)
 }
 
 // MinuteAndMillis unmarshals the time without any validation.
 // Note that the seconds and the milliseconds are combined in one
 // count, range [0..59999].
-func (c *CP24Time2a) MinuteAndMillis() (min, secInMilli int) {
-	return int(uint(c[2]) & 0x3f),
-		int(uint(c[1])<<8 | uint(c[0]))
+func (t2a *CP24Time2a) MinuteAndMillis() (min, secInMilli int) {
+	return int(uint(t2a[2]) & 0x3f),
+		int(uint(t2a[1])<<8 | uint(t2a[0]))
 }
 
 // WithinHourBefore unmarshals the time without any validation, and then it
@@ -187,8 +188,8 @@ func (c *CP24Time2a) MinuteAndMillis() (min, secInMilli int) {
 // one hour before t, and that the encoding applied an equivalent time.Location.
 // The return is zero when the invalid flag [IV] is set. Otherwise the return is
 // in range [t − 00:59:59.999, t].
-func (c *CP24Time2a) WithinHourBefore(t time.Time) time.Time {
-	if c.Invalid() {
+func (t2a *CP24Time2a) WithinHourBefore(t time.Time) time.Time {
+	if t2a.Invalid() {
 		return time.Time{}
 	}
 
@@ -196,7 +197,7 @@ func (c *CP24Time2a) WithinHourBefore(t time.Time) time.Time {
 	hour, min, sec := t.Clock()
 	secInMilli := sec*1000 + t.Nanosecond()/1e6
 
-	minEnc, secInMilliEnc := c.MinuteAndMillis()
+	minEnc, secInMilliEnc := t2a.MinuteAndMillis()
 
 	// could be in previous hour
 	if min < minEnc || (min == minEnc && secInMilli < secInMilliEnc) {
@@ -218,21 +219,11 @@ func (c *CP24Time2a) WithinHourBefore(t time.Time) time.Time {
 // as concentrator stations or by the controlling station itself (substituted
 // time).”
 // — companion standard 101, subsection 7.2.6.18
-func (c *CP24Time2a) Reserve1() bool {
-	return c[2]&0x40 != 0
+func (t2a *CP24Time2a) Reserve1() bool {
+	return t2a[2]&0x40 != 0
 }
 
 // FlagReserve1 sets the RES1 bit.
-func (c *CP24Time2a) FlagReserve1() {
-	c[2] |= 0x40
-}
-
-// TODO: Eliminate getCP56Time2a.
-func getCP56Time2a(bytes []byte, loc *time.Location) time.Time {
-	return (*CP56Time2a)(bytes[:7]).Within20thCentury(loc)
-}
-
-// TODO: Eliminate getCP24Time2a.
-func getCP24Time2a(bytes []byte, loc *time.Location) time.Time {
-	return (*CP24Time2a)(bytes[:3]).WithinHourBefore(time.Now().In(loc))
+func (t2a *CP24Time2a) FlagReserve1() {
+	t2a[2] |= 0x40
 }

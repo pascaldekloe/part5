@@ -1,6 +1,6 @@
 // Package info provides the OSI presentation layer.
 //
-// Common addresses and information-object addresses (ComAddr and Addr) can be
+// Common addresses and information-object addresses ComAddr and ObjAddr can be
 // formatted with the standard fmt package. The numeric notation in hexadecimal
 // "%x" and its upper-casing "%X" do not omit any leading zeroes. Decimals can
 // fixed in width too with leading space "% d". The “alternated format” is an
@@ -25,7 +25,7 @@ import (
 // transmission (COT) sets the presence or absense of an originator address.
 // The address generics set the numeric width for stations and information
 // objects respectively.
-type Params[T COT, Com ComAddr, Obj Addr] struct{}
+type Params[T COT, Com ComAddr, Obj ObjAddr] struct{}
 
 // ErrComAddrZero denies zero as an address.
 var errComAddrZero = errors.New("part5: common address 0 is not used")
@@ -103,19 +103,19 @@ func (addr ComAddr16) HighOctet() uint8 { return addr[1] }
 // control direction and a source address in the monitor direction.”
 // — companion standard 101, subclause 7.2.5.
 type (
-	// An Addr can be instantiated with ObjAddrN of Params.
-	Addr interface {
+	// An ObjAddr can be instantiated with ObjAddrN of Params.
+	ObjAddr interface {
 		// The address width is fixed per system.
-		Addr8 | Addr16 | Addr24
+		ObjAddr8 | ObjAddr16 | ObjAddr24
 
 		// N gets the address as a numeric value.
 		// Zero marks the address as irrelevant.
 		N() uint
 	}
 
-	Addr8  [1]uint8
-	Addr16 [2]uint8
-	Addr24 [3]uint8
+	ObjAddr8  [1]uint8
+	ObjAddr16 [2]uint8
+	ObjAddr24 [3]uint8
 )
 
 // ObjAddrN returns either a numeric match, or false when n overflows the
@@ -139,34 +139,34 @@ func (p Params[T, Com, Obj]) MustObjAddrN(n uint) Obj {
 }
 
 // N implements the Addr interface.
-func (addr Addr8) N() uint {
+func (addr ObjAddr8) N() uint {
 	return uint(addr[0])
 }
 
 // N implements the Addr interface.
-func (addr Addr16) N() uint {
+func (addr ObjAddr16) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8
 }
 
 // N implements the Addr interface.
-func (addr Addr24) N() uint {
+func (addr ObjAddr24) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8 | uint(addr[2])<<16
 }
 
 // LowOctet provides an alternative to numeric addressing.
-func (addr Addr16) LowOctet() uint8 { return addr[0] }
+func (addr ObjAddr16) LowOctet() uint8 { return addr[0] }
 
 // HighOctet provides an alternative to numeric addressing.
-func (addr Addr16) HighOctet() uint8 { return addr[1] }
+func (addr ObjAddr16) HighOctet() uint8 { return addr[1] }
 
 // LowOctet provides an alternative to numeric addressing.
-func (addr Addr24) LowOctet() uint8 { return addr[0] }
+func (addr ObjAddr24) LowOctet() uint8 { return addr[0] }
 
 // MiddleOctet provides an alternative to numeric addressing.
-func (addr Addr24) MiddleOctet() uint8 { return addr[1] }
+func (addr ObjAddr24) MiddleOctet() uint8 { return addr[1] }
 
 // HighOctet provides an alternative to numeric addressing.
-func (addr Addr24) HighOctet() uint8 { return addr[2] }
+func (addr ObjAddr24) HighOctet() uint8 { return addr[2] }
 
 // SinglePt has single-point information (IEV 371-02-07), which should be either
 // Off or On.

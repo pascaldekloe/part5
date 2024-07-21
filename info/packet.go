@@ -6,16 +6,18 @@ import (
 	"math"
 )
 
-// Var is the variable structure qualifier, which defines the payload
-// layout with an object Count and a Sequence flag.
-type Var uint8
+// Enc is the variable-structure qualifier (VQL), which defines the payload
+// encoding in a DataUnit with an object Count and an address sequence flag.
+type Enc uint8
 
 // Count returns the number of information objects, which can be zero.
-func (v Var) Count() int { return int(v & 0x7f) }
+func (e Enc) Count() int { return int(e & 0x7f) }
 
-// IsSeq returns the SQ flag, which signals that the information applies to a
-// consecutive sequence of addresses, each address incremented by one.
-func (v Var) IsSeq() bool { return v&0x80 != 0 }
+// AddrSeq returns the SQ flag, which signals that the address of each encoded
+// object is one higher than its previous. Specifying only the first information
+// object address is more efficient than the address–object encoding without the
+// SQ flag.
+func (e Enc) AddrSeq() bool { return e&0x80 != 0 }
 
 // Cause Of Transmission Flags
 const (
@@ -110,13 +112,13 @@ func (c COT16) OrigAddr() uint8 { return c[1] }
 
 // A DataUnit has a transmission packet called ASDU, short for Application
 // Service Data Unit. Information objects are encoded conform the TypeID and
-// and Var values. Encoding is likely to contain one or more Object addresses.
-type DataUnit[T COT, Com ComAddr, Obj Addr] struct {
+// and Enc values. Encoding is likely to contain one or more Object addresses.
+type DataUnit[T COT, Com ComAddr, Obj ObjAddr] struct {
 	// configuration inherited from generics
 	Params[T, Com, Obj]
 
 	Type TypeID // payload class
-	Var  Var    // payload layout
+	Enc  Enc    // payload structure
 	COT  T      // cause of transmission
 	Addr Com    // station address
 
@@ -142,7 +144,7 @@ func (p Params[T, Com, Obj]) NewDataUnit() DataUnit[T, Com, Obj] {
 	return DataUnit[T, Com, Obj]{}
 }
 
-// SingleCmd sets Type, Var, COT and Info with single command C_SC_NA_1 Act
+// SingleCmd sets Type, Enc, COT and Info with single command C_SC_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.1.
 func (p Params[T, Com, Obj]) SingleCmd(addr Obj, c Cmd) DataUnit[T, Com, Obj] {
 	u := p.cmd(addr, c)
@@ -150,7 +152,7 @@ func (p Params[T, Com, Obj]) SingleCmd(addr Obj, c Cmd) DataUnit[T, Com, Obj] {
 	return u
 }
 
-// DoubleCmd sets Type, Var, COT and Info with double command C_DC_NA_1 Act
+// DoubleCmd sets Type, Enc, COT and Info with double command C_DC_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.2.
 func (p Params[T, Com, Obj]) DoubleCmd(addr Obj, c Cmd) DataUnit[T, Com, Obj] {
 	u := p.cmd(addr, c)
@@ -158,7 +160,7 @@ func (p Params[T, Com, Obj]) DoubleCmd(addr Obj, c Cmd) DataUnit[T, Com, Obj] {
 	return u
 }
 
-// RegulCmd sets Type, Var, COT and Info with regulating-step command
+// RegulCmd sets Type, Enc, COT and Info with regulating-step command
 // C_RC_NA_1 Act conform companion standard 101, subsection 7.3.2.3.
 func (p Params[T, Com, Obj]) RegulCmd(addr Obj, c Cmd) DataUnit[T, Com, Obj] {
 	u := p.cmd(addr, c)
@@ -168,19 +170,19 @@ func (p Params[T, Com, Obj]) RegulCmd(addr Obj, c Cmd) DataUnit[T, Com, Obj] {
 
 func (p Params[T, Com, Obj]) cmd(addr Obj, c Cmd) DataUnit[T, Com, Obj] {
 	u := p.NewDataUnit()
-	u.Var = 1            // fixed
+	u.Enc = 1            // fixed
 	u.COT = p.COTOf(Act) // could Deact
 	u.setAddr(addr)
 	u.Info = append(u.Info, byte(c))
 	return u
 }
 
-// NormSetPt sets Type, Var, COT and Info with a set-point command C_SE_NA_1 Act
+// NormSetPt sets Type, Enc, COT and Info with a set-point command C_SE_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.4.
 func (p Params[T, Com, Obj]) NormSetPt(addr Obj, value Norm, q SetPtQual) DataUnit[T, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Type = C_SE_NA_1
-	u.Var = 1            // fixed
+	u.Enc = 1            // fixed
 	u.COT = p.COTOf(Act) // could Deact
 	u.setAddr(addr)
 	u.Info = append(u.Info, value[0], value[1])
@@ -188,12 +190,12 @@ func (p Params[T, Com, Obj]) NormSetPt(addr Obj, value Norm, q SetPtQual) DataUn
 	return u
 }
 
-// ScaledSetPt sets Type, Var, COT and Info with set-point command C_SE_NB_1 Act
+// ScaledSetPt sets Type, Enc, COT and Info with set-point command C_SE_NB_1 Act
 // conform companion standard 101, subsection 7.3.2.5.
 func (p Params[T, Com, Obj]) ScaledSetPt(addr Obj, value int16, q SetPtQual) DataUnit[T, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Type = C_SE_NB_1
-	u.Var = 1            // fixed
+	u.Enc = 1            // fixed
 	u.COT = p.COTOf(Act) // could Deact
 	u.setAddr(addr)
 	u.Info = append(u.Info, byte(value), byte(value>>8))
@@ -201,12 +203,12 @@ func (p Params[T, Com, Obj]) ScaledSetPt(addr Obj, value int16, q SetPtQual) Dat
 	return u
 }
 
-// FloatSetPt sets Type, Var, COT and Info with set-point command C_SE_NC_1 Act
+// FloatSetPt sets Type, Enc, COT and Info with set-point command C_SE_NC_1 Act
 // conform companion standard 101, subsection 7.3.2.6.
 func (p Params[T, Com, Obj]) FloatSetPt(addr Obj, value float32, q SetPtQual) DataUnit[T, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Type = C_SE_NC_1
-	u.Var = 1            // fixed
+	u.Enc = 1            // fixed
 	u.COT = p.COTOf(Act) // could Deact
 	u.setAddr(addr)
 	u.Info = binary.LittleEndian.AppendUint32(u.Info,
@@ -215,20 +217,20 @@ func (p Params[T, Com, Obj]) FloatSetPt(addr Obj, value float32, q SetPtQual) Da
 	return u
 }
 
-// Inro sets Type, Var, COT and Info with interrogation-command C_IC_NA_1 Act
+// Inro sets Type, Enc, COT and Info with interrogation-command C_IC_NA_1 Act
 // conform companion standard 101, subsection 7.3.4.1.
 func (p Params[T, Com, Obj]) Inro() DataUnit[T, Com, Obj] {
 	return p.InroGroup(0)
 }
 
-// InroGroup sets Type, Var, COT and Info with interrogation-command C_IC_NA_1
+// InroGroup sets Type, Enc, COT and Info with interrogation-command C_IC_NA_1
 // Act conform companion standard 101, subsection 7.3.4.1. Group can be disabled
 // with 0 for (global) station interrogation. Otherwise, use a group identifier
 // in range [1..16].
 func (p Params[T, Com, Obj]) InroGroup(group uint) DataUnit[T, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Type = C_IC_NA_1
-	u.Var = 1            // fixed
+	u.Enc = 1            // fixed
 	u.COT = p.COTOf(Act) // could Deact
 	var addr Obj         // fixed to zero
 	u.setAddr(addr)
@@ -239,12 +241,12 @@ func (p Params[T, Com, Obj]) InroGroup(group uint) DataUnit[T, Com, Obj] {
 	return u
 }
 
-// TestCmd sets Type, Var, COT and Info with test-command C_TS_NA_1 Act
+// TestCmd sets Type, Enc, COT and Info with test-command C_TS_NA_1 Act
 // conform companion standard 101, subsection 7.3.4.5.
 func (p Params[T, Com, Obj]) TestCmd() DataUnit[T, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Type = C_TS_NA_1
-	u.Var = 1            // fixed
+	u.Enc = 1            // fixed
 	u.COT = p.COTOf(Act) // fixed
 	var addr Obj         // fixed to zero
 	u.setAddr(addr)
@@ -266,7 +268,7 @@ func (u *DataUnit[T, Com, Obj]) Adopt(asdu []byte) error {
 
 	// copy header
 	u.Type = TypeID(asdu[0])
-	u.Var = Var(asdu[1])
+	u.Enc = Enc(asdu[1])
 	for i := 0; i < len(u.COT); i++ {
 		u.COT[i] = asdu[i+2]
 	}
@@ -289,9 +291,9 @@ func (u *DataUnit[T, Com, Obj]) Adopt(asdu []byte) error {
 	return nil
 }
 
-// Append the ASDU encoding to buf.
+// Append the ASDU encoding to buf and return the extended buffer.
 func (u DataUnit[T, Com, Obj]) Append(buf []byte) []byte {
-	buf = append(buf, byte(u.Type), byte(u.Var))
+	buf = append(buf, byte(u.Type), byte(u.Enc))
 	for i := 0; i < len(u.COT); i++ {
 		buf = append(buf, u.COT[i])
 	}

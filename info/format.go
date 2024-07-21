@@ -8,16 +8,16 @@ import (
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
 func (c COT8) Format(f fmt.State, verb rune) {
-	formatCauseFlagOrig(f, verb, c[0], 0)
+	formatCOT(f, verb, c[0], 0)
 }
 
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
 func (c COT16) Format(f fmt.State, verb rune) {
-	formatCauseFlagOrig(f, verb, c[0], c[1])
+	formatCOT(f, verb, c[0], c[1])
 }
 
-func formatCauseFlagOrig(f fmt.State, verb rune, c, orig uint8) {
+func formatCOT(f fmt.State, verb rune, c, orig uint8) {
 	if verb != 's' {
 		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
 		return
@@ -45,25 +45,25 @@ func formatCauseFlagOrig(f fmt.State, verb rune, c, orig uint8) {
 
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
-func (addr ComAddr8) Format(f fmt.State, verb rune) { format8(addr, f, verb) }
+func (addr ComAddr8) Format(f fmt.State, verb rune) { formatAddr8(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
-func (addr ComAddr16) Format(f fmt.State, verb rune) { format16(addr, f, verb) }
+func (addr ComAddr16) Format(f fmt.State, verb rune) { formatAddr16(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
-func (addr Addr8) Format(f fmt.State, verb rune) { format8(addr, f, verb) }
+func (addr ObjAddr8) Format(f fmt.State, verb rune) { formatAddr8(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
-func (addr Addr16) Format(f fmt.State, verb rune) { format16(addr, f, verb) }
+func (addr ObjAddr16) Format(f fmt.State, verb rune) { formatAddr16(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
 // See the package documentation of info for options.
-func (addr Addr24) Format(f fmt.State, verb rune) { format24(addr, f, verb) }
+func (addr ObjAddr24) Format(f fmt.State, verb rune) { formatAddr24(addr, f, verb) }
 
-func format8(addr [1]uint8, f fmt.State, verb rune) {
+func formatAddr8(addr [1]uint8, f fmt.State, verb rune) {
 	switch verb {
 	case 'X':
 		fmt.Fprintf(f, "%02X", addr[0])
@@ -84,7 +84,7 @@ func format8(addr [1]uint8, f fmt.State, verb rune) {
 	}
 }
 
-func format16(addr [2]uint8, f fmt.State, verb rune) {
+func formatAddr16(addr [2]uint8, f fmt.State, verb rune) {
 	switch verb {
 	case 'X':
 		if f.Flag('#') {
@@ -115,7 +115,7 @@ func format16(addr [2]uint8, f fmt.State, verb rune) {
 	}
 }
 
-func format24(addr [3]uint8, f fmt.State, verb rune) {
+func formatAddr24(addr [3]uint8, f fmt.State, verb rune) {
 	switch verb {
 	case 'X':
 		if f.Flag('#') {
@@ -166,7 +166,7 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 		// structure unknown
 		fmt.Fprintf(f, " %#x ?", u.Info)
 
-	case !u.Var.IsSeq():
+	case !u.Enc.AddrSeq():
 		// objects paired with an address each
 		var i int // read index
 		for obj_n := 0; ; obj_n++ {
@@ -177,7 +177,7 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 					obj_n++
 				}
 
-				diff := obj_n - u.Var.Count()
+				diff := obj_n - u.Enc.Count()
 				switch {
 				case diff < 0:
 					fmt.Fprintf(f, " 𝚫 −%d !", -diff)
@@ -230,7 +230,7 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 					obj_n++
 				}
 
-				diff := obj_n - u.Var.Count()
+				diff := obj_n - u.Enc.Count()
 				switch {
 				case diff < 0:
 					fmt.Fprintf(f, " 𝚫 −%d !", -diff)

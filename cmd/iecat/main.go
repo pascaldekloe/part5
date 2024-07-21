@@ -129,39 +129,39 @@ func mustPacketStream() packetStream {
 		CmdLog.Fatal("width of information-object address is neither 1 nor 2 nor 3 octets")
 
 	case *cOTAddrFlag == 1 && *comAddrFlag == 1 && *objAddrFlag == 1:
-		return system[info.COT8, info.ComAddr8, info.Addr8]{}
+		return system[info.COT8, info.ComAddr8, info.ObjAddr8]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 1 && *objAddrFlag == 2:
-		return system[info.COT8, info.ComAddr8, info.Addr16]{}
+		return system[info.COT8, info.ComAddr8, info.ObjAddr16]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 1 && *objAddrFlag == 3:
-		return system[info.COT8, info.ComAddr8, info.Addr24]{}
+		return system[info.COT8, info.ComAddr8, info.ObjAddr24]{}
 
 	case *cOTAddrFlag == 1 && *comAddrFlag == 2 && *objAddrFlag == 1:
-		return system[info.COT8, info.ComAddr16, info.Addr8]{}
+		return system[info.COT8, info.ComAddr16, info.ObjAddr8]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 2 && *objAddrFlag == 2:
-		return system[info.COT8, info.ComAddr16, info.Addr16]{}
+		return system[info.COT8, info.ComAddr16, info.ObjAddr16]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 2 && *objAddrFlag == 3:
-		return system[info.COT8, info.ComAddr16, info.Addr24]{}
+		return system[info.COT8, info.ComAddr16, info.ObjAddr24]{}
 
 	case *cOTAddrFlag == 2 && *comAddrFlag == 1 && *objAddrFlag == 1:
-		return system[info.COT16, info.ComAddr8, info.Addr8]{}
+		return system[info.COT16, info.ComAddr8, info.ObjAddr8]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 1 && *objAddrFlag == 2:
-		return system[info.COT16, info.ComAddr8, info.Addr16]{}
+		return system[info.COT16, info.ComAddr8, info.ObjAddr16]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 1 && *objAddrFlag == 3:
-		return system[info.COT16, info.ComAddr8, info.Addr24]{}
+		return system[info.COT16, info.ComAddr8, info.ObjAddr24]{}
 
 	case *cOTAddrFlag == 2 && *comAddrFlag == 2 && *objAddrFlag == 1:
-		return system[info.COT16, info.ComAddr16, info.Addr8]{}
+		return system[info.COT16, info.ComAddr16, info.ObjAddr8]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 2 && *objAddrFlag == 2:
-		return system[info.COT16, info.ComAddr16, info.Addr16]{}
+		return system[info.COT16, info.ComAddr16, info.ObjAddr16]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 2 && *objAddrFlag == 3:
-		return system[info.COT16, info.ComAddr16, info.Addr24]{}
+		return system[info.COT16, info.ComAddr16, info.ObjAddr24]{}
 	}
 
 	panic("unreachable")
 }
 
 // System has a network setup.
-type system[T info.COT, Com info.ComAddr, Obj info.Addr] struct {
+type system[T info.COT, Com info.ComAddr, Obj info.ObjAddr] struct {
 	info.Params[T, Com, Obj]
 }
 
