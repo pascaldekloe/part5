@@ -237,7 +237,7 @@ var builtins = [256]int{
 	F_DR_TA_1: 13,
 }
 
-// Cause (of transmission) does not include the Neg nor Test flags.
+// Cause of transmission includes the NegFlag and TestFlag.
 type Cause uint8
 
 // ErrCauseZero denies Cause zero.
@@ -317,11 +317,27 @@ const (
 	_ // 61: for special use (private range)
 	_ // 62: for special use (private range)
 	_ // 63: for special use (private range)
+
+	// The P/N flag negates confirmation when set.
+	// In case of irrelevance, the bit should be zero.
+	NegFlag Cause = 0x40
+
+	// The T flag classifies the unit for testing when set.
+	TestFlag Cause = 0x80
 )
 
-// String returns a label token.
+// String returns the label plus ",neg" when NegFlag plus ",test" when TestFlag.
 func (c Cause) String() string {
-	return causeLabels[c&0x3f]
+	s := causeLabels[c&0x3f]
+	switch c & (NegFlag | TestFlag) {
+	case NegFlag:
+		s += ",neg"
+	case TestFlag:
+		s += ",test"
+	case NegFlag | TestFlag:
+		s += ",neg,test"
+	}
+	return s
 }
 
 var causeLabels = [64]string{

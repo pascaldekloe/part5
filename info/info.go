@@ -1,15 +1,13 @@
 // Package info provides the OSI presentation layer.
 //
-// Common addresses and information-object addresses ComAddr and ObjAddr can be
-// formatted with the standard fmt package. The numeric notation in hexadecimal
-// "%x" and its upper-casing "%X" do not omit any leading zeroes. Decimals can
-// fixed in width too with leading space "% d". The “alternated format” is an
-// octet listing in big-endian order. Decimal octets "%#d" get sepatared by the
-// dot character ".", while hexadecimals "%#x" and "%#X" get separated by the
-// colon character ":".
-//
-// Descriptions of COT and DataUnit can be formatted with "%s". Flag '#' applies
-// the alternated address format rather than the decimal default.
+// The originator addresss, the common address and and the information-object
+// address (OrigAddr, ComAddr and ObjAddr) each can be formatted with the fmt
+// package. The numeric notation in hexadecimal "%x" and its upper-casing "%X"
+// do not omit any leading zeroes. Decimals can be fixed in width too with
+// leading space as "% d". The “alternated format” for addresses is an octet
+// listing in big-endian order. Decimal octets "%#d" get sepatared by the dot
+// character ".", while hexadecimals "%#x" and "%#X" get separated by the colon
+// character ":".
 package info
 
 import (
@@ -21,11 +19,9 @@ import (
 	"strings"
 )
 
-// Params define the system-specific parameters. Specifically, the Cause of
-// transmission (COT) sets the presence or absense of an originator address.
-// The address generics set the numeric width for stations and information
-// objects respectively.
-type Params[T COT, Com ComAddr, Obj ObjAddr] struct{}
+// Params define the system-specific parameters. Specifically, the generics set
+// the address width, which can be zero [none] for the originator.
+type Params[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct{}
 
 // ErrComAddrZero denies zero as an address.
 var errComAddrZero = errors.New("part5: common address 0 is not used")
@@ -55,7 +51,7 @@ type (
 
 // ComAddrN returns either a numeric match, or false when n overflows the
 // address width of Com.
-func (p Params[T, Com, Obj]) ComAddrN(n uint) (Com, bool) {
+func (p Params[Orig, Com, Obj]) ComAddrN(n uint) (Com, bool) {
 	var addr Com
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
@@ -64,8 +60,8 @@ func (p Params[T, Com, Obj]) ComAddrN(n uint) (Com, bool) {
 	return addr, n == 0
 }
 
-// MustComAddrN is like CommAddrN, yet it panics on overflow.
-func (p Params[T, Com, Obj]) MustComAddrN(n uint) Com {
+// MustComAddrN is like ComAddrN, yet it panics on overflow.
+func (p Params[Orig, Com, Obj]) MustComAddrN(n uint) Com {
 	addr, ok := p.ComAddrN(n)
 	if !ok {
 		panic("overflow of common address")
@@ -120,7 +116,7 @@ type (
 
 // ObjAddrN returns either a numeric match, or false when n overflows the
 // address width of Obj.
-func (p Params[T, Com, Obj]) ObjAddrN(n uint) (Obj, bool) {
+func (p Params[Orig, Com, Obj]) ObjAddrN(n uint) (Obj, bool) {
 	var addr Obj
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
@@ -130,7 +126,7 @@ func (p Params[T, Com, Obj]) ObjAddrN(n uint) (Obj, bool) {
 }
 
 // MustObjAddrN is like ObjAddrN, yet it panics on overflow.
-func (p Params[T, Com, Obj]) MustObjAddrN(n uint) Obj {
+func (p Params[Orig, Com, Obj]) MustObjAddrN(n uint) Obj {
 	addr, ok := p.ObjAddrN(n)
 	if !ok {
 		panic("overflow of information-object")

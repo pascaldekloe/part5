@@ -6,66 +6,71 @@ import (
 )
 
 // Wide tests multi-byte addressing.
-var Wide Params[COT16, ComAddr16, ObjAddr16]
+var Wide Params[OrigAddr8, ComAddr16, ObjAddr16]
 
 var goldenDataUnits = []struct {
-	unit DataUnit[COT16, ComAddr16, ObjAddr16]
+	unit DataUnit[OrigAddr8, ComAddr16, ObjAddr16]
 	desc string
 }{
 	{
-		DataUnit[COT16, ComAddr16, ObjAddr16]{
-			Type: M_SP_NA_1,
-			Enc:  1,
-			COT:  Wide.MustCOTOrigOf(Percyc, 7),
-			Addr: Wide.MustComAddrN(1001),
-			Info: []byte{1, 2, 3},
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_SP_NA_1,
+			Enc:   1,
+			Cause: Percyc,
+			Orig:  Wide.MustOrigAddrN(7),
+			Addr:  Wide.MustComAddrN(1001),
+			Info:  []byte{1, 2, 3},
 		},
-		"M_SP_NA_1 @1001 percyc #7: 0x03@513 .",
+		"M_SP_NA_1 percyc 7 1001: 0x03@513 .",
 	}, {
-		DataUnit[COT16, ComAddr16, ObjAddr16]{
-			Type: M_DP_NA_1,
-			Enc:  2,
-			COT:  Wide.COTOf(Back),
-			Addr: Wide.MustComAddrN(42),
-			Info: []byte{1, 2, 3, 4, 5, 6},
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_DP_NA_1,
+			Enc:   2,
+			Cause: Back,
+			Addr:  Wide.MustComAddrN(42),
+			Info:  []byte{1, 2, 3, 4, 5, 6},
 		},
-		"M_DP_NA_1 @42 back: 0x03@513 0x06@1284 .",
+		"M_DP_NA_1 back 0 42: 0x03@513 0x06@1284 .",
 	}, {
-		DataUnit[COT16, ComAddr16, ObjAddr16]{
-			Type: M_ST_NA_1,
-			Enc:  2,
-			COT:  Wide.MustCOTOrigOf(Spont, 21),
-			Addr: Wide.MustComAddrN(250),
-			Info: []byte{1, 2, 3, 4, 5},
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_ST_NA_1,
+			Enc:   2,
+			Cause: Spont,
+			Orig:  Wide.MustOrigAddrN(21),
+			Addr:  Wide.MustComAddrN(250),
+			Info:  []byte{1, 2, 3, 4, 5},
 		},
-		"M_ST_NA_1 @250 spont #21: 0x0304@513 0x05<EOF> !",
+		"M_ST_NA_1 spont 21 250: 0x0304@513 0x05<EOF> !",
 	}, {
-		DataUnit[COT16, ComAddr16, ObjAddr16]{
-			Type: M_ST_NA_1,
-			Enc:  1,
-			COT:  Wide.MustCOTOrigOf(Spont, 22),
-			Addr: Wide.MustComAddrN(251),
-			Info: []byte{1, 2, 3, 4, 5, 6, 7},
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_ST_NA_1,
+			Enc:   1,
+			Cause: Spont,
+			Orig:  Wide.MustOrigAddrN(22),
+			Addr:  Wide.MustComAddrN(251),
+			Info:  []byte{1, 2, 3, 4, 5, 6, 7},
 		},
-		"M_ST_NA_1 @251 spont #22: 0x0304@513 0x050607<EOF> 𝚫 +1 !",
+		"M_ST_NA_1 spont 22 251: 0x0304@513 0x050607<EOF> 𝚫 +1 !",
 	}, {
-		DataUnit[COT16, ComAddr16, ObjAddr16]{
-			Type: M_ME_NC_1,
-			Enc:  2 | 128,
-			COT:  Wide.MustCOTOrigOf(Init, 60),
-			Addr: Wide.MustComAddrN(12),
-			Info: []byte{99, 0, 1, 2, 3, 4, 5, 6},
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_ME_NC_1,
+			Enc:   2 | 128,
+			Cause: Init,
+			Orig:  Wide.MustOrigAddrN(60),
+			Addr:  Wide.MustComAddrN(12),
+			Info:  []byte{99, 0, 1, 2, 3, 4, 5, 6},
 		},
-		"M_ME_NC_1 @12 init #60: 0x0102030405@99 0x06<EOF>@100 !",
+		"M_ME_NC_1 init 60 12: 0x0102030405@99 0x06<EOF>@100 !",
 	}, {
-		DataUnit[COT16, ComAddr16, ObjAddr16]{
-			Type: M_ME_NC_1,
-			Enc:  2 | 128,
-			COT:  Wide.MustCOTOrigOf(Init, 61),
-			Addr: Wide.MustComAddrN(12),
-			Info: []byte{99, 0, 1, 2, 3, 4, 5},
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_ME_NC_1,
+			Enc:   2 | 128,
+			Cause: Init,
+			Orig:  Wide.MustOrigAddrN(61),
+			Addr:  Wide.MustComAddrN(12),
+			Info:  []byte{99, 0, 1, 2, 3, 4, 5},
 		},
-		"M_ME_NC_1 @12 init #61: 0x0102030405@99 𝚫 −1 !",
+		"M_ME_NC_1 init 61 12: 0x0102030405@99 𝚫 −1 !",
 	},
 }
 
@@ -94,7 +99,8 @@ func TestDataUnitEncoding(t *testing.T) {
 
 		case got.Type != gold.unit.Type,
 			got.Enc != gold.unit.Enc,
-			got.COT != gold.unit.COT,
+			got.Cause != gold.unit.Cause,
+			got.Orig != gold.unit.Orig,
 			got.Addr != gold.unit.Addr,
 			string(got.Info) != string(gold.unit.Info):
 			t.Errorf("%#s became %#s after codec cycle",

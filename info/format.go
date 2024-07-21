@@ -6,61 +6,46 @@ import (
 )
 
 // Format implements the fmt.Formatter interface.
-// See the package documentation of info for options.
-func (c COT8) Format(f fmt.State, verb rune) {
-	formatCOT(f, verb, c[0], 0)
-}
+// See the documentation of the info package for options.
+func (addr OrigAddr0) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'X', 'x':
+		io.WriteString(f, "00")
 
-// Format implements the fmt.Formatter interface.
-// See the package documentation of info for options.
-func (c COT16) Format(f fmt.State, verb rune) {
-	formatCOT(f, verb, c[0], c[1])
-}
-
-func formatCOT(f fmt.State, verb rune, c, orig uint8) {
-	if verb != 's' {
-		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
-		return
-	}
-
-	io.WriteString(f, causeLabels[c&63])
-
-	switch c & (negFlag | testFlag) {
-	case negFlag:
-		io.WriteString(f, ",neg")
-	case testFlag:
-		io.WriteString(f, ",test")
-	case negFlag | testFlag:
-		io.WriteString(f, ",neg,test")
-	}
-
-	if orig != 0 {
-		format := " #%d"
-		if f.Flag('#') {
-			format = " #%02x"
+	case 'd':
+		if f.Flag(' ') {
+			io.WriteString(f, "  0")
+		} else {
+			io.WriteString(f, "0")
 		}
-		fmt.Fprintf(f, format, orig)
+
+	default:
+		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
 	}
 }
 
 // Format implements the fmt.Formatter interface.
-// See the package documentation of info for options.
+// See the documentation of the info package for options.
+func (addr OrigAddr8) Format(f fmt.State, verb rune) { formatAddr8(addr, f, verb) }
+
+// Format implements the fmt.Formatter interface.
+// See the documentation of the info package for options.
 func (addr ComAddr8) Format(f fmt.State, verb rune) { formatAddr8(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
-// See the package documentation of info for options.
+// See the documentation of the info package for options.
 func (addr ComAddr16) Format(f fmt.State, verb rune) { formatAddr16(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
-// See the package documentation of info for options.
+// See the documentation of the info package for options.
 func (addr ObjAddr8) Format(f fmt.State, verb rune) { formatAddr8(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
-// See the package documentation of info for options.
+// See the documentation of the info package for options.
 func (addr ObjAddr16) Format(f fmt.State, verb rune) { formatAddr16(addr, f, verb) }
 
 // Format implements the fmt.Formatter interface.
-// See the package documentation of info for options.
+// See the documentation of the info package for options.
 func (addr ObjAddr24) Format(f fmt.State, verb rune) { formatAddr24(addr, f, verb) }
 
 func formatAddr8(addr [1]uint8, f fmt.State, verb rune) {
@@ -146,19 +131,21 @@ func formatAddr24(addr [3]uint8, f fmt.State, verb rune) {
 	}
 }
 
-// Format implements the fmt.Formatter interface.
-// See the package documentation of info for details.
-func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
+// Format implements the fmt.Formatter interface. A "%s" describes the ASDU with
+// addresses as decimal numbers. Use the “alternated format” "%#s" for addresses
+// in hexadecimal, i.e., the "%#x" as described in the documentation of the info
+// package.
+func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 	if verb != 's' {
 		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
 		return
 	}
 
-	format := "%s @%d %s:"
+	format := "%s %s %d %d:"
 	if f.Flag('#') {
-		format = "%s @%#x %s:"
+		format = "%s %s %x %#x:"
 	}
-	fmt.Fprintf(f, format, u.Type, u.Addr, u.COT)
+	fmt.Fprintf(f, format, u.Type, u.Cause, u.Orig, u.Addr)
 
 	dataSize := ObjSize[u.Type]
 	switch {
@@ -170,7 +157,7 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 		// objects paired with an address each
 		var i int // read index
 		for obj_n := 0; ; obj_n++ {
-			var addr Object
+			var addr Obj
 			if i+len(addr)+dataSize > len(u.Info) {
 				if i < len(u.Info) {
 					fmt.Fprintf(f, " %#x<EOF>", u.Info[i:])
@@ -208,7 +195,7 @@ func (u DataUnit[COT, Common, Object]) Format(f fmt.State, verb rune) {
 
 	default:
 		// offset address in Sequence
-		var addr Object
+		var addr Obj
 		if len(addr) > len(u.Info) {
 			fmt.Fprintf(f, " %#x<EOF> !", u.Info)
 			break
