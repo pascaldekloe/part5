@@ -4,6 +4,10 @@ import "errors"
 
 //go:generate stringer -type TypeID -output code_string.go code.go
 
+// ErrTypeZero denies the zero value as type identification. Use is explicitly
+// prohibited in subsection 7.2.1.1 from companion standard 101.
+var errTypeZero = errors.New("part5: type identification <0> is not used")
+
 // TypeID classifies ASDU with a code.
 type TypeID uint8
 
@@ -12,12 +16,9 @@ type TypeID uint8
 // [136..255] is for “special use”.
 const PrivateTypeFlag = 128
 
-// ErrTypeZero denies zero as a type identification.
-var errTypeZero = errors.New("part5: type identification 0 is not used")
-
 // The compatible codes are defined in table 8 from companion standard 101.
 // More compatible codes are defined in table 1 from companion standard 104.
-// The security extension are defined in table 2 from section 7.
+// The security extensions are defined in table 2 from section 7.
 // Prefix M_ is for monitored information, C_ is for control information,
 // P_ is for parameter information, F_ is for file transfer, and S_ is for
 // security.
@@ -241,7 +242,10 @@ var builtins = [256]int{
 type Cause uint8
 
 // ErrCauseZero denies Cause zero.
-var errCauseZero = errors.New("part5: cause of transmission 0 is not defined")
+
+// ErrCauseZero denies the zero value as a cause code. Use is explicitly
+// prohibited in table 14 from companion standard 101.
+var errCauseZero = errors.New("part5: cause of transmission <0> is not used")
 
 // The cause of transmission codes are defined in table 14 from companion
 // standard 101. Auth, Seskey and Usrkey are defined in table 1 from section 7,

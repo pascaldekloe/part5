@@ -23,8 +23,9 @@ import (
 // the address width, which can be zero [none] for the originator.
 type Params[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct{}
 
-// ErrComAddrZero denies zero as an address.
-var errComAddrZero = errors.New("part5: common address 0 is not used")
+// ErrComAddrZero denies the zero value as an address. Use is explicitly
+// prohibited in subsection 7.2.4.
+var errComAddrZero = errors.New("part5: common address <0> is not used")
 
 // The “common address” addresses stations. Zero is not used.
 // All information objects/addresses reside in a common address.
