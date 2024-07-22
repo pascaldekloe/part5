@@ -2,6 +2,7 @@ package info
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 	"math"
 )
@@ -18,6 +19,10 @@ func (e Enc) Count() int { return int(e & 0x7f) }
 // object address is more efficient than the address–object encoding without the
 // SQ flag.
 func (e Enc) AddrSeq() bool { return e&0x80 != 0 }
+
+// ErrAddrSeq rejects a packet encoding that would otherwise cause undefined
+// behaviour with the ObjAddr width.
+var ErrAddrSeq = errors.New("part5: address sequence [VQL SQ] overflows the addres space for information objects")
 
 // The originator address defaults to zero.
 // Value 1..255 addresses a specific part of the system.

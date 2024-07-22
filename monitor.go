@@ -312,10 +312,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 	switch u.Type {
 	case info.M_SP_NA_1: // single-point
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count() {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 1)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
 				mon.SinglePt(u, addr, info.SinglePtQual(b))
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -364,10 +364,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	case info.M_DP_NA_1: // double-point
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count() {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 1)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for _, b := range u.Info[len(addr):] {
 				mon.DoublePt(u, addr, info.DoublePtQual(b))
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -416,10 +416,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	case info.M_ST_NA_1: // step position
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count()*2 {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 2)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for i := len(addr); i+2 <= len(u.Info); i += 2 {
 				mon.Step(u, addr, info.StepQual(u.Info[i:i+2]))
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -468,10 +468,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	case info.M_BO_NA_1: // bitstring
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count()*5 {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 5)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
 				mon.Bits(u, addr, info.BitsQual(u.Info[i:i+5]))
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -520,10 +520,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	case info.M_ME_ND_1: // normalized value without quality descriptor
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count()*2 {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 2)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for i := len(addr); i+1 < len(u.Info); i += 2 {
 				mon.NormUnqual(u, addr, info.Norm(u.Info[i:i+2]))
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -542,10 +542,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	case info.M_ME_NA_1: // normalized value
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count()*3 {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 3)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for i := len(addr); i+3 <= len(u.Info); i += 3 {
 				mon.Norm(u, addr, info.NormQual(u.Info[i:i+3]))
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -594,10 +594,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	case info.M_ME_NB_1: // scaled value
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count()*3 {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 3)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for i := len(addr); i+3 <= len(u.Info); i += 3 {
 				mon.Scaled(u, addr,
 					int16(binary.LittleEndian.Uint16(u.Info[i:i+2])),
@@ -652,10 +652,10 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	case info.M_ME_NC_1: // floating-point
 		if u.Enc.AddrSeq() {
-			if len(u.Info) != len(addr)+u.Enc.Count()*5 {
-				return errInfoSize
+			addr, err := addrSeqStart(&u, 5)
+			if err != nil {
+				return err
 			}
-			addr := Obj(u.Info[:len(addr)])
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
 				mon.Float(u, addr,
 					math.Float32frombits(binary.LittleEndian.Uint32(u.Info[i:i+4])),
@@ -722,4 +722,19 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 
 	}
 	return nil
+}
+
+
+func addrSeqStart[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](u *info.DataUnit[Orig, Com, Obj], encSize int) (addr Obj, err error) {
+	if len(u.Info) != len(addr)+u.Enc.Count()*encSize {
+		return addr, errInfoSize
+	}
+	addr = Obj(u.Info[:len(addr)])
+
+	// overflow check
+	lastN := addr.N() + uint(u.Enc.Count()) - 1
+	if _, ok := u.Params.ObjAddrN(lastN); !ok {
+		return addr, info.ErrAddrSeq
+	}
+	return addr, nil
 }

@@ -3,6 +3,7 @@ package info
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 // Format implements the fmt.Formatter interface.
@@ -205,6 +206,13 @@ func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 		}
 		i := len(addr) // read index
 
+		// overflow check
+		lastAddr := addr.N() + uint(u.Enc.Count()) - 1
+		if _, ok := u.ObjAddrN(lastAddr); !ok {
+			io.WriteString(f, strings.TrimPrefix(ErrAddrSeq.Error(), "part5:"))
+			break
+		}
+
 		for obj_n := 0; ; obj_n++ {
 			if i+dataSize > len(u.Info) {
 				if i < len(u.Info) {
@@ -241,7 +249,7 @@ func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 				fmt.Fprintf(f, " %#x@%d", info, addr)
 			}
 
-			// silent overflow
+			// overflow checked with ErrAddrSeq
 			addr, _ = u.ObjAddrN(addr.N() + 1)
 		}
 	}
