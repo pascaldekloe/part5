@@ -3,7 +3,6 @@ package info
 import (
 	"fmt"
 	"io"
-	"strings"
 )
 
 // Format implements the fmt.Formatter interface.
@@ -148,109 +147,92 @@ func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 	}
 	fmt.Fprintf(f, format, u.Type, u.Cause, u.Orig, u.Addr)
 
-	dataSize := ObjSize[u.Type]
+	var addr Obj
+
+	n := u.Enc.Count()
 	switch {
-	case dataSize == 0:
-		// structure unknown
-		fmt.Fprintf(f, " %#x ?", u.Info)
+	case u.Enc.AddrSeq():
+		// only the first address is encoded
+		if len(addr) > len(u.Info) {
+			fmt.Fprintf(f, " SQ @ %#x<EOF> ~%d !", u.Info, n)
+			return
+		}
+		firstAddr := Obj(u.Info[:len(addr)])
 
-	case !u.Enc.AddrSeq():
-		// objects paired with an address each
-		var i int // read index
-		for obj_n := 0; ; obj_n++ {
-			var addr Obj
-			if i+len(addr)+dataSize > len(u.Info) {
-				if i < len(u.Info) {
-					fmt.Fprintf(f, " %#x<EOF>", u.Info[i:])
-					obj_n++
-				}
+		// print sequence start
+		addrFmt := " SQ@%d"
+		if f.Flag('#') {
+			addrFmt = " SQ@%#x"
+		}
+		fmt.Fprintf(f, addrFmt, firstAddr)
 
-				diff := obj_n - u.Enc.Count()
-				switch {
-				case diff < 0:
-					fmt.Fprintf(f, " 𝚫 −%d !", -diff)
-				case diff > 0:
-					fmt.Fprintf(f, " 𝚫 +%d !", diff)
-				case i < len(u.Info):
-					io.WriteString(f, " !")
-				default:
-					io.WriteString(f, " .")
-				}
-
-				break
+		// payload with n fixed-size elements
+		p := u.Info[len(addr):]
+		if n == 0 {
+			if len(p) != 0 {
+				fmt.Fprintf(f, " %#x ~0 ?", p)
+				return
 			}
+			break // orphan address allowed
+		}
 
-			for j := 0; j < len(addr); j++ {
-				addr[j] = u.Info[i+j]
-			}
-			i += len(addr)
-			info := u.Info[i : i+dataSize]
-			i += dataSize
+		// size protection
+		if len(p) > 250 {
+			fmt.Fprintf(f, " %#x... (%d B) ~%d ?", p[:80], len(p), n)
+			return
+		}
 
-			if f.Flag('#') {
-				fmt.Fprintf(f, " %#x@%#x ", info, addr)
-			} else {
-				fmt.Fprintf(f, " %#x@%d", info, addr)
+		size := len(p) / n
+		if len(p)%n != 0 || (size == 0 && len(p) != 0) {
+			fmt.Fprintf(f, " %#x ~%d ?", p, n)
+			return
+		}
+		if size != 0 {
+			// print elements
+			for i := 0; i+size <= len(p); i += size {
+				fmt.Fprintf(f, " %#x", p[i:i+size])
 			}
+		}
+
+		// overflow check
+		lastAddr := firstAddr.N() + uint(n) - 1
+		if _, ok := u.ObjAddrN(lastAddr); !ok {
+			io.WriteString(f, " @^ !")
+			return
 		}
 
 	default:
-		// offset address in Sequence
-		var addr Obj
-		if len(addr) > len(u.Info) {
-			fmt.Fprintf(f, " %#x<EOF> !", u.Info)
-			break
-		}
-		for i := 0; i < len(addr); i++ {
-			addr[i] = u.Info[i]
-		}
-		i := len(addr) // read index
-
-		// overflow check
-		lastAddr := addr.N() + uint(u.Enc.Count()) - 1
-		if _, ok := u.ObjAddrN(lastAddr); !ok {
-			io.WriteString(f, strings.TrimPrefix(ErrAddrSeq.Error(), "part5:"))
-			break
-		}
-
-		for obj_n := 0; ; obj_n++ {
-			if i+dataSize > len(u.Info) {
-				if i < len(u.Info) {
-					info := u.Info[i:]
-					if f.Flag('#') {
-						fmt.Fprintf(f, " %#x<EOF>@%#x ", info, addr)
-					} else {
-						fmt.Fprintf(f, " %#x<EOF>@%d", info, addr)
-					}
-					obj_n++
-				}
-
-				diff := obj_n - u.Enc.Count()
-				switch {
-				case diff < 0:
-					fmt.Fprintf(f, " 𝚫 −%d !", -diff)
-				case diff > 0:
-					fmt.Fprintf(f, " 𝚫 +%d !", diff)
-				case i < len(u.Info):
-					io.WriteString(f, " !")
-				default:
-					io.WriteString(f, " .")
-				}
-
-				break
+		// n addresses are followed by a fixed-size element (in pairs)
+		if n == 0 {
+			if len(u.Info) != 0 {
+				fmt.Fprintf(f, " %#x ~0 ?", u.Info)
+				return
 			}
+			break // not explicitly prohibited
+		}
+		// size protection
+		if len(u.Info) > 250 {
+			fmt.Fprintf(f, " %#x... (%d B) ~%d ?", u.Info[:80], len(u.Info), n)
+			return
+		}
+		size := len(u.Info) / n
+		if size < len(addr) || len(u.Info)%n != 0 {
+			fmt.Fprintf(f, " %#x ~%d ?", u.Info, n)
+			return
+		}
 
-			info := u.Info[i : i+dataSize]
-			i += dataSize
-
-			if f.Flag('#') {
-				fmt.Fprintf(f, " %#x@%#x ", info, addr)
-			} else {
-				fmt.Fprintf(f, " %#x@%d", info, addr)
-			}
-
-			// overflow checked with ErrAddrSeq
-			addr, _ = u.ObjAddrN(addr.N() + 1)
+		format := " %#x@%d"
+		if f.Flag('#') {
+			format = " %#x@%#x"
+		}
+		for i := 0; i+size <= len(u.Info); i += size {
+			fmt.Fprintf(f, format,
+				u.Info[i+len(addr):i+size],
+				Obj(u.Info[i:i+len(addr)]),
+			)
 		}
 	}
+
+	// OK
+	io.WriteString(f, " .")
 }

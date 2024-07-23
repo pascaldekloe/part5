@@ -31,7 +31,43 @@ var goldenDataUnits = []struct {
 			Info:  []byte{1, 2, 3, 4, 5, 6},
 		},
 		"M_DP_NA_1 back 0 42: 0x03@513 0x06@1284 .",
+	},
+
+	// empty not explicitly prohibited by spec
+	{
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_SP_NA_1,
+			Enc:   0,
+			Cause: Percyc,
+			Addr:  Wide.MustComAddrN(404),
+			Info:  []byte{},
+		},
+		"M_SP_NA_1 percyc 0 404: .",
 	}, {
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_DP_NA_1,
+			Enc:   0 | 128,
+			Cause: Back,
+			Addr:  Wide.MustComAddrN(302),
+			Info:  []byte{1, 2},
+		},
+		"M_DP_NA_1 back 0 302: SQ@513 .",
+	},
+
+	// address sequence with overflow is undefined behavour
+	{
+		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
+			Type:  M_DP_NA_1,
+			Enc:   2 | 128,
+			Cause: Back,
+			Addr:  Wide.MustComAddrN(666),
+			Info:  []byte{0xff, 0xff, 3, 4},
+		},
+		"M_DP_NA_1 back 0 666: SQ@65535 0x03 0x04 @^ !",
+	},
+
+	// incomplete or additional data
+	{
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_ST_NA_1,
 			Enc:   2,
@@ -40,37 +76,26 @@ var goldenDataUnits = []struct {
 			Addr:  Wide.MustComAddrN(250),
 			Info:  []byte{1, 2, 3, 4, 5},
 		},
-		"M_ST_NA_1 spont 21 250: 0x0304@513 0x05<EOF> !",
+		"M_ST_NA_1 spont 21 250: 0x0102030405 ~2 ?",
 	}, {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_ST_NA_1,
-			Enc:   1,
+			Enc:   1 | 128,
 			Cause: Spont,
 			Orig:  Wide.MustOrigAddrN(22),
 			Addr:  Wide.MustComAddrN(251),
-			Info:  []byte{1, 2, 3, 4, 5, 6, 7},
+			Info:  []byte{1},
 		},
-		"M_ST_NA_1 spont 22 251: 0x0304@513 0x050607<EOF> 𝚫 +1 !",
+		"M_ST_NA_1 spont 22 251: SQ @ 0x01<EOF> ~1 !",
 	}, {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_ME_NC_1,
 			Enc:   2 | 128,
 			Cause: Init,
-			Orig:  Wide.MustOrigAddrN(60),
-			Addr:  Wide.MustComAddrN(12),
-			Info:  []byte{99, 0, 1, 2, 3, 4, 5, 6},
-		},
-		"M_ME_NC_1 init 60 12: 0x0102030405@99 0x06<EOF>@100 !",
-	}, {
-		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
-			Type:  M_ME_NC_1,
-			Enc:   2 | 128,
-			Cause: Init,
-			Orig:  Wide.MustOrigAddrN(61),
 			Addr:  Wide.MustComAddrN(12),
 			Info:  []byte{99, 0, 1, 2, 3, 4, 5},
 		},
-		"M_ME_NC_1 init 61 12: 0x0102030405@99 𝚫 −1 !",
+		"M_ME_NC_1 init 0 12: SQ@99 0x0102030405 ~2 ?",
 	},
 }
 
