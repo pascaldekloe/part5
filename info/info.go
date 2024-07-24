@@ -504,7 +504,7 @@ const (
 	InOperationFlag = 128 // marks parameter operation
 )
 
-// Cmd is a command.
+// Cmd is a command including the qualifier.
 // See companion standard 101, subclause 7.2.6.26.
 type Cmd uint8
 
@@ -529,7 +529,8 @@ func (c Cmd) DoublePt() DoublePt { return DoublePt(c & 3) }
 // be either Lower or Higher. The other two states (0 and 3) are not permitted.
 func (c Cmd) Regul() Regul { return Regul(c & 3) }
 
-// Def returns the additional definition in the qualifier of command, if any.
+// Additional returns the additional definition in the qualifier of command,
+// range 0..31.
 //
 //	0: no additional definition
 //	1: short pulse duration (circuit-breaker), duration determined by a system parameter in the outstation
@@ -538,14 +539,14 @@ func (c Cmd) Regul() Regul { return Regul(c & 3) }
 //	4..8: reserved for standard definitions of the IEC companion standard
 //	9..15: reserved for the selection of other predefined functions
 //	16..31: reserved for special use (private range)
-func (c Cmd) Def() uint { return uint((c >> 2) & 31) }
+func (c Cmd) Additional() uint { return uint((c >> 2) & 31) }
 
-// SetDef replaces the additional definition in the qualifier of command.
+// SetAdditional replaces the additional definition in the qualifier of command.
 // Any bits from q values over 31 get discarded silently.
-func (c *Cmd) SetDef(q uint) {
-	// discard current additional definition, if any
+func (c *Cmd) SetAdditional(q uint) {
+	// discard current, if any
 	*c &^= 31 << 2
-	// trim additional-definition range, and merge
+	// trim range, and merge
 	*c |= Cmd((q & 31) << 2)
 }
 
