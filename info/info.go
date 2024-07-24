@@ -508,10 +508,6 @@ const (
 // See companion standard 101, subclause 7.2.6.26.
 type Cmd uint8
 
-// Select flags the command to select (instead of execute).
-// See “Command transmission” in section 5, subclause 6.8.
-const Select = 128
-
 func NewSingleCmd(p SinglePt) Cmd { return Cmd(p & 1) }
 func NewDoubleCmd(p DoublePt) Cmd { return Cmd(p & 3) }
 func NewRegulCmd(r Regul) Cmd     { return Cmd(r & 3) }
@@ -550,8 +546,16 @@ func (c *Cmd) SetAdditional(q uint) {
 	*c |= Cmd((q & 31) << 2)
 }
 
-// SetPtQual is the qualifier of a set-point command, which includes the Select
-// flag. See companion standard 101, subclause 7.2.6.39.
+// Select gets the S/E flag, which causes the command to select instead of
+// execute. See “Command transmission” in section 5, subclause 6.8.
+func (c Cmd) Select() bool { return c&128 != 0 }
+
+// FlagSelect sets the S/E flag, which causes the command to select instead of
+// execute. See “Command transmission” in section 5, subclause 6.8.
+func (c *Cmd) FlagSelect() { *c |= 128 }
+
+// SetPtQual is the qualifier of a set-point command.
+// See companion standard 101, subclause 7.2.6.39.
 type SetPtQual uint8
 
 // N returns the qualifier code.
@@ -559,4 +563,12 @@ type SetPtQual uint8
 //	0: default
 //	1..63: reserved for standard definitions of the IEC companion standard (compatible range)
 //	64..127: reserved for special use (private range)
-func (c SetPtQual) N() uint { return uint(c & 127) }
+func (q SetPtQual) N() uint { return uint(q & 127) }
+
+// Select gets the S/E flag, which causes the command to select instead of
+// execute. See “Command transmission” in section 5, subclause 6.8.
+func (q SetPtQual) Select() bool { return q&128 != 0 }
+
+// FlagSelect sets the S/E flag, which causes the command to select instead of
+// execute. See “Command transmission” in section 5, subclause 6.8.
+func (q *SetPtQual) FlagSelect() { *q |= 128 }
