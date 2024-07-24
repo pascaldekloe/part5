@@ -101,7 +101,7 @@ func (p Params[Orig, Com, Obj]) NewDataUnit() DataUnit[Orig, Com, Obj] {
 	return DataUnit[Orig, Com, Obj]{}
 }
 
-// SingleCmd sets Type, Enc,  and Info with single command C_SC_NA_1 Act
+// SingleCmd returns single command C_SC_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.1.
 func (p Params[Orig, Com, Obj]) SingleCmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
 	u := p.cmd(addr, c)
@@ -109,7 +109,7 @@ func (p Params[Orig, Com, Obj]) SingleCmd(addr Obj, c Cmd) DataUnit[Orig, Com, O
 	return u
 }
 
-// DoubleCmd sets Type, Enc,  and Info with double command C_DC_NA_1 Act
+// DoubleCmd returns double command C_DC_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.2.
 func (p Params[Orig, Com, Obj]) DoubleCmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
 	u := p.cmd(addr, c)
@@ -117,8 +117,9 @@ func (p Params[Orig, Com, Obj]) DoubleCmd(addr Obj, c Cmd) DataUnit[Orig, Com, O
 	return u
 }
 
-// RegulCmd sets Type, Enc,  and Info with regulating-step command
-// C_RC_NA_1 Act conform companion standard 101, subsection 7.3.2.3.
+// RegulCmd returns regulating-step command C_RC_NA_1 Act
+// conform companion standard 101, subsection 7.3.2.3.
+// The address (generics) are left to be initiated.
 func (p Params[Orig, Com, Obj]) RegulCmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
 	u := p.cmd(addr, c)
 	u.Type = C_RC_NA_1
@@ -134,7 +135,7 @@ func (p Params[Orig, Com, Obj]) cmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
 	return u
 }
 
-// NormSetPt sets Type, Enc,  and Info with a set-point command C_SE_NA_1 Act
+// NormSetPt returns set-point command C_SE_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.4.
 func (p Params[Orig, Com, Obj]) NormSetPt(addr Obj, value Norm, q SetPtQual) DataUnit[Orig, Com, Obj] {
 	u := p.NewDataUnit()
@@ -147,7 +148,7 @@ func (p Params[Orig, Com, Obj]) NormSetPt(addr Obj, value Norm, q SetPtQual) Dat
 	return u
 }
 
-// ScaledSetPt sets Type, Enc,  and Info with set-point command C_SE_NB_1 Act
+// ScaledSetPt returns set-point command C_SE_NB_1 Act
 // conform companion standard 101, subsection 7.3.2.5.
 func (p Params[Orig, Com, Obj]) ScaledSetPt(addr Obj, value int16, q SetPtQual) DataUnit[Orig, Com, Obj] {
 	u := p.NewDataUnit()
@@ -160,7 +161,7 @@ func (p Params[Orig, Com, Obj]) ScaledSetPt(addr Obj, value int16, q SetPtQual) 
 	return u
 }
 
-// FloatSetPt sets Type, Enc,  and Info with set-point command C_SE_NC_1 Act
+// FloatSetPt returns set-point command C_SE_NC_1 Act
 // conform companion standard 101, subsection 7.3.2.6.
 func (p Params[Orig, Com, Obj]) FloatSetPt(addr Obj, value float32, q SetPtQual) DataUnit[Orig, Com, Obj] {
 	u := p.NewDataUnit()
@@ -174,16 +175,16 @@ func (p Params[Orig, Com, Obj]) FloatSetPt(addr Obj, value float32, q SetPtQual)
 	return u
 }
 
-// Inro sets Type, Enc,  and Info with interrogation-command C_IC_NA_1 Act
+// Inro returns interrogation command C_IC_NA_1 Act
 // conform companion standard 101, subsection 7.3.4.1.
 func (p Params[Orig, Com, Obj]) Inro() DataUnit[Orig, Com, Obj] {
 	return p.InroGroup(0)
 }
 
-// InroGroup sets Type, Enc,  and Info with interrogation-command C_IC_NA_1
-// Act conform companion standard 101, subsection 7.3.4.1. Group can be disabled
-// with 0 for (global) station interrogation. Otherwise, use a group identifier
-// in range [1..16].
+// InroGroup returns interrogation command C_IC_NA_1
+// Act conform companion standard 101, subsection 7.3.4.1.
+// Group can be disabled with 0 for (global) station interrogation.
+// Otherwise, use a group identifier in range [1..16].
 func (p Params[Orig, Com, Obj]) InroGroup(group uint) DataUnit[Orig, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Type = C_IC_NA_1
@@ -198,7 +199,7 @@ func (p Params[Orig, Com, Obj]) InroGroup(group uint) DataUnit[Orig, Com, Obj] {
 	return u
 }
 
-// TestCmd sets Type, Enc,  and Info with test-command C_TS_NA_1 Act
+// TestCmd returns test command C_TS_NA_1 Act
 // conform companion standard 101, subsection 7.3.4.5.
 func (p Params[Orig, Com, Obj]) TestCmd() DataUnit[Orig, Com, Obj] {
 	u := p.NewDataUnit()
