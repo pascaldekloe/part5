@@ -196,7 +196,7 @@ type SinglePtQual uint8
 func (pt SinglePtQual) Value() SinglePt { return SinglePt(pt & 1) }
 
 // Qual returns the quality descriptor flags. Overflow is always zero and
-// EllapedTimeInvalid does not apply.
+// ElapsedTimeInvalid does not apply.
 func (pt SinglePtQual) Qual() Qual { return Qual(pt & 0xfe) }
 
 // DoublePt is double-point information (IEV 371-02-08), which should be either
@@ -240,7 +240,7 @@ type DoublePtQual uint8
 func (pt DoublePtQual) Value() DoublePt { return DoublePt(pt & 3) }
 
 // Qual returns the quality descriptor. Overflow is always zero and
-// EllapesTimeInvalid does not apply.
+// ElapsedTimeInvalid does not apply.
 func (pt DoublePtQual) Qual() Qual { return Qual(pt & 0xfc) }
 
 // Regul is a regulating-step command (IEV 371-03-13) state, which should be
@@ -275,7 +275,7 @@ const (
 	// The OV flag signals that the value of the information object is
 	// beyond a predefined range of value (mainly applicable to analog
 	// values).
-	Overflow = 1 << iota
+	Overflow Qual = 1 << iota
 
 	_ // reserve
 	_ // reserve
@@ -307,7 +307,7 @@ const (
 	// under this condition.
 	Invalid
 
-	OK = 0 // no remarks
+	OK Qual = 0 // no remarks
 )
 
 // String returns the flag tokens separated by comma, with "OK" for no flags.
@@ -406,7 +406,7 @@ func NewTransientStepQual(value int, flags Qual) StepQual {
 // Value loses the quality descriptor.
 func (p StepQual) Value() Step { return Step(p[0]) }
 
-// Qual returns the quality descriptor. EllapesTimeInvalid does not apply.
+// Qual returns the quality descriptor. ElapsedTimeInvalid does not apply.
 func (p StepQual) Qual() Qual { return Qual(p[1]) }
 
 // FlagQual sets [logical OR] the quality descriptor bits from flags.
@@ -433,7 +433,7 @@ func (bits *BitsQual) SetBigEndian(v uint32) {
 	binary.BigEndian.PutUint32(bits[:4], v)
 }
 
-// Qual returns the quality descriptor. EllapesTimeInvalid does not apply.
+// Qual returns the quality descriptor. ElapsedTimeInvalid does not apply.
 func (bits BitsQual) Qual() Qual { return Qual(bits[4]) }
 
 // FlagQual sets [logical OR] the quality descriptor bits from flags.
@@ -480,7 +480,7 @@ type NormQual [3]uint8
 // descriptor.
 func (norm *NormQual) Link() *Norm { return (*Norm)(norm[:2]) }
 
-// Qual returns the quality descriptor. EllapesTimeInvalid does not apply.
+// Qual returns the quality descriptor. ElapsedTimeInvalid does not apply.
 func (norm NormQual) Qual() Qual { return Qual(norm[2]) }
 
 // FlagQual sets [logical OR] the quality descriptor bits from flags.
