@@ -103,24 +103,26 @@ func (p Params[Orig, Com, Obj]) NewDataUnit() DataUnit[Orig, Com, Obj] {
 
 // SingleCmd returns single command C_SC_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.1.
-func (p Params[Orig, Com, Obj]) SingleCmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
-	u := p.cmd(addr, c)
+func (p Params[Orig, Com, Obj]) SingleCmd(addr Obj, pt SinglePt, q CmdQual) DataUnit[Orig, Com, Obj] {
+	u := p.cmd(addr, byte(pt&1)|byte(q&^3))
 	u.Type = C_SC_NA_1
 	return u
 }
 
 // DoubleCmd returns double command C_DC_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.2.
-func (p Params[Orig, Com, Obj]) DoubleCmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
-	u := p.cmd(addr, c)
+func (p Params[Orig, Com, Obj]) DoubleCmd(addr Obj, pt DoublePt, q CmdQual) DataUnit[Orig, Com, Obj] {
+	u := p.cmd(addr, byte(pt&3)|byte(q&^3))
 	u.Type = C_DC_NA_1
 	return u
 }
 
 // RegulCmd returns regulating-step command C_RC_NA_1 Act
 // conform companion standard 101, subsection 7.3.2.3.
-// The address (generics) are left to be initiated.
-func (p Params[Orig, Com, Obj]) RegulCmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
+// Regul must be either Lower or Higher. The other two states
+// (0 and 3) are not permitted.
+func (p Params[Orig, Com, Obj]) RegulCmd(addr Obj, r Regul, q CmdQual) DataUnit[Orig, Com, Obj] {
+	u := p.cmd(addr, byte(r&3)|byte(q&^3))
 	u := p.cmd(addr, c)
 	u.Type = C_RC_NA_1
 	return u

@@ -504,26 +504,10 @@ const (
 	InOperationFlag = 128 // marks parameter operation
 )
 
-// Cmd is a command including the qualifier.
-// See companion standard 101, subclause 7.2.6.26.
-type Cmd uint8
-
-func NewSingleCmd(p SinglePt) Cmd { return Cmd(p & 1) }
-func NewDoubleCmd(p DoublePt) Cmd { return Cmd(p & 3) }
-func NewRegulCmd(r Regul) Cmd     { return Cmd(r & 3) }
-
-// SinglePt returns the value assuming a single-point command.
-// The return is either Off or On.
-func (c Cmd) SinglePt() SinglePt { return SinglePt(c & 1) }
-
-// DoublePt returns the value assuming a double-point command.
-// The return is either IndeterminateOrIntermediate, DeterminatedOff,
-// DeterminatedOn or Indeterminate.
-func (c Cmd) DoublePt() DoublePt { return DoublePt(c & 3) }
-
-// Regul returns the value assuming a regulating-step command. The return should
-// be either Lower or Higher. The other two states (0 and 3) are not permitted.
-func (c Cmd) Regul() Regul { return Regul(c & 3) }
+// CmdQual is the qualifier of command conform companion standard 101, subclause
+// 7.2.6.26. The zero value executes without any additional definition, i.e.,
+// .Select() == false and .Additional() == 0.
+type CmdQual uint8
 
 // Additional returns the additional definition in the qualifier of command,
 // range 0..31.
@@ -535,35 +519,40 @@ func (c Cmd) Regul() Regul { return Regul(c & 3) }
 //	4..8: reserved for standard definitions of the IEC companion standard
 //	9..15: reserved for the selection of other predefined functions
 //	16..31: reserved for special use (private range)
-func (c Cmd) Additional() uint { return uint((c >> 2) & 31) }
+func (q CmdQual) Additional() uint { return uint((q >> 2) & 31) }
 
 // SetAdditional replaces the additional definition in the qualifier of command.
 // Any bits from q values over 31 get discarded silently.
-func (c *Cmd) SetAdditional(q uint) {
+func (q *CmdQual) SetAdditional(a uint) {
 	// discard current, if any
-	*c &^= 31 << 2
+	*q &^= 31 << 2
 	// trim range, and merge
-	*c |= Cmd((q & 31) << 2)
+	*q |= CmdQual((a & 31) << 2)
 }
 
 // Select gets the S/E flag, which causes the command to select instead of
 // execute. See “Command transmission” in section 5, subclause 6.8.
-func (c Cmd) Select() bool { return c&128 != 0 }
+func (q CmdQual) Select() bool { return q&128 != 0 }
 
 // FlagSelect sets the S/E flag, which causes the command to select instead of
 // execute. See “Command transmission” in section 5, subclause 6.8.
-func (c *Cmd) FlagSelect() { *c |= 128 }
+func (q *CmdQual) FlagSelect() { *q |= 128 }
 
-// SetPtQual is the qualifier of a set-point command.
-// See companion standard 101, subclause 7.2.6.39.
+// SetPtQual is the qualifier of set-point command conform companion standard
+// 101, subclause 7.2.6.39. The zero value exectutes the “default”, i.e.,
+// .Select() == false and .N() == 0.
 type SetPtQual uint8
 
-// N returns the qualifier code.
+// N returns the QL value, range 0..127.
 //
 //	0: default
 //	1..63: reserved for standard definitions of the IEC companion standard (compatible range)
 //	64..127: reserved for special use (private range)
 func (q SetPtQual) N() uint { return uint(q & 127) }
+
+// SetN resplaces the QL value, range 0..127.
+// Any bits from n values over 127 get discarded silently.
+func (q *SetPtQual) SetN(n uint) { *q = *q&128 | n&127 }
 
 // Select gets the S/E flag, which causes the command to select instead of
 // execute. See “Command transmission” in section 5, subclause 6.8.
