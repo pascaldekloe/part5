@@ -85,6 +85,60 @@ type DataUnit[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct {
 	Info []byte // encoded payload
 }
 
+// NewDataUnit returns a new ASDU.
+func (p Params[Orig, Com, Obj]) NewDataUnit() DataUnit[Orig, Com, Obj] {
+	return DataUnit[Orig, Com, Obj]{}
+}
+
+// Adopt reads the Data Unit Identifier from the ASDU into the fields.
+// The remainder of the bytes is sliced as Info without any validation.
+func (u *DataUnit[Orig, Com, Obj]) Adopt(asdu []byte) error {
+	if len(asdu) < 3+len(u.Orig)+len(u.Addr) {
+		if len(asdu) == 0 {
+			return io.EOF
+		}
+		return io.ErrUnexpectedEOF
+	}
+
+	// copy header
+	u.Type = TypeID(asdu[0])
+	u.Enc = Enc(asdu[1])
+	u.Cause = Cause(asdu[2])
+	for i := 0; i < len(u.Orig); i++ {
+		u.Orig[i] = asdu[i+3]
+	}
+	for i := 0; i < len(u.Addr); i++ {
+		u.Addr[i] = asdu[i+3+len(u.Orig)]
+	}
+
+	// reject values whom are "not used"
+	switch {
+	case u.Type == 0:
+		return errTypeZero
+	case u.Cause&63 == 0:
+		return errCauseZero
+	case u.Addr.N() == 0:
+		return errComAddrZero
+	}
+
+	// slice payload
+	u.Info = asdu[3+len(u.Orig)+len(u.Addr):]
+	return nil
+}
+
+// Append the ASDU encoding to buf and return the extended buffer.
+func (u DataUnit[Orig, Com, Obj]) Append(buf []byte) []byte {
+	buf = append(buf, byte(u.Type), byte(u.Enc), byte(u.Cause))
+	for i := 0; i < len(u.Orig); i++ {
+		buf = append(buf, u.Orig[i])
+	}
+	for i := 0; i < len(u.Addr); i++ {
+		buf = append(buf, u.Addr[i])
+	}
+	buf = append(buf, u.Info...)
+	return buf
+}
+
 func (u *DataUnit[Orig, Com, Obj]) setAddr(addr Obj) {
 	u.Info = u.bootstrap[:0]
 	u.addAddr(addr)
@@ -94,11 +148,6 @@ func (u *DataUnit[Orig, Com, Obj]) addAddr(addr Obj) {
 	for i := 0; i < len(addr); i++ {
 		u.Info = append(u.Info, addr[i])
 	}
-}
-
-// NewDataUnit returns a new ASDU.
-func (p Params[Orig, Com, Obj]) NewDataUnit() DataUnit[Orig, Com, Obj] {
-	return DataUnit[Orig, Com, Obj]{}
 }
 
 // SingleCmd returns single command C_SC_NA_1 Act
@@ -213,53 +262,4 @@ func (p Params[Orig, Com, Obj]) TestCmd() DataUnit[Orig, Com, Obj] {
 	// standard 101, subsection 7.2.6.14
 	u.Info = append(u.Info, 0b1010_1010, 0b0101_0101)
 	return u
-}
-
-// Adopt reads the Data Unit Identifier from the ASDU into the fields.
-// The remainder of the bytes is sliced as Info without any validation.
-func (u *DataUnit[Orig, Com, Obj]) Adopt(asdu []byte) error {
-	if len(asdu) < 3+len(u.Orig)+len(u.Addr) {
-		if len(asdu) == 0 {
-			return io.EOF
-		}
-		return io.ErrUnexpectedEOF
-	}
-
-	// copy header
-	u.Type = TypeID(asdu[0])
-	u.Enc = Enc(asdu[1])
-	u.Cause = Cause(asdu[2])
-	for i := 0; i < len(u.Orig); i++ {
-		u.Orig[i] = asdu[i+3]
-	}
-	for i := 0; i < len(u.Addr); i++ {
-		u.Addr[i] = asdu[i+3+len(u.Orig)]
-	}
-
-	// reject values whom are "not used"
-	switch {
-	case u.Type == 0:
-		return errTypeZero
-	case u.Cause&63 == 0:
-		return errCauseZero
-	case u.Addr.N() == 0:
-		return errComAddrZero
-	}
-
-	// slice payload
-	u.Info = asdu[3+len(u.Orig)+len(u.Addr):]
-	return nil
-}
-
-// Append the ASDU encoding to buf and return the extended buffer.
-func (u DataUnit[Orig, Com, Obj]) Append(buf []byte) []byte {
-	buf = append(buf, byte(u.Type), byte(u.Enc), byte(u.Cause))
-	for i := 0; i < len(u.Orig); i++ {
-		buf = append(buf, u.Orig[i])
-	}
-	for i := 0; i < len(u.Addr); i++ {
-		buf = append(buf, u.Addr[i])
-	}
-	buf = append(buf, u.Info...)
-	return buf
 }
