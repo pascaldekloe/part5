@@ -552,7 +552,7 @@ func (q SetPtQual) N() uint { return uint(q & 127) }
 
 // SetN resplaces the QL value, range 0..127.
 // Any bits from n values over 127 get discarded silently.
-func (q *SetPtQual) SetN(n uint) { *q = *q&128 | n&127 }
+func (q *SetPtQual) SetN(n uint) { *q = *q&128 | SetPtQual(n&127) }
 
 // Select gets the S/E flag, which causes the command to select instead of
 // execute. See “Command transmission” in section 5, subclause 6.8.

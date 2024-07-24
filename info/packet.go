@@ -123,17 +123,16 @@ func (p Params[Orig, Com, Obj]) DoubleCmd(addr Obj, pt DoublePt, q CmdQual) Data
 // (0 and 3) are not permitted.
 func (p Params[Orig, Com, Obj]) RegulCmd(addr Obj, r Regul, q CmdQual) DataUnit[Orig, Com, Obj] {
 	u := p.cmd(addr, byte(r&3)|byte(q&^3))
-	u := p.cmd(addr, c)
 	u.Type = C_RC_NA_1
 	return u
 }
 
-func (p Params[Orig, Com, Obj]) cmd(addr Obj, c Cmd) DataUnit[Orig, Com, Obj] {
+func (p Params[Orig, Com, Obj]) cmd(addr Obj, c byte) DataUnit[Orig, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Enc = 1     // fixed
 	u.Cause = Act // could Deact
 	u.setAddr(addr)
-	u.Info = append(u.Info, byte(c))
+	u.Info = append(u.Info, c)
 	return u
 }
 
