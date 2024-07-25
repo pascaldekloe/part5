@@ -21,7 +21,7 @@ var goldenDataUnits = []struct {
 			Addr:  Wide.MustComAddrN(1001),
 			Info:  []byte{1, 2, 3},
 		},
-		"M_SP_NA_1 percyc 7 1001: 0x03@513 .",
+		"M_SP_NA_1 per/cyc 7 1001: 0x03@513 .",
 	}, {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_DP_NA_1,
@@ -42,7 +42,7 @@ var goldenDataUnits = []struct {
 			Addr:  Wide.MustComAddrN(404),
 			Info:  []byte{},
 		},
-		"M_SP_NA_1 percyc 0 404: .",
+		"M_SP_NA_1 per/cyc 0 404: .",
 	}, {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_DP_NA_1,

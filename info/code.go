@@ -561,7 +561,7 @@ func (c Cause) String() string {
 
 var causeLabels = [64]string{
 	"notdef",
-	"percyc",
+	"per/cyc",
 	"back",
 	"spont",
 	"init",
