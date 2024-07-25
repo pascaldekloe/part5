@@ -87,7 +87,9 @@ type DataUnit[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct {
 
 // NewDataUnit returns a new ASDU.
 func (p Params[Orig, Com, Obj]) NewDataUnit() DataUnit[Orig, Com, Obj] {
-	return DataUnit[Orig, Com, Obj]{}
+	var u DataUnit[Orig, Com, Obj]
+	u.Info = u.bootstrap[:0]
+	return u
 }
 
 // Adopt reads the Data Unit Identifier from the ASDU into the fields.
@@ -139,11 +141,6 @@ func (u DataUnit[Orig, Com, Obj]) Append(buf []byte) []byte {
 	return buf
 }
 
-func (u *DataUnit[Orig, Com, Obj]) setAddr(addr Obj) {
-	u.Info = u.bootstrap[:0]
-	u.addAddr(addr)
-}
-
 func (u *DataUnit[Orig, Com, Obj]) addAddr(addr Obj) {
 	for i := 0; i < len(addr); i++ {
 		u.Info = append(u.Info, addr[i])
@@ -180,7 +177,7 @@ func (p Params[Orig, Com, Obj]) cmd(addr Obj, c byte) DataUnit[Orig, Com, Obj] {
 	u := p.NewDataUnit()
 	u.Enc = 1     // fixed
 	u.Cause = Act // could Deact
-	u.setAddr(addr)
+	u.addAddr(addr)
 	u.Info = append(u.Info, c)
 	return u
 }
@@ -192,7 +189,7 @@ func (p Params[Orig, Com, Obj]) NormSetPt(addr Obj, value Norm, q SetPtQual) Dat
 	u.Type = C_SE_NA_1
 	u.Enc = 1     // fixed
 	u.Cause = Act // could Deact
-	u.setAddr(addr)
+	u.addAddr(addr)
 	u.Info = append(u.Info, value[0], value[1])
 	u.Info = append(u.Info, byte(q))
 	return u
@@ -205,7 +202,7 @@ func (p Params[Orig, Com, Obj]) ScaledSetPt(addr Obj, value int16, q SetPtQual) 
 	u.Type = C_SE_NB_1
 	u.Enc = 1     // fixed
 	u.Cause = Act // could Deact
-	u.setAddr(addr)
+	u.addAddr(addr)
 	u.Info = append(u.Info, byte(value), byte(value>>8))
 	u.Info = append(u.Info, byte(q))
 	return u
@@ -218,7 +215,7 @@ func (p Params[Orig, Com, Obj]) FloatSetPt(addr Obj, value float32, q SetPtQual)
 	u.Type = C_SE_NC_1
 	u.Enc = 1     // fixed
 	u.Cause = Act // could Deact
-	u.setAddr(addr)
+	u.addAddr(addr)
 	u.Info = binary.LittleEndian.AppendUint32(u.Info,
 		math.Float32bits(value))
 	u.Info = append(u.Info, byte(q))
@@ -241,7 +238,7 @@ func (p Params[Orig, Com, Obj]) InroGroup(group uint) DataUnit[Orig, Com, Obj] {
 	u.Enc = 1     // fixed
 	u.Cause = Act // could Deact
 	var addr Obj  // fixed to zero
-	u.setAddr(addr)
+	u.addAddr(addr)
 
 	// qualifier of interrogation is described in
 	// companion standard 101, section 7.2.6.22
@@ -257,7 +254,7 @@ func (p Params[Orig, Com, Obj]) TestCmd() DataUnit[Orig, Com, Obj] {
 	u.Enc = 1     // fixed
 	u.Cause = Act // fixed
 	var addr Obj  // fixed to zero
-	u.setAddr(addr)
+	u.addAddr(addr)
 	// fixed test bit pattern defined in companion
 	// standard 101, subsection 7.2.6.14
 	u.Info = append(u.Info, 0b1010_1010, 0b0101_0101)
