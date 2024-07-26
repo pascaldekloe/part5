@@ -95,7 +95,7 @@ func main() {
 			}
 
 		case l := <-client.Level:
-			log.Printf("connection level: %s", l)
+			CmdLog.Printf("connection level %s", l)
 			if l == session.Exit {
 				return
 			}
