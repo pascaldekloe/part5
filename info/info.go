@@ -43,7 +43,7 @@ type (
 		// directed to all stations of a specific system.
 		// Use is restricted to type C_IC_NA_1, C_CI_NA_1,
 		// C_CS_NA_1 and C_RP_NA_1.
-		IsGlobal() bool
+		Global() bool
 	}
 
 	ComAddr8  [1]uint8
@@ -80,13 +80,13 @@ func (addr ComAddr16) N() uint {
 	return uint(addr[0]) | uint(addr[1])<<8
 }
 
-// IsGlobal implements the ComAddr interface.
-func (addr ComAddr8) IsGlobal() bool {
+// Global implements the ComAddr interface.
+func (addr ComAddr8) Global() bool {
 	return addr[0] == 0xff
 }
 
-// IsGlobal implements the ComAddr interface.
-func (addr ComAddr16) IsGlobal() bool {
+// Global implements the ComAddr interface.
+func (addr ComAddr16) Global() bool {
 	return addr[0] == 0xff && addr[1] == 0xff
 }
 
