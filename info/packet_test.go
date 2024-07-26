@@ -16,12 +16,12 @@ var goldenDataUnits = []struct {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_SP_NA_1,
 			Enc:   1,
-			Cause: Percyc,
+			Cause: Cyclic,
 			Orig:  Wide.MustOrigAddrN(7),
 			Addr:  Wide.MustComAddrN(1001),
 			Info:  []byte{1, 2, 3},
 		},
-		"M_SP_NA_1 per/cyc 7 1001: 0x03@513 .",
+		"M_SP_NA_1 cyclic 7 1001: 0x03@513 .",
 	}, {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_DP_NA_1,
@@ -38,11 +38,11 @@ var goldenDataUnits = []struct {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_SP_NA_1,
 			Enc:   0,
-			Cause: Percyc,
+			Cause: Cyclic,
 			Addr:  Wide.MustComAddrN(404),
 			Info:  []byte{},
 		},
-		"M_SP_NA_1 per/cyc 0 404: .",
+		"M_SP_NA_1 cyclic 0 404: .",
 	}, {
 		DataUnit[OrigAddr8, ComAddr16, ObjAddr16]{
 			Type:  M_DP_NA_1,

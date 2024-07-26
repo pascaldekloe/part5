@@ -43,7 +43,7 @@ func isCommand(t info.TypeID) bool {
 	return t-45 < 25
 }
 
-// Response alternatives to info.Actcon are propagated as errors for simplicity.
+// Response alternatives to info.ActCon are propagated as errors for simplicity.
 var (
 	// A negative confirm denies without justification.
 	ErrConNeg = errors.New("part5: command not activated [actcon, P/N := <1>]")
@@ -77,18 +77,18 @@ func ConOf[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](in, req info.
 
 	// match cause of transmission, or not
 	switch in.Cause &^ info.TestFlag {
-	case info.Actcon:
+	case info.ActCon:
 		if req.Cause&^info.TestFlag == info.Act {
 			return nil // OK
 		}
-	case info.Deactcon:
+	case info.DeactCon:
 		if req.Cause&^info.TestFlag == info.Deact {
 			return nil // OK
 		}
 
-	case info.Actcon | info.NegFlag:
+	case info.ActCon | info.NegFlag:
 		return ErrConNeg
-	case info.Actterm:
+	case info.ActTerm:
 		return ErrTerm
 
 	// “ASDUs in the control direction with undefined values in the data
