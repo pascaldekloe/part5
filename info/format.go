@@ -236,3 +236,71 @@ func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 	// OK
 	io.WriteString(f, " .")
 }
+
+// Format implements the fmt.Formatter interface. String formatting with "%s"
+// gets the incomplete time as ":<MM>:<SS>.<mmm>". Invalid times get the ",IV"
+// suffix. Precision "%.1s" includes Reserve1 as suffix ",RES1=<0|1>".
+func (t2a CP24Time2a) Format(f fmt.State, verb rune) {
+	if verb != 's' {
+		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
+		return
+	}
+
+	min, secInMilli := t2a.MinuteAndMillis()
+	sec := secInMilli / 1000
+	millis := secInMilli % 1000
+	fmt.Fprintf(f, ":%02d:%02d.%03d", min, sec, millis)
+
+	if t2a.Invalid() {
+		io.WriteString(f, ",IV")
+	}
+
+	if n, ok := f.Precision(); ok && n != 0 {
+		if n > 0 {
+			if t2a.Reserve1() {
+				io.WriteString(f, ",RES1=1")
+			} else {
+				io.WriteString(f, ",RES1=0")
+			}
+		}
+	}
+}
+
+// Format implements the fmt.Formatter interface. String formatting with "%s"
+// gets the date–time in the ISO extended-format. Invalid times get the ",IV"
+// suffix. Precision "%.1s" includes Reserve1 as suffix ",RES1=<0|1>", "%.2s"
+// additionally adds Reserve2 as ",RES2=<0|1><0|1>", and "%.3s" additionally
+// adds Reserve3 as ",RES3=<0|1><0|1><0|1><0|1>".
+func (t2a CP56Time2a) Format(f fmt.State, verb rune) {
+	if verb != 's' {
+		fmt.Fprintf(f, "%%!%c(BADVERB)", verb)
+		return
+	}
+
+	year, month, day := t2a.Calendar()
+	hour, min, secInMilli := t2a.ClockAndMillis()
+	sec := secInMilli / 1000
+	millis := secInMilli % 1000
+	fmt.Fprintf(f, "%02d-%02d-%02dT%02d:%02d:%02d.%03d",
+		year, month, day, hour, min, sec, millis)
+
+	if t2a.Invalid() {
+		io.WriteString(f, ",IV")
+	}
+
+	if n, ok := f.Precision(); ok && n != 0 {
+		if n > 0 {
+			if t2a.Reserve1() {
+				io.WriteString(f, ",RES1=1")
+			} else {
+				io.WriteString(f, ",RES1=0")
+			}
+		}
+		if n > 1 {
+			fmt.Fprintf(f, ",RES2=%02b", t2a.Reserve2())
+		}
+		if n > 2 {
+			fmt.Fprintf(f, ",RES3=%04b", t2a.Reserve3())
+		}
+	}
+}

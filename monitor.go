@@ -109,19 +109,14 @@ func (l logger[Orig, Com, Obj]) SinglePt(u info.DataUnit[Orig, Com, Obj], addr O
 		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
 }
 
-func (l logger[Orig, Com, Obj]) SinglePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, t info.CP24Time2a) {
-	min, secInMilli := t.MinuteAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-		min, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) SinglePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) SinglePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, t info.CP56Time2a) {
-	y, m, d := t.Calendar()
-	H, M, secInMilli := t.ClockAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) SinglePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) DoublePt(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual) {
@@ -129,19 +124,14 @@ func (l logger[Orig, Com, Obj]) DoublePt(u info.DataUnit[Orig, Com, Obj], addr O
 		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
 }
 
-func (l logger[Orig, Com, Obj]) DoublePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, t info.CP24Time2a) {
-	min, secInMilli := t.MinuteAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-		min, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) DoublePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) DoublePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, t info.CP56Time2a) {
-	y, m, d := t.Calendar()
-	H, M, secInMilli := t.ClockAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) DoublePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) Step(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual) {
@@ -149,19 +139,14 @@ func (l logger[Orig, Com, Obj]) Step(u info.DataUnit[Orig, Com, Obj], addr Obj, 
 		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
 }
 
-func (l logger[Orig, Com, Obj]) StepAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, t info.CP24Time2a) {
-	min, secInMilli := t.MinuteAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-		min, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) StepAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) StepAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, t info.CP56Time2a) {
-	y, m, d := t.Calendar()
-	H, M, secInMilli := t.ClockAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) StepAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) Bits(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual) {
@@ -169,19 +154,14 @@ func (l logger[Orig, Com, Obj]) Bits(u info.DataUnit[Orig, Com, Obj], addr Obj, 
 		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual())
 }
 
-func (l logger[Orig, Com, Obj]) BitsAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, t info.CP24Time2a) {
-	min, secInMilli := t.MinuteAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %#x %s :%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(),
-		min, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) BitsAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %#x %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) BitsAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, t info.CP56Time2a) {
-	y, m, d := t.Calendar()
-	H, M, secInMilli := t.ClockAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %#x %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(),
-		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) BitsAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %#x %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) NormUnqual(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.Norm) {
@@ -194,19 +174,14 @@ func (l logger[Orig, Com, Obj]) Norm(u info.DataUnit[Orig, Com, Obj], addr Obj, 
 		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual())
 }
 
-func (l logger[Orig, Com, Obj]) NormAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, t info.CP24Time2a) {
-	min, secInMilli := t.MinuteAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s :%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(),
-		min, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) NormAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) NormAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, t info.CP56Time2a) {
-	y, m, d := t.Calendar()
-	H, M, secInMilli := t.ClockAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(),
-		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) NormAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) Scaled(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual) {
@@ -214,19 +189,14 @@ func (l logger[Orig, Com, Obj]) Scaled(u info.DataUnit[Orig, Com, Obj], addr Obj
 		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q)
 }
 
-func (l logger[Orig, Com, Obj]) ScaledAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, t info.CP24Time2a) {
-	min, secInMilli := t.MinuteAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %d %s :%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q,
-		min, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) ScaledAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %d %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q, tag)
 }
 
-func (l logger[Orig, Com, Obj]) ScaledAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, t info.CP56Time2a) {
-	y, m, d := t.Calendar()
-	H, M, secInMilli := t.ClockAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %d %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q,
-		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) ScaledAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %d %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q, tag)
 }
 
 func (l logger[Orig, Com, Obj]) Float(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual) {
@@ -234,19 +204,14 @@ func (l logger[Orig, Com, Obj]) Float(u info.DataUnit[Orig, Com, Obj], addr Obj,
 		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q)
 }
 
-func (l logger[Orig, Com, Obj]) FloatAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, t info.CP24Time2a) {
-	min, secInMilli := t.MinuteAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s :%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q,
-		min, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) FloatAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q, tag)
 }
 
-func (l logger[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, t info.CP56Time2a) {
-	y, m, d := t.Calendar()
-	H, M, secInMilli := t.ClockAndMillis()
-	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q,
-		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+func (l logger[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q, tag)
 }
 
 // ErrNotMonitor rejects an info.DataUnit based on its type identifier.

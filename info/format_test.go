@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
-var goldenFormats = []struct {
+var goldenAddrFormats = []struct {
 	value  any
 	format string
 	want   string
@@ -37,8 +38,8 @@ var goldenFormats = []struct {
 	{ObjAddr24{0xa, 0xb, 0xc}, "%#X", "0C:0B:0A"},
 }
 
-func TestGoldenFormats(t *testing.T) {
-	for _, gold := range goldenFormats {
+func TestGoldenAddrFormats(t *testing.T) {
+	for _, gold := range goldenAddrFormats {
 		got := fmt.Sprintf(gold.format, gold.value)
 		if got != gold.want {
 			t.Errorf("%q of %T got %q, want %q",
@@ -80,5 +81,93 @@ func FuzzDataUnitFormat(f *testing.F) {
 		case strings.Count(DUI, " ") != 3:
 			t.Errorf("data-uint identifier %q of %q does not have 4 fields", DUI, a)
 		}
+	})
+}
+
+func TestCP24Time2aFormat(t *testing.T) {
+	// timezone should be ignored
+	timestamp := time.Date(2006, 01, 02, 15, 04, 05, 987000000, time.Local)
+
+	want := func(t *testing.T, t2a CP24Time2a, format, want string) {
+		t.Helper()
+		got := fmt.Sprintf(format, t2a)
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	}
+
+	t.Run("Plain", func(t *testing.T) {
+		var t2a CP24Time2a
+		t2a.Set(timestamp)
+		want(t, t2a, "%s", ":04:05.987")
+	})
+
+	t.Run("Invalid", func(t *testing.T) {
+		var t2a CP24Time2a
+		t2a.Set(timestamp)
+		t2a[2] |= 0x80 // invalid
+		want(t, t2a, "%s", ":04:05.987,IV")
+	})
+
+	t.Run("NoRES1", func(t *testing.T) {
+		var t2a CP24Time2a
+		t2a.Set(timestamp)
+		want(t, t2a, "%.1s", ":04:05.987,RES1=0")
+	})
+
+	t.Run("InvalidAndRES1", func(t *testing.T) {
+		var t2a CP24Time2a
+		t2a.Set(timestamp)
+		t2a[2] |= 0x80 // invalid
+		t2a.FlagReserve1()
+		want(t, t2a, "%.1s", ":04:05.987,IV,RES1=1")
+	})
+}
+
+func TestCP56Time2aFormat(t *testing.T) {
+	// timezone should be ignored
+	timestamp := time.Date(2006, 01, 02, 15, 04, 05, 987000000, time.Local)
+
+	want := func(t *testing.T, t2a CP56Time2a, format, want string) {
+		t.Helper()
+		got := fmt.Sprintf(format, t2a)
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	}
+
+	t.Run("Plain", func(t *testing.T) {
+		var t2a CP56Time2a
+		t2a.Set(timestamp)
+		want(t, t2a, "%s", "06-01-02T15:04:05.987")
+		want(t, t2a, "%.0s", "06-01-02T15:04:05.987")
+		want(t, t2a, "%.0s", "06-01-02T15:04:05.987")
+		want(t, t2a, "%.0s", "06-01-02T15:04:05.987")
+		want(t, t2a, "%.1s", "06-01-02T15:04:05.987,RES1=0")
+		want(t, t2a, "%.2s", "06-01-02T15:04:05.987,RES1=0,RES2=00")
+		want(t, t2a, "%.3s", "06-01-02T15:04:05.987,RES1=0,RES2=00,RES3=0000")
+		want(t, t2a, "%.4s", "06-01-02T15:04:05.987,RES1=0,RES2=00,RES3=0000")
+	})
+
+	t.Run("Reserves", func(t *testing.T) {
+		var t2a CP56Time2a
+		t2a.Set(timestamp)
+		t2a.FlagReserve1()
+		t2a.FlagReserve2(2)
+		t2a.FlagReserve3(5)
+		want(t, t2a, "%s", "06-01-02T15:04:05.987")
+		want(t, t2a, "%.1s", "06-01-02T15:04:05.987,RES1=1")
+		want(t, t2a, "%.2s", "06-01-02T15:04:05.987,RES1=1,RES2=10")
+		want(t, t2a, "%.3s", "06-01-02T15:04:05.987,RES1=1,RES2=10,RES3=0101")
+	})
+
+	t.Run("Invalid", func(t *testing.T) {
+		var t2a CP56Time2a
+		t2a.Set(timestamp)
+		t2a.FlagReserve2(1)
+		t2a.FlagReserve3(10)
+		t2a[2] |= 0x80 // invalid
+		want(t, t2a, "%s", "06-01-02T15:04:05.987,IV")
+		want(t, t2a, "%.3s", "06-01-02T15:04:05.987,IV,RES1=0,RES2=01,RES3=1010")
 	})
 }
