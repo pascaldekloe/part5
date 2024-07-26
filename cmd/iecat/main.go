@@ -167,7 +167,7 @@ type system[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
 
 // StreamInbound implements the packetStream interface.
 func (sys system[Orig, Com, Obj]) streamInbound(client *session.Station) {
-	mon := part5.NewLog(sys.Params, os.Stdout)
+	mon := part5.NewLogger(sys.Params, os.Stdout)
 
 	u := sys.NewDataUnit() // reusable
 	var n uint64
@@ -178,7 +178,7 @@ func (sys system[Orig, Com, Obj]) streamInbound(client *session.Station) {
 		if err != nil {
 			CmdLog.Print("payload from inbound APDU dropped: ", err)
 		} else {
-			mon.OnDataUnit(u)
+			part5.ApplyDataUnit(mon, u)
 		}
 
 		if n == *inCapFlag {

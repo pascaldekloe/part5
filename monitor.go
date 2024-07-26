@@ -10,284 +10,243 @@ import (
 	"github.com/pascaldekloe/part5/info"
 )
 
-// Single Point
-type (
+// A Monitor accepts information in monitor direction as listed in table 8 from
+// companion standard 101.
+type Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	SinglePtMonitor[Orig, Com, Obj]
+	DoublePtMonitor[Orig, Com, Obj]
+	StepMonitor[Orig, Com, Obj]
+	BitsMonitor[Orig, Com, Obj]
+	NormMonitor[Orig, Com, Obj]
+	ScaledMonitor[Orig, Com, Obj]
+	FloatMonitor[Orig, Com, Obj]
+}
+
+// SinglePtMonitor accepts single points.
+type SinglePtMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// SinglePt gets called for type identifier 1: M_SP_NA_1.
-	SinglePt[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual)
+	SinglePt(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual)
 	// SinglePtAtMinute gets called for type identifier 2: M_SP_TA_1.
-	SinglePtAtMinute[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP24Time2a)
+	SinglePtAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP24Time2a)
 	// SinglePtAtMoment gets called for type identifier 30: M_SP_TB_1.
-	SinglePtAtMoment[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP56Time2a)
-)
+	SinglePtAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP56Time2a)
+}
 
-// Double Point
-type (
+// DoublePtMonitor accepts double points.
+type DoublePtMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// DoublePt gets called for type identifier 3: M_DP_NA_1.
-	DoublePt[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual)
+	DoublePt(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual)
 	// DoublePtAtMinute gets called for type identifier 4: M_DP_TA_1.
-	DoublePtAtMinute[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP24Time2a)
+	DoublePtAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP24Time2a)
 	// DoublePtAtMoment gets called for type identifier 31: M_DP_TB_1.
-	DoublePtAtMoment[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP56Time2a)
-)
+	DoublePtAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP56Time2a)
+}
 
-// Step Position
-type (
+// StepMonitor accepts step positions.
+type StepMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// Step gets called for type identifier 5: M_ST_NA_1.
-	Step[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual)
+	Step(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual)
 	// StepAtMinute gets called for type identifier 6: M_ST_TA_1.
-	StepAtMinute[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP24Time2a)
+	StepAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP24Time2a)
 	// StepAtMoment gets called for type identifier 32: M_ST_TB_1.
-	StepAtMoment[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP56Time2a)
-)
+	StepAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP56Time2a)
+}
 
-// Bitstring
-type (
+// BitsMonitor accepts bitstrings.
+type BitsMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// Bits gets called for type identifier 7: M_BO_NA_1.
-	Bits[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual)
+	Bits(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual)
 	// BitsAtMinute gets called for type identifier 8: M_BO_TA_1.
-	BitsAtMinute[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP24Time2a)
+	BitsAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP24Time2a)
 	// BitsAtMoment gets called for type identifier 33: M_BO_TB_1.
-	BitsAtMoment[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP56Time2a)
-)
+	BitsAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP56Time2a)
+}
 
-// Normalized Value
-type (
+// NormMonitor accepts normalized values.
+type NormMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// NormUnqual gets called for type identifier 21: M_ME_ND_1.
-	NormUnqual[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.Norm)
+	NormUnqual(info.DataUnit[Orig, Com, Obj], Obj, info.Norm)
 	// Norm gets called for type identifier 9: M_ME_NA_1.
-	Norm[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual)
+	Norm(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual)
 	// NormAtMinute gets called for type identifier 10: M_ME_TA_1.
-	NormAtMinute[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP24Time2a)
+	NormAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP24Time2a)
 	// NormAtMoment gets called for type identifier 34: M_ME_TD_1.
-	NormAtMoment[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP56Time2a)
-)
+	NormAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP56Time2a)
+}
 
-// Scaled Value
-type (
+// ScaledMonitor accepts scaled values.
+type ScaledMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// Scaled gets called for type identifier 11: M_ME_NB_1.
-	Scaled[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual)
+	Scaled(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual)
 	// ScaledAtMinute gets called for type identifier 12: M_ME_TB_1.
-	ScaledAtMinute[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP24Time2a)
+	ScaledAtMinute(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP24Time2a)
 	// ScaledAtMoment gets called for type identifier 35: M_ME_TE_1.
-	ScaledAtMoment[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP56Time2a)
-)
+	ScaledAtMoment(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP56Time2a)
+}
 
-// Floating Point
-type (
+// FloatMonitor accepts floating points.
+type FloatMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// Float gets called for type identifier 13: M_ME_NC_1.
-	Float[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual)
+	Float(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual)
 	// FloatAtMinute gets called for type identifier 14: M_ME_TC_1.
-	FloatAtMinute[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP24Time2a)
+	FloatAtMinute(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP24Time2a)
 	// FloatAtMoment gets called for type identifier 36: M_ME_TF_1.
-	FloatAtMoment[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP56Time2a)
-)
-
-// Monitor processes information in monitor direction,
-// as listed in table 8 from companion standard 101.
-type Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	info.Params[Orig, Com, Obj]
-
-	SinglePt[Orig, Com, Obj]
-	SinglePtAtMinute[Orig, Com, Obj]
-	SinglePtAtMoment[Orig, Com, Obj]
-
-	DoublePt[Orig, Com, Obj]
-	DoublePtAtMinute[Orig, Com, Obj]
-	DoublePtAtMoment[Orig, Com, Obj]
-
-	Step[Orig, Com, Obj]
-	StepAtMinute[Orig, Com, Obj]
-	StepAtMoment[Orig, Com, Obj]
-
-	Bits[Orig, Com, Obj]
-	BitsAtMinute[Orig, Com, Obj]
-	BitsAtMoment[Orig, Com, Obj]
-
-	NormUnqual[Orig, Com, Obj]
-	Norm[Orig, Com, Obj]
-	NormAtMinute[Orig, Com, Obj]
-	NormAtMoment[Orig, Com, Obj]
-
-	Scaled[Orig, Com, Obj]
-	ScaledAtMinute[Orig, Com, Obj]
-	ScaledAtMoment[Orig, Com, Obj]
-
-	Float[Orig, Com, Obj]
-	FloatAtMinute[Orig, Com, Obj]
-	FloatAtMoment[Orig, Com, Obj]
+	FloatAtMoment(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP56Time2a)
 }
 
-// NewMonitor instantiatiates all listener functions with a no-op placeholder.
-func NewMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](p info.Params[Orig, Com, Obj]) Monitor[Orig, Com, Obj] {
-	return Monitor[Orig, Com, Obj]{
-		Params: p, // nop
-
-		SinglePt:         func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual) {},
-		SinglePtAtMinute: func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP24Time2a) {},
-		SinglePtAtMoment: func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP56Time2a) {},
-
-		DoublePt:         func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual) {},
-		DoublePtAtMinute: func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP24Time2a) {},
-		DoublePtAtMoment: func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP56Time2a) {},
-
-		Step:         func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual) {},
-		StepAtMinute: func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP24Time2a) {},
-		StepAtMoment: func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP56Time2a) {},
-
-		Bits:         func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual) {},
-		BitsAtMinute: func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP24Time2a) {},
-		BitsAtMoment: func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP56Time2a) {},
-
-		NormUnqual:   func(info.DataUnit[Orig, Com, Obj], Obj, info.Norm) {},
-		Norm:         func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual) {},
-		NormAtMinute: func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP24Time2a) {},
-		NormAtMoment: func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP56Time2a) {},
-
-		Scaled:         func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual) {},
-		ScaledAtMinute: func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP24Time2a) {},
-		ScaledAtMoment: func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP56Time2a) {},
-
-		Float:         func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual) {},
-		FloatAtMinute: func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP24Time2a) {},
-		FloatAtMoment: func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP56Time2a) {},
-	}
+type logger[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	W io.Writer
 }
 
-// NewLog writes each measurement event as a text line in a human readable formon.
-func NewLog[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](p info.Params[Orig, Com, Obj], w io.Writer) Monitor[Orig, Com, Obj] {
-	return Monitor[Orig, Com, Obj]{
-		Params: p, // nop
+// NewLogger returns a Monitor which writes on each invocation as a text line in
+// a human readable formon.
+func NewLogger[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](_ info.Params[Orig, Com, Obj], w io.Writer) Monitor[Orig, Com, Obj] {
+	return logger[Orig, Com, Obj]{w}
+}
 
-		SinglePt: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
-		},
-		SinglePtAtMinute: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, t info.CP24Time2a) {
-			min, secInMilli := t.MinuteAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-				min, secInMilli/1000, secInMilli%1000)
-		},
-		SinglePtAtMoment: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, t info.CP56Time2a) {
-			y, m, d := t.Calendar()
-			H, M, secInMilli := t.ClockAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
-		},
+func (l logger[Orig, Com, Obj]) SinglePt(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
+}
 
-		DoublePt: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
-		},
-		DoublePtAtMinute: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, t info.CP24Time2a) {
-			min, secInMilli := t.MinuteAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-				min, secInMilli/1000, secInMilli%1000)
-		},
-		DoublePtAtMoment: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, t info.CP56Time2a) {
-			y, m, d := t.Calendar()
-			H, M, secInMilli := t.ClockAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
-		},
+func (l logger[Orig, Com, Obj]) SinglePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, t info.CP24Time2a) {
+	min, secInMilli := t.MinuteAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
+		min, secInMilli/1000, secInMilli%1000)
+}
 
-		Step: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
-		},
-		StepAtMinute: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, t info.CP24Time2a) {
-			min, secInMilli := t.MinuteAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-				min, secInMilli/1000, secInMilli%1000)
-		},
-		StepAtMoment: func(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, t info.CP56Time2a) {
-			y, m, d := t.Calendar()
-			H, M, secInMilli := t.ClockAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
-				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
-		},
+func (l logger[Orig, Com, Obj]) SinglePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, t info.CP56Time2a) {
+	y, m, d := t.Calendar()
+	H, M, secInMilli := t.ClockAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
+		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+}
 
-		Bits: func(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %#x %s\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual())
-		},
-		BitsAtMinute: func(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, t info.CP24Time2a) {
-			min, secInMilli := t.MinuteAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %#x %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(),
-				min, secInMilli/1000, secInMilli%1000)
-		},
-		BitsAtMoment: func(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, t info.CP56Time2a) {
-			y, m, d := t.Calendar()
-			H, M, secInMilli := t.ClockAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %#x %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(),
-				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
-		},
+func (l logger[Orig, Com, Obj]) DoublePt(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
+}
 
-		NormUnqual: func(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.Norm) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %f\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, n.Float64())
-		},
-		Norm: func(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %f %s\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual())
-		},
-		NormAtMinute: func(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, t info.CP24Time2a) {
-			min, secInMilli := t.MinuteAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %f %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(),
-				min, secInMilli/1000, secInMilli%1000)
-		},
-		NormAtMoment: func(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, t info.CP56Time2a) {
-			y, m, d := t.Calendar()
-			H, M, secInMilli := t.ClockAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %f %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(),
-				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
-		},
+func (l logger[Orig, Com, Obj]) DoublePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, t info.CP24Time2a) {
+	min, secInMilli := t.MinuteAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
+		min, secInMilli/1000, secInMilli%1000)
+}
 
-		Scaled: func(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %d %s\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, v, q)
-		},
-		ScaledAtMinute: func(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, t info.CP24Time2a) {
-			min, secInMilli := t.MinuteAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %d %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, v, q,
-				min, secInMilli/1000, secInMilli%1000)
-		},
-		ScaledAtMoment: func(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, t info.CP56Time2a) {
-			y, m, d := t.Calendar()
-			H, M, secInMilli := t.ClockAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %d %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, v, q,
-				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
-		},
+func (l logger[Orig, Com, Obj]) DoublePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, t info.CP56Time2a) {
+	y, m, d := t.Calendar()
+	H, M, secInMilli := t.ClockAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
+		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+}
 
-		Float: func(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual) {
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %g %s\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, f, q)
-		},
-		FloatAtMinute: func(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, t info.CP24Time2a) {
-			min, secInMilli := t.MinuteAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %g %s :%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, f, q,
-				min, secInMilli/1000, secInMilli%1000)
-		},
-		FloatAtMoment: func(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, t info.CP56Time2a) {
-			y, m, d := t.Calendar()
-			H, M, secInMilli := t.ClockAndMillis()
-			fmt.Fprintf(w, "%s %s %x %#x/%#x %g %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
-				u.Type, u.Cause, u.Orig, u.Addr, addr, f, q,
-				y, m, d, H, M, secInMilli/1000, secInMilli%1000)
-		},
-	}
+func (l logger[Orig, Com, Obj]) Step(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
+}
+
+func (l logger[Orig, Com, Obj]) StepAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, t info.CP24Time2a) {
+	min, secInMilli := t.MinuteAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s :%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
+		min, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) StepAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, t info.CP56Time2a) {
+	y, m, d := t.Calendar()
+	H, M, secInMilli := t.ClockAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(),
+		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) Bits(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %#x %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual())
+}
+
+func (l logger[Orig, Com, Obj]) BitsAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, t info.CP24Time2a) {
+	min, secInMilli := t.MinuteAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %#x %s :%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(),
+		min, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) BitsAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, t info.CP56Time2a) {
+	y, m, d := t.Calendar()
+	H, M, secInMilli := t.ClockAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %#x %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, b.Array(), b.Qual(),
+		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) NormUnqual(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.Norm) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Float64())
+}
+
+func (l logger[Orig, Com, Obj]) Norm(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual())
+}
+
+func (l logger[Orig, Com, Obj]) NormAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, t info.CP24Time2a) {
+	min, secInMilli := t.MinuteAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s :%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(),
+		min, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) NormAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, t info.CP56Time2a) {
+	y, m, d := t.Calendar()
+	H, M, secInMilli := t.ClockAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(),
+		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) Scaled(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %d %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q)
+}
+
+func (l logger[Orig, Com, Obj]) ScaledAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, t info.CP24Time2a) {
+	min, secInMilli := t.MinuteAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %d %s :%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q,
+		min, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) ScaledAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, t info.CP56Time2a) {
+	y, m, d := t.Calendar()
+	H, M, secInMilli := t.ClockAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %d %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, v, q,
+		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) Float(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q)
+}
+
+func (l logger[Orig, Com, Obj]) FloatAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, t info.CP24Time2a) {
+	min, secInMilli := t.MinuteAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s :%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q,
+		min, secInMilli/1000, secInMilli%1000)
+}
+
+func (l logger[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, t info.CP56Time2a) {
+	y, m, d := t.Calendar()
+	H, M, secInMilli := t.ClockAndMillis()
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s %02d-%02d-%02dT%02d:%02d:%02d.%03d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q,
+		y, m, d, H, M, secInMilli/1000, secInMilli%1000)
 }
 
 // ErrNotMonitor rejects an info.DataUnit based on its type identifier.
@@ -295,12 +254,12 @@ var ErrNotMonitor = errors.New("part5: ASDU type identifier not in monitor infor
 
 var errInfoSize = errors.New("part5: size of ASDU payload doesn't match the variable structure qualifier")
 
-// OnDataUnit applies the payload to the respective listener. Note that one
-// DataUnit can have multiple information elements, in which case the listener
+// ApplyDataUnit propagates u to the corresponding mon method. Note that one
+// DataUnit can have multiple information elements, in which case the interface
 // is invoked once for each element in order of appearance. DataUnits with zero
 // information elements do not cause any listener invocation. Errors other than
 // ErrNotMonitor reject malformed content in the DataUnit.
-func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) error {
+func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon Monitor[Orig, Com, Obj], u info.DataUnit[Orig, Com, Obj]) error {
 	// monitor type identifiers (M_*) are in range 1..44
 	if u.Type-1 > 43 {
 		return ErrNotMonitor
@@ -723,7 +682,6 @@ func (mon *Monitor[Orig, Com, Obj]) OnDataUnit(u info.DataUnit[Orig, Com, Obj]) 
 	}
 	return nil
 }
-
 
 func addrSeqStart[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](u *info.DataUnit[Orig, Com, Obj], encSize int) (addr Obj, err error) {
 	if len(u.Info) != len(addr)+u.Enc.Count()*encSize {
