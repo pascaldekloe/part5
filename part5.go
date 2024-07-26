@@ -1,11 +1,9 @@
+// Package part5 provides the OSI application layer of IEC 60870-5.
 package part5
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
-	"math"
 
 	"github.com/pascaldekloe/part5/info"
 )
@@ -15,81 +13,95 @@ import (
 // unknown information-object address.
 type CmdUnk struct {
 	// The cause of transmission from the response has the info.NegFlag set.
-	// It may also have the info.TestFlag test.
+	// It may also have the info.TestFlag set.
 	info.Cause
 }
 
 // Error implements the builtin.error interface.
 func (u CmdUnk) Error() string {
-	return "part5: command got rejected as " + u.Cause.String()
+	return "part5: command rejected as " + u.Cause.String()
+}
+
+// CauseMis signals an incorrect response to either an activation or a
+// deactivation request.
+type CauseMis struct {
+	Type info.TypeID // command identifier
+	Req  info.Cause  // from request
+	Res  info.Cause  // from response
+}
+
+// Error implements the builtin.error interface.
+func (mis CauseMis) Error() string {
+	return fmt.Sprintf("part5: illegal response %s to %s %s",
+		mis.Res, mis.Type, mis.Req)
 }
 
 // ErrNotCmd rejects an info.DataUnit based on its type identifier.
 var ErrNotCmd = errors.New("part5: ASDU type identifier not in command range 45..69")
 
 func isCommand(t info.TypeID) bool {
-	return t - 45 < 25
+	return t-45 < 25
 }
 
-var ErrOtherCmd = errors.New("part5: response for other command")
-
-// OnDataUnit applies the payload to the respective listener. Note that one
-// DataUnit can have multiple information elements, in which case the listener
-// is invoked once for each element in order of appearance. DataUnits with zero
-// information elements do not cause any listener invocation. Errors other than
-// ErrNotCommand reject malformed content in the DataUnit.
-func (ctl *Control[COT, Common, Object]) OnDataUnit(u info.DataUnit[COT, Common, Object]) (info.Cause, err error) { 
-
+// Response alternatives to info.Actcon are propagated as errors for simplicity.
 var (
-	ErrConNeg = errors.New("part5: command not activated [actcon with P/N := <1>]")
+	// A negative confirm denies without justification.
+	ErrConNeg = errors.New("part5: command not activated [actcon, P/N := <1>]")
+	// Termination notification is optional, depending on the implementation.
 	ErrTerm = errors.New("part5: command terminated [actterm]")
-	ErrTermNeg = errors.New("part5: command not terminated [actterm with P/N := <1>]")
 )
 
-// ActConOf returns no error if the in(bound) packet is a confirmatin of the
-// activation req(quest). The return is ErrNegCon when the activation got denied.
-//
-// Errors other than ErrNegCon, ErrTerm, ErrTermNeg, ErrNotCmd, or a CmdUnk indicate protocol failure.
-func ActConOf[COT, Common, Object])(in, req info.DataUnit[COT, Common, Object]) error {
+// ErrOtherCmd may indicate an orphaned command from earlier activity.
+var ErrOtherCmd = errors.New("part5: response for other command")
+
+// ConOf returns a specific error if the in(bound) packet is not a positive
+// confirmation of an activation or a deactivation req(uest). Valid alternatives
+// may include ErrNotCmd, ErrTerm or ErrConNeg.
+func ConOf[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](in, req info.DataUnit[Orig, Com, Obj]) error {
 	// sanity check
-	if req.Cause &^ (info.NegFlag | info.TestFlag) != info.Act {
-		return errors.New("part5: not an activation request")
+	switch req.Cause &^ info.TestFlag {
+	case info.Act, info.Deact:
+		break // pass
+	default:
+		// incorrect API use
+		return fmt.Errorf("part5: cause %s of request not act nor deact", req.Cause)
 	}
 
+	// command match
 	if !in.Mirrors(req) {
-		if !isCommand(in) {
+		if !isCommand(in.Type) {
 			return ErrNotCmd
 		}
 		return ErrOtherCmd
 	}
 
-	switch u.Cause &^ info.TestFlag {
+	// match cause of transmission, or not
+	switch in.Cause &^ info.TestFlag {
 	case info.Actcon:
-		return nil
-	case info.Actcon|info.NegFlag:
-		return ErrConNeg
+		if req.Cause&^info.TestFlag == info.Act {
+			return nil // OK
+		}
+	case info.Deactcon:
+		if req.Cause&^info.TestFlag == info.Deact {
+			return nil // OK
+		}
 
-	cause info.Actterm:
+	case info.Actcon | info.NegFlag:
+		return ErrConNeg
+	case info.Actterm:
 		return ErrTerm
-	cause info.Actterm|info.NegFlag:
-		return ErrTermNeg
 
 	// “ASDUs in the control direction with undefined values in the data
 	// unit identifier (except the variable structure qualifier) and the
 	// information object address are mirrored by the controlled station
 	// with bit “P/N := <1> negative confirm” …”
 	// — companion standard 101, subsection 7.2.3
-	cause info.UnkType|info.NegFlag,
-		info.UnkCause|info.NegFlag,
-		info.UnkAddr|info.NegFlag,
-		info.UnkInfo|info.NegFlag:
-		return CmdUnk{u.Cause}
-	cause info.UnkType, info.UnkCause, info.UnkAddr, info.UnkInfo:
-		// give a hint as this is not obvious
-		return fmt.Errorf("part5: cause %s responses need P/N flag, a.k.a. the negative confirm", in.Cause)
+	case info.UnkType | info.NegFlag,
+		info.UnkCause | info.NegFlag,
+		info.UnkAddr | info.NegFlag,
+		info.UnkInfo | info.NegFlag:
+		return CmdUnk{in.Cause}
 
-	default:
-		return false, fmt.Errorf("part5: illegal cause %s from response to %s request cause %s",
-			u.Cause, req.Type, req.Cause)
 	}
+	return CauseMis{Type: req.Type, Req: req.Cause, Res: in.Cause}
 }
