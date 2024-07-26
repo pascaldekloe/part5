@@ -141,6 +141,18 @@ func (u DataUnit[Orig, Com, Obj]) Append(buf []byte) []byte {
 	return buf
 }
 
+// Mirrors compares all fields for equality with the exception of Cause. For
+// Cause, only the TestFlag is compared for equality. Command responses should
+// mirror their respective requests.
+func (u DataUnit[Orig, Com, Obj]) Mirrors(o DataUnit[Orig, Com, Obj]) bool {
+	return u.Type == o.Type &&
+		u.Enc == o.Enc &&
+		u.Cause&TestFlag == o.Cause&TestFlag &&
+		u.Orig == o.Orig &&
+		u.Addr == o.Addr &&
+		string(u.Info) == string(o.Info)
+}
+
 func (u *DataUnit[Orig, Com, Obj]) addAddr(addr Obj) {
 	for i := 0; i < len(addr); i++ {
 		u.Info = append(u.Info, addr[i])
