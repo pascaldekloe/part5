@@ -286,11 +286,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+1) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+1 {
-				mon.SinglePt(u, Obj(u.Info[:len(addr)]),
-					info.SinglePtQual(u.Info[len(addr)]),
+			for i := 0; i+len(addr)+1 <= len(u.Info); i += len(addr) + 1 {
+				mon.SinglePt(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.SinglePtQual(u.Info[i+len(addr)]),
 				)
-				u.Info = u.Info[len(addr)+1:]
 			}
 		}
 
@@ -301,12 +301,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+4) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+4 {
-			mon.SinglePtAtMinute(u, Obj(u.Info[:len(addr)]),
-				info.SinglePtQual(u.Info[len(addr)]),
-				info.CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
+		for i := 0; i+len(addr)+4 <= len(u.Info); i += len(addr) + 4 {
+			mon.SinglePtAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.SinglePtQual(u.Info[i+len(addr)]),
+				info.CP24Time2a(u.Info[i+len(addr)+1:i+len(addr)+4]),
 			)
-			u.Info = u.Info[len(addr)+4:]
 		}
 
 	case info.M_SP_TB_1: // single-point with 7 octet time-tag
@@ -316,24 +316,29 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(u.Info) >= (len(addr) + 8) {
-			mon.SinglePtAtMoment(u, Obj(u.Info[:len(addr)]),
-				info.SinglePtQual(u.Info[len(addr)]),
-				info.CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
+		for i := 0; i+len(addr)+8 <= len(u.Info); i += len(addr) + 8 {
+			mon.SinglePtAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.SinglePtQual(u.Info[i+len(addr)]),
+				info.CP56Time2a(u.Info[i+len(addr)+1:i+len(addr)+8]),
 			)
-			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_PS_NA_1: // single-points with status change
 		if u.Enc.AddrSeq() {
-			addr, err := addrSeqStart(&u, 1)
+			addr, err := addrSeqStart(&u, 5)
 			if err != nil {
 				return err
 			}
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
 				mon.SinglePtChangePack(u, addr,
-					info.SinglePtChangePack(binary.BigEndian.Uint32(u.Info[i:i+4])),
-					info.Qual(u.Info[i+4]))
+					info.SinglePtChangePack(
+						binary.BigEndian.Uint32(
+							u.Info[i:i+4],
+						),
+					),
+					info.Qual(u.Info[i+4]),
+				)
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
 			}
 		} else {
@@ -343,8 +348,13 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			for i := 0; i+len(addr)+5 <= len(u.Info); i += len(addr) + 5 {
 				mon.SinglePtChangePack(u,
 					Obj(u.Info[i:i+len(addr)]),
-					info.SinglePtChangePack(binary.BigEndian.Uint32(u.Info[i+len(addr):i+len(addr)+4])),
-					info.Qual(u.Info[i+len(addr)+4]))
+					info.SinglePtChangePack(
+						binary.BigEndian.Uint32(
+							u.Info[i+len(addr):i+len(addr)+4],
+						),
+					),
+					info.Qual(u.Info[i+len(addr)+4]),
+				)
 			}
 		}
 
@@ -362,11 +372,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+1) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+1 {
-				mon.DoublePt(u, Obj(u.Info[:len(addr)]),
-					info.DoublePtQual(u.Info[len(addr)]),
+			for i := 0; i+len(addr)+1 <= len(u.Info); i += len(addr) + 1 {
+				mon.DoublePt(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.DoublePtQual(u.Info[i+len(addr)]),
 				)
-				u.Info = u.Info[len(addr)+1:]
 			}
 		}
 
@@ -377,12 +387,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+4) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+4 {
-			mon.DoublePtAtMinute(u, Obj(u.Info[:len(addr)]),
-				info.DoublePtQual(u.Info[len(addr)]),
-				info.CP24Time2a(u.Info[len(addr)+1:len(addr)+4]),
+		for i := 0; i+len(addr)+4 <= len(u.Info); i += len(addr) + 4 {
+			mon.DoublePtAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.DoublePtQual(u.Info[i+len(addr)]),
+				info.CP24Time2a(u.Info[i+len(addr)+1:i+len(addr)+4]),
 			)
-			u.Info = u.Info[len(addr)+4:]
 		}
 
 	case info.M_DP_TB_1: // double-point with 7 octet time-tag
@@ -392,12 +402,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+8 {
-			mon.DoublePtAtMoment(u, Obj(u.Info[:len(addr)]),
-				info.DoublePtQual(u.Info[len(addr)]),
-				info.CP56Time2a(u.Info[len(addr)+1:len(addr)+8]),
+		for i := 0; i+len(addr)+8 <= len(u.Info); i += len(addr) + 8 {
+			mon.DoublePtAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.DoublePtQual(u.Info[i+len(addr)]),
+				info.CP56Time2a(u.Info[i+len(addr)+1:i+len(addr)+8]),
 			)
-			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_EP_TA_1: // protection equipment with 3-octet time tag
@@ -448,11 +458,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+2) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+2 {
-				mon.Step(u, Obj(u.Info[:len(addr)]),
-					info.StepQual(u.Info[len(addr):len(addr)+2]),
+			for i := 0; i+len(addr)+2 <= len(u.Info); i += len(addr) + 2 {
+				mon.Step(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.StepQual(u.Info[i+len(addr):i+len(addr)+2]),
 				)
-				u.Info = u.Info[len(addr)+2:]
 			}
 		}
 
@@ -463,12 +473,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+5 {
-			mon.StepAtMinute(u, Obj(u.Info[:len(addr)]),
-				info.StepQual(u.Info[len(addr):len(addr)+2]),
-				info.CP24Time2a(u.Info[len(addr)+2:len(addr)+5]),
+		for i := 0; i+len(addr)+5 <= len(u.Info); i += len(addr) + 5 {
+			mon.StepAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.StepQual(u.Info[i+len(addr):i+len(addr)+2]),
+				info.CP24Time2a(u.Info[i+len(addr)+2:i+len(addr)+5]),
 			)
-			u.Info = u.Info[len(addr)+5:]
 		}
 
 	case info.M_ST_TB_1: // step position with 7 octet time-tag
@@ -478,15 +488,15 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+9) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+9 {
-			mon.StepAtMoment(u, Obj(u.Info[:len(addr)]),
-				info.StepQual(u.Info[len(addr):len(addr)+2]),
-				info.CP56Time2a(u.Info[len(addr)+2:len(addr)+9]),
+		for i := 0; i+len(addr)+9 <= len(u.Info); i += len(addr) + 9 {
+			mon.StepAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.StepQual(u.Info[i+len(addr):i+len(addr)+2]),
+				info.CP56Time2a(u.Info[i+len(addr)+2:i+len(addr)+9]),
 			)
-			u.Info = u.Info[len(addr)+9:]
 		}
 
-	case info.M_BO_NA_1: // bitstring
+	case info.M_BO_NA_1: // bit string
 		if u.Enc.AddrSeq() {
 			addr, err := addrSeqStart(&u, 5)
 			if err != nil {
@@ -500,11 +510,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+5 {
-				mon.Bits(u, Obj(u.Info),
-					info.BitsQual(u.Info[len(addr):len(addr)+5]),
+			for i := 0; i+len(addr)+5 <= len(u.Info); i += len(addr) + 5 {
+				mon.Bits(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.BitsQual(u.Info[i+len(addr):i+len(addr)+5]),
 				)
-				u.Info = u.Info[len(addr)+5:]
 			}
 		}
 
@@ -515,12 +525,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+8 {
-			mon.BitsAtMinute(u, Obj(u.Info[:len(addr)]),
-				info.BitsQual(u.Info[len(addr):len(addr)+5]),
-				info.CP24Time2a(u.Info[len(addr)+5:len(addr)+8]),
+		for i := 0; i+len(addr)+8 <= len(u.Info); i += len(addr) + 8 {
+			mon.BitsAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.BitsQual(u.Info[i+len(addr):i+len(addr)+5]),
+				info.CP24Time2a(u.Info[i+len(addr)+5:i+len(addr)+8]),
 			)
-			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_BO_TB_1: // bit string with 7 octet time-tag
@@ -530,12 +540,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+12) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+12 {
-			mon.BitsAtMoment(u, Obj(u.Info[:len(addr)]),
-				info.BitsQual(u.Info[len(addr):len(addr)+5]),
-				info.CP56Time2a(u.Info[len(addr)+5:len(addr)+12]),
+		for i := 0; i+len(addr)+12 <= len(u.Info); i += len(addr) + 12 {
+			mon.BitsAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.BitsQual(u.Info[i+len(addr):i+len(addr)+5]),
+				info.CP56Time2a(u.Info[i+len(addr)+5:i+len(addr)+12]),
 			)
-			u.Info = u.Info[len(addr)+12:]
 		}
 
 	case info.M_ME_ND_1: // normalized value without quality descriptor
@@ -552,11 +562,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+2) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+2 {
-				mon.NormUnqual(u, Obj(u.Info[:len(addr)]),
-					info.Norm(u.Info[len(addr):len(addr)+2]),
+			for i := 0; i+len(addr)+2 <= len(u.Info); i += len(addr) + 2 {
+				mon.NormUnqual(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.Norm(u.Info[i+len(addr):i+len(addr)+2]),
 				)
-				u.Info = u.Info[len(addr)+2:]
 			}
 		}
 
@@ -574,11 +584,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+3) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+3 {
-				mon.Norm(u, Obj(u.Info[:len(addr)]),
-					info.NormQual(u.Info[len(addr):len(addr)+3]),
+			for i := 0; i+len(addr)+3 <= len(u.Info); i += len(addr) + 3 {
+				mon.Norm(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.NormQual(u.Info[i+len(addr):i+len(addr)+3]),
 				)
-				u.Info = u.Info[len(addr)+3:]
 			}
 		}
 
@@ -589,12 +599,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+6) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+6 {
-			mon.NormAtMinute(u, Obj(u.Info[:len(addr)]),
-				info.NormQual(u.Info[len(addr):len(addr)+3]),
-				info.CP24Time2a(u.Info[len(addr)+3:len(addr)+6]),
+		for i := 0; i+len(addr)+6 <= len(u.Info); i += len(addr) + 6 {
+			mon.NormAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.NormQual(u.Info[i+len(addr):i+len(addr)+3]),
+				info.CP24Time2a(u.Info[i+len(addr)+3:i+len(addr)+6]),
 			)
-			u.Info = u.Info[len(addr)+6:]
 		}
 
 	case info.M_ME_TD_1: // normalized value with 7 octet time-tag
@@ -604,12 +614,12 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+10) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+10 {
-			mon.NormAtMoment(u, Obj(u.Info[:len(addr)]),
-				info.NormQual(u.Info[len(addr):len(addr)+3]),
-				info.CP56Time2a(u.Info[len(addr)+3:len(addr)+10]),
+		for i := 0; i+len(addr)+10 <= len(u.Info); i += len(addr) + 10 {
+			mon.NormAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.NormQual(u.Info[i+len(addr):i+len(addr)+3]),
+				info.CP56Time2a(u.Info[i+len(addr)+3:i+len(addr)+10]),
 			)
-			u.Info = u.Info[len(addr)+10:]
 		}
 
 	case info.M_ME_NB_1: // scaled value
@@ -620,7 +630,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			}
 			for i := len(addr); i+3 <= len(u.Info); i += 3 {
 				mon.Scaled(u, addr,
-					int16(binary.LittleEndian.Uint16(u.Info[i:i+2])),
+					int16(
+						binary.LittleEndian.Uint16(
+							u.Info[i:i+2],
+						),
+					),
 					info.Qual(u.Info[i+2]),
 				)
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -629,12 +643,16 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+3) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+3 {
-				mon.Scaled(u, Obj(u.Info[:len(addr)]),
-					int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
-					info.Qual(u.Info[len(addr)+2]),
+			for i := 0; i+len(addr)+3 <= len(u.Info); i += len(addr) + 3 {
+				mon.Scaled(u,
+					Obj(u.Info[i:i+len(addr)]),
+					int16(
+						binary.LittleEndian.Uint16(
+							u.Info[i+len(addr):i+len(addr)+2],
+						),
+					),
+					info.Qual(u.Info[i+len(addr)+2]),
 				)
-				u.Info = u.Info[len(addr)+3:]
 			}
 		}
 
@@ -645,13 +663,17 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+6) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+6 {
-			mon.ScaledAtMinute(u, Obj(u.Info[:len(addr)]),
-				int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
-				info.Qual(u.Info[len(addr)+2]),
-				info.CP24Time2a(u.Info[len(addr)+3:len(addr)+6]),
+		for i := 0; i+len(addr)+6 <= len(u.Info); i += len(addr) + 6 {
+			mon.ScaledAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
+				int16(
+					binary.LittleEndian.Uint16(
+						u.Info[i+len(addr):i+len(addr)+2],
+					),
+				),
+				info.Qual(u.Info[i+len(addr)+2]),
+				info.CP24Time2a(u.Info[i+len(addr)+3:i+len(addr)+6]),
 			)
-			u.Info = u.Info[len(addr)+6:]
 		}
 
 	case info.M_ME_TE_1: // scaled value with 7 octet time-tag
@@ -661,11 +683,16 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+10) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+10 {
-			mon.ScaledAtMoment(u, Obj(u.Info[:len(addr)]),
-				int16(binary.LittleEndian.Uint16(u.Info[len(addr):len(addr)+2])),
-				info.Qual(u.Info[len(addr)+2]),
-				info.CP56Time2a(u.Info[len(addr)+3:len(addr)+10]),
+		for i := 0; i+len(addr)+10 <= len(u.Info); i += len(addr) + 10 {
+			mon.ScaledAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
+				int16(
+					binary.LittleEndian.Uint16(
+						u.Info[i+len(addr):i+len(addr)+2],
+					),
+				),
+				info.Qual(u.Info[i+len(addr)+2]),
+				info.CP56Time2a(u.Info[i+len(addr)+3:i+len(addr)+10]),
 			)
 			u.Info = u.Info[len(addr)+10:]
 		}
@@ -678,7 +705,11 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			}
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
 				mon.Float(u, addr,
-					math.Float32frombits(binary.LittleEndian.Uint32(u.Info[i:i+4])),
+					math.Float32frombits(
+						binary.LittleEndian.Uint32(
+							u.Info[i:i+4],
+						),
+					),
 					info.Qual(u.Info[i+4]),
 				)
 				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
@@ -687,16 +718,16 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
 				return errInfoSize
 			}
-			for len(u.Info) >= len(addr)+5 {
-				mon.Float(u, Obj(u.Info[:len(addr)]),
+			for i := 0; i+len(addr)+5 <= len(u.Info); i += len(addr) + 5 {
+				mon.Float(u,
+					Obj(u.Info[i:i+len(addr)]),
 					math.Float32frombits(
 						binary.LittleEndian.Uint32(
-							u.Info[len(addr):len(addr)+4],
+							u.Info[i+len(addr):i+len(addr)+4],
 						),
 					),
-					info.Qual(u.Info[len(addr)+4]),
+					info.Qual(u.Info[i+len(addr)+4]),
 				)
-				u.Info = u.Info[len(addr)+5:]
 			}
 		}
 
@@ -707,17 +738,17 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+8) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+8 {
-			mon.FloatAtMinute(u, Obj(u.Info[:len(addr)]),
+		for i := 0; i+len(addr)+8 <= len(u.Info); i += len(addr) + 8 {
+			mon.FloatAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
 				math.Float32frombits(
 					binary.LittleEndian.Uint32(
-						u.Info[len(addr):len(addr)+4],
+						u.Info[i+len(addr):i+len(addr)+4],
 					),
 				),
-				info.Qual(u.Info[len(addr)+4]),
-				info.CP24Time2a(u.Info[len(addr)+5:len(addr)+8]),
+				info.Qual(u.Info[i+len(addr)+4]),
+				info.CP24Time2a(u.Info[i+len(addr)+5:i+len(addr)+8]),
 			)
-			u.Info = u.Info[len(addr)+8:]
 		}
 
 	case info.M_ME_TF_1: // floating point with 7 octet time-tag
@@ -727,17 +758,17 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 		if len(u.Info) != u.Enc.Count()*(len(addr)+12) {
 			return errInfoSize
 		}
-		for len(u.Info) >= len(addr)+12 {
-			mon.FloatAtMoment(u, Obj(u.Info[:len(addr)]),
+		for i := 0; i+len(addr)+12 <= len(u.Info); i += len(addr) + 12 {
+			mon.FloatAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
 				math.Float32frombits(
 					binary.LittleEndian.Uint32(
-						u.Info[len(addr):len(addr)+4],
+						u.Info[i+len(addr):i+len(addr)+4],
 					),
 				),
-				info.Qual(u.Info[len(addr)+4]),
-				info.CP56Time2a(u.Info[len(addr)+5:len(addr)+12]),
+				info.Qual(u.Info[i+len(addr)+4]),
+				info.CP56Time2a(u.Info[i+len(addr)+5:i+len(addr)+12]),
 			)
-			u.Info = u.Info[len(addr)+12:]
 		}
 
 	}
