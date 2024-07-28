@@ -561,3 +561,25 @@ func (q SetPtQual) Select() bool { return q&128 != 0 }
 // FlagSelect sets the S/E flag, which causes the command to select instead of
 // execute. See “Command transmission” in section 5, subclause 6.8.
 func (q *SetPtQual) FlagSelect() { *q |= 128 }
+
+// SinglePtChangePack holds 16 single-point values, each including a flag to
+// signal changes since the last reporting of this information. Note how changes
+// like On-Off-On or Off-On-Off could go undetected without such tracking on the
+// equipment.
+//
+// The compound information element (CP32) is read in big-endian order, conform
+// “Status and status change detection” of companion standard 101, subclause
+// 7.2.6.40.
+type SinglePtChangePack uint32
+
+// Element returns the single point together with its change-dected flag by
+// sequence number. The function panics when n is not in range 1..16.
+func (pack SinglePtChangePack) Element(n int) (status SinglePt, change bool) {
+	if n < 1 || n > 16 {
+		panic("number out of bounds")
+	}
+	// values are defined in big-endian bit-order
+	status = SinglePt(pack>>(32-n)) & 1
+	change = (pack>>(16-n))&1 != 0
+	return
+}
