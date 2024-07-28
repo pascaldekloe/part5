@@ -53,9 +53,10 @@ type Station struct {
 	// operation blocks and may behave in an unexpected way.
 	Level <-chan Level
 
-	// Launch targets a level.
-	// Any failure to do so terminates the connection.
-	Launch chan<- Level
+	// Target sets the desired availability level. Closing the channel is
+	// equivalent to Exit. Failure to reach the level causes the connection
+	// to terminate.
+	Target chan<- Level
 }
 
 // Transport layer as datagram channels.

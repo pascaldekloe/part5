@@ -40,7 +40,7 @@ type tcp struct {
 	err    chan<- error
 	// Station counterparts
 	level  chan<- Level
-	launch <-chan Level
+	target <-chan Level
 
 	recv chan apdu // for recvLoop
 	send chan apdu // for sendLoop
@@ -70,14 +70,14 @@ func TCP(config TCPConfig, conn net.Conn) *Station {
 	class2Chan := make(chan *Outbound)
 	inChan := make(chan []byte)
 	errChan := make(chan error, 8)
-	launchChan := make(chan Level)
+	targetChan := make(chan Level)
 	levelChan := make(chan Level)
 
 	t := tcp{
 		TCPConfig: config,
 		conn:      conn,
 		level:     levelChan,
-		launch:    launchChan,
+		target:    targetChan,
 
 		in:     inChan,
 		class1: class1Chan,
@@ -105,7 +105,7 @@ func TCP(config TCPConfig, conn net.Conn) *Station {
 		Transport: Transport{inChan, class1Chan, class2Chan, errChan},
 		Addr:      conn.RemoteAddr(),
 		Level:     levelChan,
-		Launch:    launchChan,
+		Target:    targetChan,
 	}
 }
 
@@ -334,7 +334,7 @@ func (t *tcp) run() {
 				t.idleSince = keepAliveSend
 			}
 
-		case l := <-t.launch:
+		case l := <-t.target:
 			var f function
 			switch l {
 			case Exit:

@@ -54,7 +54,7 @@ func TestSeq(t *testing.T) {
 			}
 		}
 		t.Log("pinged all; close connection")
-		ping.Launch <- Exit
+		ping.Target <- Exit
 	}()
 
 	// blocks until pong exit to ensure ping sends ack before close
@@ -106,7 +106,7 @@ func TestBringDown(t *testing.T) {
 	a, b, exitGroup := newTCPTestDuo(t, connA, connB, TCPConfig{})
 	defer exitGroup.Wait()
 
-	a.Launch <- Down
+	a.Target <- Down
 	select {
 	case a.Class1 <- NewOutbound([]byte("ping")):
 		t.Error("outbound class Ⅰ on station A still receptive")
@@ -124,7 +124,7 @@ func TestBringDown(t *testing.T) {
 		break
 	}
 
-	close(a.Launch) // exit
+	close(a.Target) // exit
 	time.Sleep(2 * timeoutResolution)
 
 	o := NewOutbound([]byte("ping"))
@@ -168,7 +168,7 @@ func TestUnackThreashold(t *testing.T) {
 		RecvUnackMax: 3,
 	})
 	defer func() {
-		a.Launch <- Exit
+		a.Target <- Exit
 		exitGroup.Wait()
 	}()
 
@@ -256,7 +256,7 @@ func TestFastAckOnIdle(t *testing.T) {
 	connA, connB := net.Pipe()
 	a, b, exitGroup := newTCPTestDuo(t, connA, connB, TCPConfig{})
 	defer func() {
-		a.Launch <- Exit
+		a.Target <- Exit
 		exitGroup.Wait()
 	}()
 
@@ -390,7 +390,7 @@ func BenchmarkFlood(bench *testing.B) {
 		RecvUnackTimeout: time.Second,
 	})
 	defer func() {
-		a.Launch <- Exit
+		a.Target <- Exit
 		exitGroup.Wait()
 	}()
 
@@ -496,7 +496,7 @@ func newTCPTestDuo(t testing.TB, connA, connB net.Conn, config TCPConfig) (a, b 
 	wantLevel(t, a, Down)
 	wantLevel(t, b, Down)
 
-	a.Launch <- Up
+	a.Target <- Up
 	wantLevel(t, b, Up)
 	wantLevel(t, a, Up)
 

@@ -91,7 +91,7 @@ func main() {
 			switch sig {
 			case syscall.SIGINT:
 				exitCode = 130
-				client.Launch <- session.Exit
+				client.Target <- session.Exit
 			}
 
 		case l := <-client.Level:
@@ -183,14 +183,14 @@ func (sys system[Orig, Com, Obj]) streamInbound(client *session.Station) {
 
 		if n == *inCapFlag {
 			CmdLog.Printf("reached %d inbound messages", n)
-			client.Launch <- session.Exit
+			client.Target <- session.Exit
 		}
 	}
 }
 
 // StreamOutbound implements the packetStream interface.
 func (sys system[Orig, Com, Obj]) streamOutbound(client *session.Station) {
-	client.Launch <- session.Up
+	client.Target <- session.Up
 
 	if *inroFlag != "<none>" {
 		// send interrogation activation
