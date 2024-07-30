@@ -58,6 +58,14 @@ var ErrOtherCmd = errors.New("part5: response for other command")
 // confirmation of an activation or a deactivation req(uest). Valid alternatives
 // may include ErrNotCmd, ErrTerm or ErrConNeg.
 func ConOf[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](in, req info.DataUnit[Orig, Com, Obj]) error {
+	// command match
+	if !in.Mirrors(req) {
+		if !isCommand(in.Type) {
+			return ErrNotCmd
+		}
+		return ErrOtherCmd
+	}
+
 	// sanity check
 	switch req.Cause &^ info.TestFlag {
 	case info.Act, info.Deact:
@@ -65,14 +73,6 @@ func ConOf[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](in, req info.
 	default:
 		// incorrect API use
 		return fmt.Errorf("part5: cause %s of request not act nor deact", req.Cause)
-	}
-
-	// command match
-	if !in.Mirrors(req) {
-		if !isCommand(in.Type) {
-			return ErrNotCmd
-		}
-		return ErrOtherCmd
 	}
 
 	// match cause of transmission, or not
