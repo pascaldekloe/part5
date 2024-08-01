@@ -6,17 +6,17 @@ import (
 )
 
 func TestQualString(t *testing.T) {
-	if s := Qual(0).String(); s != "OK" {
-		t.Errorf("0 got %q, want OK", s)
+	if s := Qual(0).String(); s != "[]" {
+		t.Errorf("0 got %q, want []", s)
 	}
 	if s := Qual(Overflow).String(); s != "OV" {
 		t.Errorf("Overflow got %q, want OV", s)
 	}
-	if s := Qual(0x02).String(); s != "RES2" {
-		t.Errorf("0x02 got %q, want RES2", s)
+	if s := Qual(0x02).String(); s != "[2]" {
+		t.Errorf("0x02 got %q, want [2]", s)
 	}
-	if s := Qual(0x06).String(); s != "RES2,RES3" {
-		t.Errorf("0x06 got %q, want RES2,RES3", s)
+	if s := Qual(0x06).String(); s != "[2],[3]" {
+		t.Errorf("0x06 got %q, want [2],[3]", s)
 	}
 	if s := Qual(Blocked | NotTopical).String(); s != "BL,NT" {
 		t.Errorf("Blocked|NotTopical got %q, want BL,NT", s)
