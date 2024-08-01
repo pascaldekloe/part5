@@ -124,7 +124,7 @@ func (u *DataUnit[Orig, Com, Obj]) Adopt(asdu []byte) error {
 	}
 
 	// slice payload
-	u.Info = asdu[3+len(u.Orig)+len(u.Addr):]
+	u.Info = asdu[3+len(u.Orig)+len(u.Addr) : len(asdu) : len(asdu)]
 	return nil
 }
 
