@@ -12,7 +12,7 @@ type CP56Time2a [7]byte
 
 // Invalid returns the IV flag.
 func (t2a *CP56Time2a) Invalid() bool {
-	return t2a[2]&0x80 != 0
+	return t2a[2]&byte(IV) != 0
 }
 
 // Set marshals the time. Reserved bits can be set afterwards.
@@ -32,7 +32,7 @@ func (t2a *CP56Time2a) setAll(t time.Time, all bool) {
 	if t.IsZero() {
 		t2a[0] = 0
 		t2a[1] = 0
-		t2a[2] = 0x80 // invalid flag [IV]
+		t2a[2] = byte(IV) // invalid flag
 		t2a[3] = 0
 		t2a[4] = 0
 		t2a[5] = 0
@@ -151,7 +151,7 @@ type CP24Time2a [3]byte
 
 // Invalid returns the IV flag.
 func (t2a *CP24Time2a) Invalid() bool {
-	return t2a[2]&0x80 != 0
+	return t2a[2]&byte(IV) != 0
 }
 
 // Set marshals the time. Reserved bits can be set afterwards.
@@ -162,7 +162,7 @@ func (t2a *CP24Time2a) Set(t time.Time) {
 	if t.IsZero() {
 		t2a[0] = 0
 		t2a[1] = 0
-		t2a[2] = 0x80 // invalid flag [IV]
+		t2a[2] = byte(IV) // invalid flag
 
 		return
 	}
