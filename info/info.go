@@ -512,7 +512,7 @@ const (
 	RevStartFlag                              // SRD: start of operation in reverse direction
 
 	// codes from standard
-	GS = GenStartFlag
+	GS  = GenStartFlag
 	SL1 = L1StartFlag
 	SL2 = L2StartFlag
 	SL3 = L3StartFlag
@@ -582,7 +582,7 @@ const (
 	L3OutFlag                           // CL3: command to output circuit phase L3
 
 	// codes from standard
-	GC = GenOutFlag
+	GC  = GenOutFlag
 	CL1 = L1OutFlag
 	CL2 = L2OutFlag
 	CL3 = L3OutFlag
@@ -633,20 +633,24 @@ func (flags ProtEquipOut) String() string {
 	return buf.String()[1:]
 }
 
+// ParamQual is the qualifier of parameter of measured values conform companion
+// standard 101, subclause 7.2.6.24.
+type ParamQual uint8
+
 // Qualifier Of Parameter Of Measured Values
 // See companion standard 101, subclause 7.2.6.24.
 const (
-	_          = iota // 0: not used
-	Threashold        // 1: threshold value
-	Smoothing         // 2: smoothing factor (filter time constant)
-	LowLimit          // 3: low limit for transmission of measured values
-	HighLimit         // 4: high limit for transmission of measured values
+	_          ParamQual = iota // 0: not used
+	Threashold                  // 1: threshold value
+	Smoothing                   // 2: smoothing factor (filter time constant)
+	LowLimit                    // 3: low limit for transmission of measured values
+	HighLimit                   // 4: high limit for transmission of measured values
 
 	// 5..31: reserved for standard definitions of this companion standard (compatible range)
 	// 32..63: reserved for special use (private range)
 
-	ChangeFlag  = 64  // marks local parameter change
-	NotInOpFlag = 128 // marks parameter operation
+	ChangeFlag  ParamQual = 64  // marks local parameter change
+	NotInOpFlag ParamQual = 128 // marks parameter operation
 
 	// codes from standard
 	LPC = ChangeFlag
