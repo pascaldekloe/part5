@@ -14,6 +14,8 @@ type MonitorDelegate[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] str
 	SinglePtChangeMonitor[Orig, Com, Obj]
 	DoublePtMonitor[Orig, Com, Obj]
 	ProtEquipMonitor[Orig, Com, Obj]
+	ProtEquipStartMonitor[Orig, Com, Obj]
+	ProtEquipOutMonitor[Orig, Com, Obj]
 	StepMonitor[Orig, Com, Obj]
 	BitsMonitor[Orig, Com, Obj]
 	NormMonitor[Orig, Com, Obj]
@@ -29,16 +31,18 @@ func NewMonitorDelegate[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
 // NewMonitorDelegateDefault returns a new delegate with each sub-interface set
 // to a def(ault) value. Note that def may be nil.
 func NewMonitorDelegateDefault[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](def Monitor[Orig, Com, Obj]) *MonitorDelegate[Orig, Com, Obj] {
-	return &MonitorDelegate[Orig,Com,Obj] {
-		SinglePtMonitor : def,
-		SinglePtChangeMonitor : def,
-		DoublePtMonitor : def,
-		ProtEquipMonitor : def,
-		StepMonitor : def,
-		BitsMonitor : def,
-		NormMonitor : def,
-		ScaledMonitor : def,
-		FloatMonitor : def,
+	return &MonitorDelegate[Orig, Com, Obj]{
+		SinglePtMonitor:       def,
+		SinglePtChangeMonitor: def,
+		DoublePtMonitor:       def,
+		ProtEquipMonitor:      def,
+		ProtEquipStartMonitor: def,
+		ProtEquipOutMonitor:   def,
+		StepMonitor:           def,
+		BitsMonitor:           def,
+		NormMonitor:           def,
+		ScaledMonitor:         def,
+		FloatMonitor:          def,
 	}
 }
 
@@ -93,6 +97,30 @@ func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipAtMinute(u info.DataUnit[Or
 func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, ms uint16, tag info.CP56Time2a) {
 	if del.ProtEquipMonitor != nil {
 		del.ProtEquipMonitor.ProtEquipAtMoment(u, addr, p, ms, tag)
+	}
+}
+
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP24Time2a) {
+	if del.ProtEquipStartMonitor != nil {
+		del.ProtEquipStartMonitor.ProtEquipStartAtMinute(u, addr, flags, q, ms, tag)
+	}
+}
+
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP56Time2a) {
+	if del.ProtEquipStartMonitor != nil {
+		del.ProtEquipStartMonitor.ProtEquipStartAtMoment(u, addr, flags, q, ms, tag)
+	}
+}
+
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP24Time2a) {
+	if del.ProtEquipOutMonitor != nil {
+		del.ProtEquipOutMonitor.ProtEquipOutAtMinute(u, addr, flags, q, ms, tag)
+	}
+}
+
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP56Time2a) {
+	if del.ProtEquipOutMonitor != nil {
+		del.ProtEquipOutMonitor.ProtEquipOutAtMoment(u, addr, flags, q, ms, tag)
 	}
 }
 
@@ -245,6 +273,26 @@ func (l logger[Orig, Com, Obj]) ProtEquipAtMinute(u info.DataUnit[Orig, Com, Obj
 func (l logger[Orig, Com, Obj]) ProtEquipAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, ms uint16, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
 		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), ms, tag)
+}
+
+func (l logger[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
+}
+
+func (l logger[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
+}
+
+func (l logger[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
+}
+
+func (l logger[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
 }
 
 func (l logger[Orig, Com, Obj]) Step(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual) {

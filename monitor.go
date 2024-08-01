@@ -16,6 +16,8 @@ type Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	SinglePtChangeMonitor[Orig, Com, Obj]
 	DoublePtMonitor[Orig, Com, Obj]
 	ProtEquipMonitor[Orig, Com, Obj]
+	ProtEquipStartMonitor[Orig, Com, Obj]
+	ProtEquipOutMonitor[Orig, Com, Obj]
 	StepMonitor[Orig, Com, Obj]
 	BitsMonitor[Orig, Com, Obj]
 	NormMonitor[Orig, Com, Obj]
@@ -118,6 +120,28 @@ type ProtEquipMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] in
 	ProtEquipAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP24Time2a)
 	// ProtEquipAtMoment gets called for type identifier 38: M_EP_TD_1.
 	ProtEquipAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP56Time2a)
+}
+
+// ProtEquipStartMonitor consumes start events from protection equipment.
+// The uint16 with the relay duration time should contain milliseconds in
+// range 0..60000. See info.EllapsedTimeInvalid before using such value.
+// Quality descriptor info.Overflow does not apply.
+type ProtEquipStartMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// ProtEquipStartAtMinute gets called for type identifier 18: M_EP_TB_1
+	ProtEquipStartAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, info.CP24Time2a)
+	// ProtEquipStartAtMoment for type identifier 39: M_EP_TE_1
+	ProtEquipStartAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, info.CP56Time2a)
+}
+
+// ProtEquipOutMonitor consumes output commands form protection equipment.
+// The uint16 with the relay operating time should contain milliseconds in
+// range 0..60000. See info.EllapsedTimeInvalid before using such value.
+// Quality descriptor info.Overflow does not apply.
+type ProtEquipOutMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// ProtEquipOutAtMinute for type identifier 19: M_EP_TC_1
+	ProtEquipOutAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, info.CP24Time2a)
+	// ProtEquipOutAtMoment for type identifier 40: M_EP_TF_1
+	ProtEquipOutAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, info.CP56Time2a)
 }
 
 // StepMonitor consumes step positions.

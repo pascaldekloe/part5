@@ -488,6 +488,128 @@ func (norm *NormQual) FlagQual(flags Qual) {
 	norm[2] |= uint8(flags)
 }
 
+// ProtEquipStart has flags for start events from protection equipment when it
+// detects faults.
+type ProtEquipStart uint8
+
+// Start Events Of Protection Equipment
+// See companion standard 101, subclause 7.2.6.11.
+const (
+	GenStartFlag   ProtEquipStart = 1 << iota // GS: general start of operation
+	L1StartFlag                               // SL1: start of operation phase L1
+	L2StartFlag                               // SL2: start of operation phase L2
+	L3StartFlag                               // SL3: start of operation phase L3
+	EarthStartFlag                            // SIE: start of operation IE (earth current)
+	RevStartFlag                              // SRD: start of operation in reverse direction
+)
+
+// String returns the codes from the standard, comma separated, with "RES7" and
+// "RES8" for the two reserved bits, and "<>" for none.
+func (flags ProtEquipStart) String() string {
+	switch flags {
+	case 0:
+		return "<>"
+	case GenStartFlag:
+		return "GS"
+	case L1StartFlag:
+		return "SL1"
+	case L2StartFlag:
+		return "SL2"
+	case L3StartFlag:
+		return "SL3"
+	case EarthStartFlag:
+		return "SIE"
+	case RevStartFlag:
+		return "SRD"
+	}
+	// got multiple flags or non-standard flags
+
+	var buf strings.Builder
+	if flags&GenStartFlag != 0 {
+		buf.WriteString(",GS")
+	}
+	if flags&L1StartFlag != 0 {
+		buf.WriteString(",SL1")
+	}
+	if flags&L2StartFlag != 0 {
+		buf.WriteString(",SL2")
+	}
+	if flags&L3StartFlag != 0 {
+		buf.WriteString(",SL3")
+	}
+	if flags&EarthStartFlag != 0 {
+		buf.WriteString(",SIE")
+	}
+	if flags&RevStartFlag != 0 {
+		buf.WriteString(",SRD")
+	}
+	if flags&64 != 0 {
+		buf.WriteString(",RES7")
+	}
+	if flags&128 != 0 {
+		buf.WriteString(",RES8")
+	}
+	return buf.String()[1:]
+}
+
+// ProtEquipOut has flags for commands from protection equipment to output the
+// circuit information.
+type ProtEquipOut uint8
+
+// Output Circuit Information Of Protection Equipment
+// See companion standard 101, subclause 7.2.6.12.
+const (
+	GenOutFlag ProtEquipOut = 1 << iota // GC: general command to output circuit
+	L1OutFlag                           // CL1: command to output circuit phase L1
+	L2OutFlag                           // CL2: command to output circuit phase L2
+	L3OutFlag                           // CL3: command to output circuit phase L3
+)
+
+// String returns the codes from the standard, comma separated, with "RES5"
+// through "RES8" for the four reserved bits, and "<>" for none.
+func (flags ProtEquipOut) String() string {
+	switch flags {
+	case 0:
+		return "<>"
+	case GenOutFlag:
+		return "GC"
+	case L1OutFlag:
+		return "CL1"
+	case L2OutFlag:
+		return "CL2"
+	case L3OutFlag:
+		return "CL3"
+	}
+	// got multiple flags or non-standard flags
+
+	var buf strings.Builder
+	if flags&GenOutFlag != 0 {
+		buf.WriteString(",GC")
+	}
+	if flags&L1OutFlag != 0 {
+		buf.WriteString(",CL1")
+	}
+	if flags&L2OutFlag != 0 {
+		buf.WriteString(",CL2")
+	}
+	if flags&L3OutFlag != 0 {
+		buf.WriteString(",CL3")
+	}
+	if flags&16 != 0 {
+		buf.WriteString(",RES5")
+	}
+	if flags&32 != 0 {
+		buf.WriteString(",RES6")
+	}
+	if flags&64 != 0 {
+		buf.WriteString(",RES7")
+	}
+	if flags&128 != 0 {
+		buf.WriteString(",RES8")
+	}
+	return buf.String()[1:]
+}
+
 // Qualifier Of Parameter Of Measured Values
 // See companion standard 101, subclause 7.2.6.24.
 const (
