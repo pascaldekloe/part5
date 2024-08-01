@@ -332,17 +332,17 @@ func (l logger[Orig, Com, Obj]) NormUnqual(u info.DataUnit[Orig, Com, Obj], addr
 
 func (l logger[Orig, Com, Obj]) Norm(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual())
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Ref().Float64(), n.Qual())
 }
 
 func (l logger[Orig, Com, Obj]) NormAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Ref().Float64(), n.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) NormAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %f %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Link().Float64(), n.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, n.Ref().Float64(), n.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) Scaled(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual) {

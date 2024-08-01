@@ -485,9 +485,9 @@ func (norm *Norm) SetFloat64(v float64) {
 // Norm is a 16-bit normalized value with a quality desciptor.
 type NormQual [3]uint8
 
-// Link returns a reference to the normalized-value withouth the quality
+// Ref returns a reference to the normalized-value withouth the quality
 // descriptor.
-func (norm *NormQual) Link() *Norm { return (*Norm)(norm[:2]) }
+func (norm *NormQual) Ref() *Norm { return (*Norm)(norm[:2]) }
 
 // Qual returns the quality descriptor. ElapsedTimeInvalid does not apply.
 func (norm NormQual) Qual() Qual { return Qual(norm[2]) }
