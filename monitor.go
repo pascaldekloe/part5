@@ -4,116 +4,328 @@ import (
 	"encoding/binary"
 	"errors"
 	"math"
+	"time"
 
 	"github.com/pascaldekloe/part5/info"
 )
 
-// The structure of the monitoring interface matches table 16 from companion
-// standard 101 closely.
-type (
-	// A Monitor consumes information in monitor direction as listed in table 8
-	// from companion standard 101.
-	Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		SinglePtMonitor[Orig, Com, Obj]
-		SinglePtChangeMonitor[Orig, Com, Obj]
-		DoublePtMonitor[Orig, Com, Obj]
-		ProtEquipMonitor[Orig, Com, Obj]
-		StepMonitor[Orig, Com, Obj]
-		BitsMonitor[Orig, Com, Obj]
-		NormMonitor[Orig, Com, Obj]
-		ScaledMonitor[Orig, Com, Obj]
-		FloatMonitor[Orig, Com, Obj]
-	}
+// A Monitor consumes information in monitor direction as listed in table 8
+// from companion standard 101.
+type Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	SinglePtMonitor[Orig, Com, Obj]
+	SinglePtChangeMonitor[Orig, Com, Obj]
+	DoublePtMonitor[Orig, Com, Obj]
+	ProtEquipMonitor[Orig, Com, Obj]
+	StepMonitor[Orig, Com, Obj]
+	BitsMonitor[Orig, Com, Obj]
+	NormMonitor[Orig, Com, Obj]
+	ScaledMonitor[Orig, Com, Obj]
+	FloatMonitor[Orig, Com, Obj]
+}
 
-	// SinglePtMonitor consumes single points.
-	SinglePtMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// SinglePt gets called for type identifier 1: M_SP_NA_1.
-		SinglePt(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual)
-		// SinglePtAtMinute gets called for type identifier 2: M_SP_TA_1.
-		SinglePtAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP24Time2a)
-		// SinglePtAtMoment gets called for type identifier 30: M_SP_TB_1.
-		SinglePtAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP56Time2a)
-	}
+// SinglePtMonitor consumes single points.
+type SinglePtMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// SinglePt gets called for type identifier 1: M_SP_NA_1.
+	SinglePt(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual)
+	// SinglePtAtMinute gets called for type identifier 2: M_SP_TA_1.
+	SinglePtAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP24Time2a)
+	// SinglePtAtMoment gets called for type identifier 30: M_SP_TB_1.
+	SinglePtAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, info.CP56Time2a)
+}
 
-	// SinglePtChangeMonitor consumes single points with change detection.
-	SinglePtChangeMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// SinglePtChangePack gets called for type identifier 20: M_PS_NA_1.
-		SinglePtChangePack(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtChangePack, info.Qual)
-	}
+type singlePtProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
 
-	// DoublePtMonitor consumes double points.
-	DoublePtMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// DoublePt gets called for type identifier 3: M_DP_NA_1.
-		DoublePt(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual)
-		// DoublePtAtMinute gets called for type identifier 4: M_DP_TA_1.
-		DoublePtAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP24Time2a)
-		// DoublePtAtMoment gets called for type identifier 31: M_DP_TB_1.
-		DoublePtAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP56Time2a)
-	}
+// SinglePointProxy abstracts the variants from the SinglePointMonitor interface
+// into one function. Time tags are interpretated within the time-zone argument.
+// The time.Time argument is always zero for type M_SP_NA_1. Time is also zero
+// for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func SinglePtProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtQual, time.Time), zone *time.Location, leeway time.Duration) SinglePtMonitor[Orig, Com, Obj] {
+	return singlePtProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
 
-	// ProtEquipMonitor consumes double points about protection equipment.
-	// The uint16 with the ellapsed time should contain milliseconds in
-	// range 0..60000. See info.EllapsedTimeInvalid in the DoublePtQual
-	// before using such value.
-	ProtEquipMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// ProtEquipAtMinute gets called for type identifier 17: M_EP_TA_1.
-		ProtEquipAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP24Time2a)
-		// ProtEquipAtMoment gets called for type identifier 38: M_EP_TD_1.
-		ProtEquipAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP56Time2a)
-	}
+func (proxy singlePtProxy[Orig, Com, Obj]) SinglePt(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.SinglePtQual) {
+	proxy.listener(u, addr, pt, time.Time{})
+}
 
-	// StepMonitor consumes step positions.
-	StepMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// Step gets called for type identifier 5: M_ST_NA_1.
-		Step(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual)
-		// StepAtMinute gets called for type identifier 6: M_ST_TA_1.
-		StepAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP24Time2a)
-		// StepAtMoment gets called for type identifier 32: M_ST_TB_1.
-		StepAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP56Time2a)
-	}
+func (proxy singlePtProxy[Orig, Com, Obj]) SinglePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.SinglePtQual, tag info.CP24Time2a) {
+	proxy.listener(u, addr, pt, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
 
-	// BitsMonitor consumes bitstrings.
-	BitsMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// Bits gets called for type identifier 7: M_BO_NA_1.
-		Bits(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual)
-		// BitsAtMinute gets called for type identifier 8: M_BO_TA_1.
-		BitsAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP24Time2a)
-		// BitsAtMoment gets called for type identifier 33: M_BO_TB_1.
-		BitsAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP56Time2a)
-	}
+func (proxy singlePtProxy[Orig, Com, Obj]) SinglePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.SinglePtQual, tag info.CP56Time2a) {
+	proxy.listener(u, addr, pt, tag.Within20thCentury(proxy.timeZone))
+}
 
-	// NormMonitor consumes normalized values.
-	NormMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// NormUnqual gets called for type identifier 21: M_ME_ND_1.
-		NormUnqual(info.DataUnit[Orig, Com, Obj], Obj, info.Norm)
-		// Norm gets called for type identifier 9: M_ME_NA_1.
-		Norm(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual)
-		// NormAtMinute gets called for type identifier 10: M_ME_TA_1.
-		NormAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP24Time2a)
-		// NormAtMoment gets called for type identifier 34: M_ME_TD_1.
-		NormAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP56Time2a)
-	}
+// SinglePtChangeMonitor consumes single points with change detection.
+type SinglePtChangeMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// SinglePtChangePack gets called for type identifier 20: M_PS_NA_1.
+	SinglePtChangePack(info.DataUnit[Orig, Com, Obj], Obj, info.SinglePtChangePack, info.Qual)
+}
 
-	// ScaledMonitor consumes scaled values.
-	ScaledMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// Scaled gets called for type identifier 11: M_ME_NB_1.
-		Scaled(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual)
-		// ScaledAtMinute gets called for type identifier 12: M_ME_TB_1.
-		ScaledAtMinute(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP24Time2a)
-		// ScaledAtMoment gets called for type identifier 35: M_ME_TE_1.
-		ScaledAtMoment(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP56Time2a)
-	}
+// DoublePtMonitor consumes double points.
+type DoublePtMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// DoublePt gets called for type identifier 3: M_DP_NA_1.
+	DoublePt(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual)
+	// DoublePtAtMinute gets called for type identifier 4: M_DP_TA_1.
+	DoublePtAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP24Time2a)
+	// DoublePtAtMoment gets called for type identifier 31: M_DP_TB_1.
+	DoublePtAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, info.CP56Time2a)
+}
 
-	// FloatMonitor consumes floating points.
-	FloatMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-		// Float gets called for type identifier 13: M_ME_NC_1.
-		Float(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual)
-		// FloatAtMinute gets called for type identifier 14: M_ME_TC_1.
-		FloatAtMinute(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP24Time2a)
-		// FloatAtMoment gets called for type identifier 36: M_ME_TF_1.
-		FloatAtMoment(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP56Time2a)
-	}
-)
+type doublePtProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// DoublePointProxy abstracts the variants from the DoublePointMonitor interface
+// into one function. Time tags are interpretated within the time-zone argument.
+// The time.Time argument is always zero for type M_DP_NA_1. Time is also zero
+// for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func DoublePtProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, time.Time), zone *time.Location, leeway time.Duration) DoublePtMonitor[Orig, Com, Obj] {
+	return doublePtProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy doublePtProxy[Orig, Com, Obj]) DoublePt(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual) {
+	proxy.listener(u, addr, pt, time.Time{})
+}
+
+func (proxy doublePtProxy[Orig, Com, Obj]) DoublePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, tag info.CP24Time2a) {
+	proxy.listener(u, addr, pt, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy doublePtProxy[Orig, Com, Obj]) DoublePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, tag info.CP56Time2a) {
+	proxy.listener(u, addr, pt, tag.Within20thCentury(proxy.timeZone))
+}
+
+// ProtEquipMonitor consumes double points about protection equipment.
+// The uint16 with the ellapsed time should contain milliseconds in
+// range 0..60000. See info.EllapsedTimeInvalid in the DoublePtQual
+// before using such value.
+type ProtEquipMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// ProtEquipAtMinute gets called for type identifier 17: M_EP_TA_1.
+	ProtEquipAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP24Time2a)
+	// ProtEquipAtMoment gets called for type identifier 38: M_EP_TD_1.
+	ProtEquipAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP56Time2a)
+}
+
+// StepMonitor consumes step positions.
+type StepMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// Step gets called for type identifier 5: M_ST_NA_1.
+	Step(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual)
+	// StepAtMinute gets called for type identifier 6: M_ST_TA_1.
+	StepAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP24Time2a)
+	// StepAtMoment gets called for type identifier 32: M_ST_TB_1.
+	StepAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, info.CP56Time2a)
+}
+
+type stepProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// StepProxy abstracts the variants from the StepMonitor interface
+// into one function. Time tags are interpretated within the time-zone argument.
+// The time.Time argument is always zero for type M_ST_NA_1. Time is also zero
+// for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func StepProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, info.StepQual, time.Time), zone *time.Location, leeway time.Duration) StepMonitor[Orig, Com, Obj] {
+	return stepProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy stepProxy[Orig, Com, Obj]) Step(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual) {
+	proxy.listener(u, addr, p, time.Time{})
+}
+
+func (proxy stepProxy[Orig, Com, Obj]) StepAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, tag info.CP24Time2a) {
+	proxy.listener(u, addr, p, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy stepProxy[Orig, Com, Obj]) StepAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, tag info.CP56Time2a) {
+	proxy.listener(u, addr, p, tag.Within20thCentury(proxy.timeZone))
+}
+
+// BitsMonitor consumes bitstrings.
+type BitsMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// Bits gets called for type identifier 7: M_BO_NA_1.
+	Bits(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual)
+	// BitsAtMinute gets called for type identifier 8: M_BO_TA_1.
+	BitsAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP24Time2a)
+	// BitsAtMoment gets called for type identifier 33: M_BO_TB_1.
+	BitsAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, info.CP56Time2a)
+}
+
+type bitsProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// BitsProxy abstracts the variants from the BitsMonitor interface
+// into one function. Time tags are interpretated within the time-zone argument.
+// The time.Time argument is always zero for type M_BO_NA_1. Time is also zero
+// for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func BitsProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, info.BitsQual, time.Time), zone *time.Location, leeway time.Duration) BitsMonitor[Orig, Com, Obj] {
+	return bitsProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy bitsProxy[Orig, Com, Obj]) Bits(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual) {
+	proxy.listener(u, addr, b, time.Time{})
+}
+
+func (proxy bitsProxy[Orig, Com, Obj]) BitsAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, tag info.CP24Time2a) {
+	proxy.listener(u, addr, b, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy bitsProxy[Orig, Com, Obj]) BitsAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual, tag info.CP56Time2a) {
+	proxy.listener(u, addr, b, tag.Within20thCentury(proxy.timeZone))
+}
+
+// NormMonitor consumes normalized values.
+type NormMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// NormUnqual gets called for type identifier 21: M_ME_ND_1.
+	NormUnqual(info.DataUnit[Orig, Com, Obj], Obj, info.Norm)
+	// Norm gets called for type identifier 9: M_ME_NA_1.
+	Norm(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual)
+	// NormAtMinute gets called for type identifier 10: M_ME_TA_1.
+	NormAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP24Time2a)
+	// NormAtMoment gets called for type identifier 34: M_ME_TD_1.
+	NormAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, info.CP56Time2a)
+}
+
+type normProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// NormProxy abstracts the variants from the NormMonitor interface into one
+// function. Time tags are interpretated within the time-zone argument. The
+// time.Time argument is always zero for type M_ME_ND_1 and M_ME_NA_1. Time
+// is also zero for Invalid() info.CP24Time2a and info.CP56Time2a. The
+// quality descriptor is always info.OK for type M_ME_ND_1.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func NormProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, info.NormQual, time.Time), zone *time.Location, leeway time.Duration) NormMonitor[Orig, Com, Obj] {
+	return normProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy normProxy[Orig, Com, Obj]) NormUnqual(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.Norm) {
+	proxy.listener(u, addr, info.NormQual{n[0], n[1], uint8(info.OK)}, time.Time{})
+}
+
+func (proxy normProxy[Orig, Com, Obj]) Norm(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual) {
+	proxy.listener(u, addr, n, time.Time{})
+}
+
+func (proxy normProxy[Orig, Com, Obj]) NormAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, tag info.CP24Time2a) {
+	proxy.listener(u, addr, n, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy normProxy[Orig, Com, Obj]) NormAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, n info.NormQual, tag info.CP56Time2a) {
+	proxy.listener(u, addr, n, tag.Within20thCentury(proxy.timeZone))
+}
+
+// ScaledMonitor consumes scaled values.
+type ScaledMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// Scaled gets called for type identifier 11: M_ME_NB_1.
+	Scaled(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual)
+	// ScaledAtMinute gets called for type identifier 12: M_ME_TB_1.
+	ScaledAtMinute(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP24Time2a)
+	// ScaledAtMoment gets called for type identifier 35: M_ME_TE_1.
+	ScaledAtMoment(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, info.CP56Time2a)
+}
+
+type scaledProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// ScaledProxy abstracts the variants from the ScaledMonitor interface into one
+// function. Time tags are interpretated within the time-zone argument. The
+// time.Time argument is always zero for type M_ME_NB_1. Time is also zero for
+// Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func ScaledProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, int16, info.Qual, time.Time), zone *time.Location, leeway time.Duration) ScaledMonitor[Orig, Com, Obj] {
+	return scaledProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy scaledProxy[Orig, Com, Obj]) Scaled(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual) {
+	proxy.listener(u, addr, v, q, time.Time{})
+}
+
+func (proxy scaledProxy[Orig, Com, Obj]) ScaledAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, tag info.CP24Time2a) {
+	proxy.listener(u, addr, v, q, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy scaledProxy[Orig, Com, Obj]) ScaledAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, v int16, q info.Qual, tag info.CP56Time2a) {
+	proxy.listener(u, addr, v, q, tag.Within20thCentury(proxy.timeZone))
+}
+
+// FloatMonitor consumes floating points.
+type FloatMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// Float gets called for type identifier 13: M_ME_NC_1.
+	Float(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual)
+	// FloatAtMinute gets called for type identifier 14: M_ME_TC_1.
+	FloatAtMinute(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP24Time2a)
+	// FloatAtMoment gets called for type identifier 36: M_ME_TF_1.
+	FloatAtMoment(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, info.CP56Time2a)
+}
+
+type floatProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// FloatProxy abstracts the variants from the FloatMonitor interface
+// into one function. Time tags are interpretated within the time-zone argument.
+// The time.Time argument is always zero for type M_ME_NC_1. Time is also zero
+// for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func FloatProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, float32, info.Qual, time.Time), zone *time.Location, leeway time.Duration) FloatMonitor[Orig, Com, Obj] {
+	return floatProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy floatProxy[Orig, Com, Obj]) Float(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual) {
+	proxy.listener(u, addr, f, q, time.Time{})
+}
+
+func (proxy floatProxy[Orig, Com, Obj]) FloatAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, tag info.CP24Time2a) {
+	proxy.listener(u, addr, f, q, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy floatProxy[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, tag info.CP56Time2a) {
+	proxy.listener(u, addr, f, q, tag.Within20thCentury(proxy.timeZone))
+}
 
 // ErrNotMonitor rejects an info.DataUnit based on its type identifier.
 var ErrNotMonitor = errors.New("part5: ASDU type identifier not in monitor information range 1..44")
