@@ -318,12 +318,12 @@ const (
 	OK Qual = 0 // no remarks
 )
 
-// String returns the codes from the standard, comma separated, with "RES2" and
-// "RES3" for the two reserved bits, and "OK" for none.
+// String returns the codes from the standard, comma separated, with "[2]" and
+// "[3]" for the two reserved bits, and "[]" for none.
 func (flags Qual) String() string {
 	switch flags {
 	case OK: // no flags
-		return "OK"
+		return "[]"
 	case OV:
 		return "OV"
 	case EI:
@@ -344,10 +344,10 @@ func (flags Qual) String() string {
 		buf.WriteString(",OV")
 	}
 	if flags&2 != 0 {
-		buf.WriteString(",RES2")
+		buf.WriteString(",[2]")
 	}
 	if flags&4 != 0 {
-		buf.WriteString(",RES3")
+		buf.WriteString(",[3]")
 	}
 	if flags&EI != 0 {
 		buf.WriteString(",EI")
@@ -520,12 +520,12 @@ const (
 	SRD = RevStartFlag
 )
 
-// String returns the codes from the standard, comma separated, with "RES7" and
-// "RES8" for the two reserved bits, and "<>" for none.
+// String returns the codes from the standard, comma separated, with "[7]" and
+// "[8]" for the two reserved bits, and "<>" for none.
 func (flags ProtEquipStart) String() string {
 	switch flags {
 	case 0:
-		return "<>"
+		return "[]"
 	case GS:
 		return "GS"
 	case SL1:
@@ -561,10 +561,10 @@ func (flags ProtEquipStart) String() string {
 		buf.WriteString(",SRD")
 	}
 	if flags&64 != 0 {
-		buf.WriteString(",RES7")
+		buf.WriteString(",[7]")
 	}
 	if flags&128 != 0 {
-		buf.WriteString(",RES8")
+		buf.WriteString(",[8]")
 	}
 	return buf.String()[1:]
 }
@@ -588,12 +588,12 @@ const (
 	CL3 = L3OutFlag
 )
 
-// String returns the codes from the standard, comma separated, with "RES5"
-// through "RES8" for the four reserved bits, and "<>" for none.
+// String returns the codes from the standard, comma separated, with "[5]"
+// "[6]", "[7]" and "[8]" for the four reserved bits, and "[]" for none.
 func (flags ProtEquipOut) String() string {
 	switch flags {
 	case 0:
-		return "<>"
+		return "[]"
 	case GC:
 		return "GC"
 	case CL1:
@@ -619,16 +619,16 @@ func (flags ProtEquipOut) String() string {
 		buf.WriteString(",CL3")
 	}
 	if flags&16 != 0 {
-		buf.WriteString(",RES5")
+		buf.WriteString(",[5]")
 	}
 	if flags&32 != 0 {
-		buf.WriteString(",RES6")
+		buf.WriteString(",[6]")
 	}
 	if flags&64 != 0 {
-		buf.WriteString(",RES7")
+		buf.WriteString(",[7]")
 	}
 	if flags&128 != 0 {
-		buf.WriteString(",RES8")
+		buf.WriteString(",[8]")
 	}
 	return buf.String()[1:]
 }

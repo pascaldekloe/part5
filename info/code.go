@@ -169,7 +169,7 @@ const (
 func (t TypeID) String() string { return typeIDLabels[t] }
 
 var typeIDLabels = [256]string{
-	"notused<0>",
+	"<0>",
 	"M_SP_NA_1",
 	"M_SP_TA_1",
 	"M_DP_NA_1",
@@ -564,7 +564,7 @@ func (c Cause) String() string {
 }
 
 var causeLabels = [64]string{
-	"notdef",
+	"<0>",
 	"cyclic", // conform section 5 instead of "per/cyc" introduced by companion standard 101
 	"back",
 	"spont",
