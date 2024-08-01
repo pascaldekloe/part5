@@ -307,31 +307,40 @@ const (
 	// under this condition.
 	Invalid
 
+	// codes from standard
+	OV = Overflow
+	EI = ElapsedTimeInvalid
+	BL = Blocked
+	SB = Substituted
+	NT = NotTopical
+	IV = Invalid
+
 	OK Qual = 0 // no remarks
 )
 
-// String returns the flag tokens separated by comma, with "OK" for no flags.
+// String returns the codes from the standard, comma separated, with "RES2" and
+// "RES3" for the two reserved bits.
 func (q Qual) String() string {
 	switch q {
 	case OK: // no flags
 		return "OK"
-	case Overflow:
+	case OV:
 		return "OV"
-	case ElapsedTimeInvalid:
+	case EI:
 		return "EI"
-	case Blocked:
+	case BL:
 		return "BL"
-	case Substituted:
+	case SB:
 		return "SB"
-	case NotTopical:
+	case NT:
 		return "NT"
-	case Invalid:
+	case IV:
 		return "IV"
 	}
-	// got multiple flags
+	// got multiple flags or reserved flags
 
 	var buf strings.Builder
-	if q&Overflow != 0 {
+	if q&OV != 0 {
 		buf.WriteString(",OV")
 	}
 	if q&2 != 0 {
@@ -340,19 +349,19 @@ func (q Qual) String() string {
 	if q&4 != 0 {
 		buf.WriteString(",RES3")
 	}
-	if q&ElapsedTimeInvalid != 0 {
+	if q&EI != 0 {
 		buf.WriteString(",EI")
 	}
-	if q&Blocked != 0 {
+	if q&BL != 0 {
 		buf.WriteString(",BL")
 	}
-	if q&Substituted != 0 {
+	if q&SB != 0 {
 		buf.WriteString(",SB")
 	}
-	if q&NotTopical != 0 {
+	if q&NT != 0 {
 		buf.WriteString(",NT")
 	}
-	if q&Invalid != 0 {
+	if q&IV != 0 {
 		buf.WriteString(",IV")
 	}
 	return buf.String()[1:]
@@ -501,6 +510,14 @@ const (
 	L3StartFlag                               // SL3: start of operation phase L3
 	EarthStartFlag                            // SIE: start of operation IE (earth current)
 	RevStartFlag                              // SRD: start of operation in reverse direction
+
+	// codes from standard
+	GS = GenStartFlag
+	SL1 = L1StartFlag
+	SL2 = L2StartFlag
+	SL3 = L3StartFlag
+	SIE = EarthStartFlag
+	SRD = RevStartFlag
 )
 
 // String returns the codes from the standard, comma separated, with "RES7" and
@@ -509,38 +526,38 @@ func (flags ProtEquipStart) String() string {
 	switch flags {
 	case 0:
 		return "<>"
-	case GenStartFlag:
+	case GS:
 		return "GS"
-	case L1StartFlag:
+	case SL1:
 		return "SL1"
-	case L2StartFlag:
+	case SL2:
 		return "SL2"
-	case L3StartFlag:
+	case SL3:
 		return "SL3"
-	case EarthStartFlag:
+	case SIE:
 		return "SIE"
-	case RevStartFlag:
+	case SRD:
 		return "SRD"
 	}
-	// got multiple flags or non-standard flags
+	// got multiple flags or reserved flags
 
 	var buf strings.Builder
-	if flags&GenStartFlag != 0 {
+	if flags&GS != 0 {
 		buf.WriteString(",GS")
 	}
-	if flags&L1StartFlag != 0 {
+	if flags&SL1 != 0 {
 		buf.WriteString(",SL1")
 	}
-	if flags&L2StartFlag != 0 {
+	if flags&SL2 != 0 {
 		buf.WriteString(",SL2")
 	}
-	if flags&L3StartFlag != 0 {
+	if flags&SL3 != 0 {
 		buf.WriteString(",SL3")
 	}
-	if flags&EarthStartFlag != 0 {
+	if flags&SIE != 0 {
 		buf.WriteString(",SIE")
 	}
-	if flags&RevStartFlag != 0 {
+	if flags&SRD != 0 {
 		buf.WriteString(",SRD")
 	}
 	if flags&64 != 0 {
@@ -563,6 +580,12 @@ const (
 	L1OutFlag                           // CL1: command to output circuit phase L1
 	L2OutFlag                           // CL2: command to output circuit phase L2
 	L3OutFlag                           // CL3: command to output circuit phase L3
+
+	// codes from standard
+	GC = GenOutFlag
+	CL1 = L1OutFlag
+	CL2 = L2OutFlag
+	CL3 = L3OutFlag
 )
 
 // String returns the codes from the standard, comma separated, with "RES5"
@@ -571,28 +594,28 @@ func (flags ProtEquipOut) String() string {
 	switch flags {
 	case 0:
 		return "<>"
-	case GenOutFlag:
+	case GC:
 		return "GC"
-	case L1OutFlag:
+	case CL1:
 		return "CL1"
-	case L2OutFlag:
+	case CL2:
 		return "CL2"
-	case L3OutFlag:
+	case CL3:
 		return "CL3"
 	}
-	// got multiple flags or non-standard flags
+	// got multiple flags or reserved flags
 
 	var buf strings.Builder
-	if flags&GenOutFlag != 0 {
+	if flags&GC != 0 {
 		buf.WriteString(",GC")
 	}
-	if flags&L1OutFlag != 0 {
+	if flags&CL1 != 0 {
 		buf.WriteString(",CL1")
 	}
-	if flags&L2OutFlag != 0 {
+	if flags&CL2 != 0 {
 		buf.WriteString(",CL2")
 	}
-	if flags&L3OutFlag != 0 {
+	if flags&CL3 != 0 {
 		buf.WriteString(",CL3")
 	}
 	if flags&16 != 0 {
@@ -622,8 +645,12 @@ const (
 	// 5..31: reserved for standard definitions of this companion standard (compatible range)
 	// 32..63: reserved for special use (private range)
 
-	ChangeFlag      = 64  // marks local parameter change
-	InOperationFlag = 128 // marks parameter operation
+	ChangeFlag  = 64  // marks local parameter change
+	NotInOpFlag = 128 // marks parameter operation
+
+	// codes from standard
+	LPC = ChangeFlag
+	POP = NotInOpFlag
 )
 
 // CmdQual is the qualifier of command conform companion standard 101, subclause

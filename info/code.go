@@ -543,6 +543,10 @@ const (
 
 	// The T flag classifies the unit for testing when set.
 	TestFlag Cause = 0x80
+
+	// codes from standard
+	PN = NegFlag
+	T  = TestFlag
 )
 
 // String returns the label plus ",neg" when NegFlag plus ",test" when TestFlag.
