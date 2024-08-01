@@ -319,9 +319,9 @@ const (
 )
 
 // String returns the codes from the standard, comma separated, with "RES2" and
-// "RES3" for the two reserved bits.
-func (q Qual) String() string {
-	switch q {
+// "RES3" for the two reserved bits, and "OK" for none.
+func (flags Qual) String() string {
+	switch flags {
 	case OK: // no flags
 		return "OK"
 	case OV:
@@ -340,28 +340,28 @@ func (q Qual) String() string {
 	// got multiple flags or reserved flags
 
 	var buf strings.Builder
-	if q&OV != 0 {
+	if flags&OV != 0 {
 		buf.WriteString(",OV")
 	}
-	if q&2 != 0 {
+	if flags&2 != 0 {
 		buf.WriteString(",RES2")
 	}
-	if q&4 != 0 {
+	if flags&4 != 0 {
 		buf.WriteString(",RES3")
 	}
-	if q&EI != 0 {
+	if flags&EI != 0 {
 		buf.WriteString(",EI")
 	}
-	if q&BL != 0 {
+	if flags&BL != 0 {
 		buf.WriteString(",BL")
 	}
-	if q&SB != 0 {
+	if flags&SB != 0 {
 		buf.WriteString(",SB")
 	}
-	if q&NT != 0 {
+	if flags&NT != 0 {
 		buf.WriteString(",NT")
 	}
-	if q&IV != 0 {
+	if flags&IV != 0 {
 		buf.WriteString(",IV")
 	}
 	return buf.String()[1:]
@@ -427,27 +427,27 @@ func (p *StepQual) FlagQual(flags Qual) {
 type BitsQual [5]uint8
 
 // Array gets a copy of the bitstring.
-func (bits *BitsQual) Array() [4]uint8 { return ([4]byte)(bits[:4]) }
+func (b *BitsQual) Array() [4]uint8 { return ([4]byte)(b[:4]) }
 
 // Slice gets a reference to the data.
-func (bits *BitsQual) Slice() []uint8 { return bits[:4] }
+func (b *BitsQual) Slice() []uint8 { return b[:4] }
 
 // BigEndian returns the bitstring as an integer.
-func (bits BitsQual) BigEndian() uint32 {
-	return binary.BigEndian.Uint32(bits[:4])
+func (b BitsQual) BigEndian() uint32 {
+	return binary.BigEndian.Uint32(b[:4])
 }
 
 // SetBigEndian updates the bitstring with an integer.
-func (bits *BitsQual) SetBigEndian(v uint32) {
-	binary.BigEndian.PutUint32(bits[:4], v)
+func (b *BitsQual) SetBigEndian(v uint32) {
+	binary.BigEndian.PutUint32(b[:4], v)
 }
 
 // Qual returns the quality descriptor. ElapsedTimeInvalid does not apply.
-func (bits BitsQual) Qual() Qual { return Qual(bits[4]) }
+func (b BitsQual) Qual() Qual { return Qual(b[4]) }
 
 // FlagQual sets [logical OR] the quality descriptor bits from flags.
-func (bits *BitsQual) FlagQual(flags Qual) {
-	bits[4] |= uint8(flags)
+func (b *BitsQual) FlagQual(flags Qual) {
+	b[4] |= uint8(flags)
 }
 
 // Norm is a 16-bit normalized value.

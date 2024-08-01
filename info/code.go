@@ -166,7 +166,7 @@ const (
 )
 
 // String returns the label.
-func (ID TypeID) String() string { return typeIDLabels[ID] }
+func (t TypeID) String() string { return typeIDLabels[t] }
 
 var typeIDLabels = [256]string{
 	"notused<0>",
