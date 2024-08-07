@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -174,11 +175,26 @@ func (sys system[Orig, Com, Obj]) streamInbound(client *session.Station) {
 	for p := range client.In {
 		n++
 
+		// parse
 		err := u.Adopt(p)
 		if err != nil {
-			CmdLog.Print("payload from inbound APDU dropped: ", err)
+			CmdLog.Print("payload from inbound APDU dropped: ",
+				strings.TrimPrefix(err.Error(), "part5: "))
 		} else {
-			part5.ApplyDataUnit(mon, u)
+			err := part5.MonitorDataUnit(mon, u)
+			switch err {
+			case nil:
+				break // printed with payload aware formatting
+
+			case part5.ErrNotMonitor, part5.ErrMonitorReserve:
+				// fallback to print with default formatting,
+				// unaware of its payload structure
+				fmt.Printf("%s", u)
+
+			default:
+				CmdLog.Print("APDU dropped: ",
+					strings.TrimPrefix(err.Error(), "part5: "))
+			}
 		}
 
 		if n == *inCapFlag {

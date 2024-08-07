@@ -351,17 +351,21 @@ func (proxy floatProxy[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, Com,
 	proxy.listener(u, addr, f, q, tag.Within20thCentury(proxy.timeZone))
 }
 
-// ErrNotMonitor rejects an info.DataUnit based on its type identifier.
-var ErrNotMonitor = errors.New("part5: ASDU type identifier not in monitor information range 1..44")
+// MonitorDataUnit has two errors for the selection on type identifier.
+var (
+	// ErrNotMonitor rejects an info.DataUnit based on its type identifier.
+	ErrNotMonitor = errors.New("part5: ASDU type identifier not in monitor information range 1..44")
+
+	// ErrMonitorReserve signals type extension within monitor information range 1..44.
+	ErrMonitorReserve = errors.New("part5: ASDU type identifier reserved for further compatible definitions")
+)
 
 var errInfoSize = errors.New("part5: size of ASDU payload doesn't match the variable structure qualifier")
 
-// ApplyDataUnit propagates u to the corresponding mon method. Note that one
-// DataUnit can have multiple information elements, in which case the interface
-// is invoked once for each element in order of appearance. DataUnits with zero
-// information elements do not cause any listener invocation. Errors other than
-// ErrNotMonitor reject malformed content in the DataUnit.
-func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon Monitor[Orig, Com, Obj], u info.DataUnit[Orig, Com, Obj]) error {
+// MonitorDataUnit propagates information objects in u to the corresponding
+// listener method from mon, filtering with ErrNotMontior and ErrMonitorReserve.
+// DataUnits with no [zero] information elements pass without invocation to mon.
+func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon Monitor[Orig, Com, Obj], u info.DataUnit[Orig, Com, Obj]) error {
 	// monitor type identifiers (M_*) are in range 1..44
 	if u.Type-1 > 43 {
 		return ErrNotMonitor
@@ -870,6 +874,8 @@ func ApplyDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon M
 			)
 		}
 
+	default:
+		return ErrMonitorReserve
 	}
 	return nil
 }

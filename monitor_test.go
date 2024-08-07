@@ -15,6 +15,6 @@ func FuzzMonitorWideASDU(f *testing.F) {
 	f.Fuzz(func(t *testing.T, bytes []byte) {
 		u := sys.NewDataUnit()
 		u.Adopt(bytes)
-		ApplyDataUnit(mon, u)
+		MonitorDataUnit(mon, u)
 	})
 }
