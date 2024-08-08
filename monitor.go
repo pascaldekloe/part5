@@ -371,6 +371,33 @@ type ProtEquipMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] in
 	ProtEquipAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP56Time2a)
 }
 
+type protEquipProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// ProtEquipProxy abstracts the variants from the ProtEquipMonitor
+// interface into one function. Time tags are interpretated within the time-zone
+// argument. Time is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func ProtEquipProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
+	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, time.Time),
+	zone *time.Location, leeway time.Duration) ProtEquipMonitor[Orig, Com, Obj] {
+	return protEquipProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy protEquipProxy[Orig, Com, Obj]) ProtEquipAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, ms uint16, tag info.CP24Time2a) {
+	proxy.listener(u, addr, pt, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy protEquipProxy[Orig, Com, Obj]) ProtEquipAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, ms uint16, tag info.CP56Time2a) {
+	proxy.listener(u, addr, pt, ms, tag.Within20thCentury(proxy.timeZone))
+}
+
 // ProtEquipStartMonitor consumes start events from protection equipment.
 // The uint16 with the relay duration time should contain milliseconds in
 // range 0..60000. See info.EllapsedTimeInvalid before using such value.
@@ -382,6 +409,33 @@ type ProtEquipStartMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAdd
 	ProtEquipStartAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, info.CP56Time2a)
 }
 
+type protEquipStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// ProtEquipStartProxy abstracts the variants from the ProtEquipStartMonitor
+// interface into one function. Time tags are interpretated within the time-zone
+// argument. Time is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func ProtEquipStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
+	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, time.Time),
+	zone *time.Location, leeway time.Duration) ProtEquipStartMonitor[Orig, Com, Obj] {
+	return protEquipStartProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms int16, tag info.CP24Time2a) {
+	proxy.listener(u, addr, start, q, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms int16, tag info.CP56Time2a) {
+	proxy.listener(u, addr, start, q, ms, tag.Within20thCentury(proxy.timeZone))
+}
+
 // ProtEquipOutMonitor consumes output commands form protection equipment.
 // The uint16 with the relay operating time should contain milliseconds in
 // range 0..60000. See info.EllapsedTimeInvalid before using such value.
@@ -391,6 +445,33 @@ type ProtEquipOutMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr]
 	ProtEquipOutAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, info.CP24Time2a)
 	// ProtEquipOutAtMoment for type identifier 40: M_EP_TF_1
 	ProtEquipOutAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, info.CP56Time2a)
+}
+
+type protEquipOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// ProtEquipOutProxy abstracts the variants from the ProtEquipOutMonitor
+// interface into one function. Time tags are interpretated within the time-zone
+// argument. Time is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func ProtEquipOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
+	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, time.Time),
+	zone *time.Location, leeway time.Duration) ProtEquipOutMonitor[Orig, Com, Obj] {
+	return protEquipOutProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms int16, tag info.CP24Time2a) {
+	proxy.listener(u, addr, out, q, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms int16, tag info.CP56Time2a) {
+	proxy.listener(u, addr, out, q, ms, tag.Within20thCentury(proxy.timeZone))
 }
 
 // InitEndMonitor consumes end-of-initialization notification.
