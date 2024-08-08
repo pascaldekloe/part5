@@ -206,39 +206,39 @@ func (del *MonitorDelegate[Orig, Com, Obj]) TotalsAtMoment(u info.DataUnit[Orig,
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtectAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, ms uint16, tag info.CP24Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtectAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, elapsed info.CP16Time2a, tag info.CP24Time2a) {
 	if del.ProtectMonitor != nil {
-		del.ProtectMonitor.ProtectAtMinute(u, addr, p, ms, tag)
+		del.ProtectMonitor.ProtectAtMinute(u, addr, p, elapsed, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtectAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, ms uint16, tag info.CP56Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtectAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, elapsed info.CP16Time2a, tag info.CP56Time2a) {
 	if del.ProtectMonitor != nil {
-		del.ProtectMonitor.ProtectAtMoment(u, addr, p, ms, tag)
+		del.ProtectMonitor.ProtectAtMoment(u, addr, p, elapsed, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtectStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, ms uint16, tag info.CP24Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtectStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, duration info.CP16Time2a, tag info.CP24Time2a) {
 	if del.ProtectStartMonitor != nil {
-		del.ProtectStartMonitor.ProtectStartAtMinute(u, addr, flags, q, ms, tag)
+		del.ProtectStartMonitor.ProtectStartAtMinute(u, addr, flags, q, duration, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtectStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, ms uint16, tag info.CP56Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtectStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, duration info.CP16Time2a, tag info.CP56Time2a) {
 	if del.ProtectStartMonitor != nil {
-		del.ProtectStartMonitor.ProtectStartAtMoment(u, addr, flags, q, ms, tag)
+		del.ProtectStartMonitor.ProtectStartAtMoment(u, addr, flags, q, duration, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtectOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, ms uint16, tag info.CP24Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtectOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, opTime info.CP16Time2a, tag info.CP24Time2a) {
 	if del.ProtectOutMonitor != nil {
-		del.ProtectOutMonitor.ProtectOutAtMinute(u, addr, flags, q, ms, tag)
+		del.ProtectOutMonitor.ProtectOutAtMinute(u, addr, flags, q, opTime, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtectOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, ms uint16, tag info.CP56Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtectOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, opTime info.CP16Time2a, tag info.CP56Time2a) {
 	if del.ProtectOutMonitor != nil {
-		del.ProtectOutMonitor.ProtectOutAtMoment(u, addr, flags, q, ms, tag)
+		del.ProtectOutMonitor.ProtectOutAtMoment(u, addr, flags, q, opTime, tag)
 	}
 }
 
@@ -388,34 +388,34 @@ func (l logger[Orig, Com, Obj]) TotalsAtMoment(u info.DataUnit[Orig, Com, Obj], 
 		u.Type, u.Cause, u.Orig, u.Addr, addr, c, tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtectAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, ms uint16, tag info.CP24Time2a) {
+func (l logger[Orig, Com, Obj]) ProtectAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, elapsed info.CP16Time2a, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), ms, tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), elapsed.Millis(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtectAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, ms uint16, tag info.CP56Time2a) {
+func (l logger[Orig, Com, Obj]) ProtectAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, elapsed info.CP16Time2a, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), ms, tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), elapsed.Millis(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtectStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, ms uint16, tag info.CP24Time2a) {
+func (l logger[Orig, Com, Obj]) ProtectStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, duration info.CP16Time2a, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, duration.Millis(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtectStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, ms uint16, tag info.CP56Time2a) {
+func (l logger[Orig, Com, Obj]) ProtectStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectStart, q info.Qual, duration info.CP16Time2a, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, duration.Millis(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtectOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, ms uint16, tag info.CP24Time2a) {
+func (l logger[Orig, Com, Obj]) ProtectOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, opTime info.CP16Time2a, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, opTime.Millis(), tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtectOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, ms uint16, tag info.CP56Time2a) {
+func (l logger[Orig, Com, Obj]) ProtectOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtectOut, q info.Qual, opTime info.CP16Time2a, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, opTime.Millis(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) InitEnd(u info.DataUnit[Orig, Com, Obj], c info.InitCause) {
