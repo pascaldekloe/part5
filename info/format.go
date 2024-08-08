@@ -131,6 +131,21 @@ func formatAddr24(addr [3]uint8, f fmt.State, verb rune) {
 	}
 }
 
+// Format implements the fmt.Formatter interface. A "%s" describes the binary
+// counter reading with all of its attributes in decimal notation.
+func (c Counter) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%d#%d", c.Count(), c.SeqNo())
+	if c.Carry() {
+		io.WriteString(f, ",CY")
+	}
+	if c.Adjusted() {
+		io.WriteString(f, ",CA")
+	}
+	if c.Invalid() {
+		io.WriteString(f, ",IV")
+	}
+}
+
 // Format implements the fmt.Formatter interface. A "%s" describes the ASDU with
 // addresses as decimal numbers. Use the “alternated format” "%#s" for addresses
 // in hexadecimal, i.e., the "%#x" as described in the documentation of the info

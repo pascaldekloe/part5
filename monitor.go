@@ -23,6 +23,8 @@ type Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	NormMonitor[Orig, Com, Obj]
 	ScaledMonitor[Orig, Com, Obj]
 	FloatMonitor[Orig, Com, Obj]
+	TotalsMonitor[Orig, Com, Obj]
+	InitEndMonitor[Orig, Com, Obj]
 }
 
 // SinglePtMonitor consumes single points.
@@ -349,6 +351,52 @@ func (proxy floatProxy[Orig, Com, Obj]) FloatAtMinute(u info.DataUnit[Orig, Com,
 
 func (proxy floatProxy[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, tag info.CP56Time2a) {
 	proxy.listener(u, addr, f, q, tag.Within20thCentury(proxy.timeZone))
+}
+
+// TotalsMonitor consumes integrated totals.
+type TotalsMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// Totals gets called for type identifier 15: M_IT_NA_1.
+	Totals(info.DataUnit[Orig, Com, Obj], Obj, info.Counter)
+	// TotalsAtMinute gets called for type identifier 16: M_IT_TA_1.
+	TotalsAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.Counter, info.CP24Time2a)
+	// TotalsAtMoment gets called for type identifier 37: M_IT_TB_1.
+	TotalsAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.Counter, info.CP56Time2a)
+}
+
+type totalsProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.Counter, time.Time)
+	timeZone   *time.Location
+	timeLeeway time.Duration
+}
+
+// TotalsProxy abstracts the variants from the TotalsMonitor interface
+// into one function. Time tags are interpretated within the time-zone argument.
+// The time.Time argument is always zero for type M_IT_NA_1. Time is also zero
+// for Invalid() info.CP24Time2a and info.CP56Time2a.
+//
+// Time tags are assumed to be recent. See the example of WithinHourBefore from
+// info.CP24Time2a for an explaination of the leeway setting.
+// https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
+func TotalsProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](listener func(info.DataUnit[Orig, Com, Obj], Obj, info.Counter, time.Time), zone *time.Location, leeway time.Duration) TotalsMonitor[Orig, Com, Obj] {
+	return totalsProxy[Orig, Com, Obj]{listener, zone, leeway}
+}
+
+func (proxy totalsProxy[Orig, Com, Obj]) Totals(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter) {
+	proxy.listener(u, addr, c, time.Time{})
+}
+
+func (proxy totalsProxy[Orig, Com, Obj]) TotalsAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter, tag info.CP24Time2a) {
+	proxy.listener(u, addr, c, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
+}
+
+func (proxy totalsProxy[Orig, Com, Obj]) TotalsAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter, tag info.CP56Time2a) {
+	proxy.listener(u, addr, c, tag.Within20thCentury(proxy.timeZone))
+}
+
+// InitEndMonitor consumes end-of-initialization notification.
+type InitEndMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// Totals gets called for type identifier 70: M_EI_NA_1.
+	InitEnd(info.DataUnit[Orig, Com, Obj], info.InitCause)
 }
 
 // MonitorDataUnit has two errors for the selection on type identifier.
@@ -873,6 +921,63 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				info.CP56Time2a(u.Info[i+len(addr)+5:i+len(addr)+12]),
 			)
 		}
+
+	case info.M_IT_NA_1: // integrated totals.
+		if u.Enc.AddrSeq() {
+			addr, err := addrSeqStart(&u, 5)
+			if err != nil {
+				return err
+			}
+			for i := len(addr); i+5 <= len(u.Info); i += 5 {
+				mon.Totals(u, addr, info.Counter(u.Info[i:i+5]))
+				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+			}
+		} else {
+			if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
+				return errInfoSize
+			}
+			for i := 0; i+len(addr)+5 <= len(u.Info); i += len(addr) + 5 {
+				mon.Totals(u, Obj(u.Info[i:i+len(addr)]),
+					info.Counter(u.Info[i+len(addr):i+len(addr)+5]),
+				)
+			}
+		}
+
+	case info.M_IT_TA_1: // integrated totals with 3 octet time-tag.
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_IT_TA_1 not allowed")
+		}
+		if len(u.Info) != u.Enc.Count()*(len(addr)+8) {
+			return errInfoSize
+		}
+		for i := 0; i+len(addr)+8 <= len(u.Info); i += len(addr) + 8 {
+			mon.TotalsAtMinute(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.Counter(u.Info[i+len(addr):i+len(addr)+5]),
+				info.CP24Time2a(u.Info[i+len(addr)+5:i+len(addr)+8]),
+			)
+		}
+
+	case info.M_IT_TB_1: // integrated totals with 7 octet time-tag.
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_IT_TB_1 not allowed")
+		}
+		if len(u.Info) != u.Enc.Count()*(len(addr)+12) {
+			return errInfoSize
+		}
+		for i := 0; i+len(addr)+12 <= len(u.Info); i += len(addr) + 12 {
+			mon.TotalsAtMoment(u,
+				Obj(u.Info[i:i+len(addr)]),
+				info.Counter(u.Info[i+len(addr):i+len(addr)+5]),
+				info.CP56Time2a(u.Info[i+len(addr)+5:i+len(addr)+12]),
+			)
+		}
+
+	case info.M_EI_NA_1: // end of initialization
+		if len(u.Info) != len(addr)+1 {
+			return errInfoSize
+		}
+		mon.InitEnd(u, info.InitCause(u.Info[len(addr)]))
 
 	default:
 		return ErrMonitorReserve

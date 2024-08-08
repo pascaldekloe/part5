@@ -21,6 +21,8 @@ type MonitorDelegate[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] str
 	NormMonitor[Orig, Com, Obj]
 	ScaledMonitor[Orig, Com, Obj]
 	FloatMonitor[Orig, Com, Obj]
+	TotalsMonitor[Orig, Com, Obj]
+	InitEndMonitor[Orig, Com, Obj]
 }
 
 // NewMonitorDelegate returns a new delegate with each sub-interface nil.
@@ -43,6 +45,8 @@ func NewMonitorDelegateDefault[Orig info.OrigAddr, Com info.ComAddr, Obj info.Ob
 		NormMonitor:           def,
 		ScaledMonitor:         def,
 		FloatMonitor:          def,
+		TotalsMonitor:         def,
+		InitEndMonitor:        def,
 	}
 }
 
@@ -220,6 +224,30 @@ func (del *MonitorDelegate[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, 
 	}
 }
 
+func (del *MonitorDelegate[Orig, Com, Obj]) Totals(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter) {
+	if del.TotalsMonitor != nil {
+		del.TotalsMonitor.Totals(u, addr, c)
+	}
+}
+
+func (del *MonitorDelegate[Orig, Com, Obj]) TotalsAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter, tag info.CP24Time2a) {
+	if del.TotalsMonitor != nil {
+		del.TotalsMonitor.TotalsAtMinute(u, addr, c, tag)
+	}
+}
+
+func (del *MonitorDelegate[Orig, Com, Obj]) TotalsAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter, tag info.CP56Time2a) {
+	if del.TotalsMonitor != nil {
+		del.TotalsMonitor.TotalsAtMoment(u, addr, c, tag)
+	}
+}
+
+func (del *MonitorDelegate[Orig, Com, Obj]) InitEnd(u info.DataUnit[Orig, Com, Obj], c info.InitCause) {
+	if del.InitEndMonitor != nil {
+		del.InitEndMonitor.InitEnd(u, c)
+	}
+}
+
 type logger[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
 	W io.Writer
 }
@@ -373,4 +401,24 @@ func (l logger[Orig, Com, Obj]) FloatAtMinute(u info.DataUnit[Orig, Com, Obj], a
 func (l logger[Orig, Com, Obj]) FloatAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, f float32, q info.Qual, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %g %s %s\n",
 		u.Type, u.Cause, u.Orig, u.Addr, addr, f, q, tag)
+}
+
+func (l logger[Orig, Com, Obj]) Totals(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, c)
+}
+
+func (l logger[Orig, Com, Obj]) TotalsAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter, tag info.CP24Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, c, tag)
+}
+
+func (l logger[Orig, Com, Obj]) TotalsAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, c info.Counter, tag info.CP56Time2a) {
+	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
+		u.Type, u.Cause, u.Orig, u.Addr, addr, c, tag)
+}
+
+func (l logger[Orig, Com, Obj]) InitEnd(u info.DataUnit[Orig, Com, Obj], c info.InitCause) {
+	fmt.Fprintf(l.W, "%s %s %x %#x %d\n",
+		u.Type, u.Cause, u.Orig, u.Addr, c)
 }

@@ -497,6 +497,50 @@ func (norm *NormQual) FlagQual(flags Qual) {
 	norm[2] |= uint8(flags)
 }
 
+// Counter is a binary counter reading conform chapter 7.2.6.9 from companion
+// standard 101. The zero value has count zero, sequence number zero, and flags
+// Carry, Adjusted and Invalid all false.
+type Counter [5]uint8
+
+// Count returns the reading, signed.
+func (c Counter) Count() int32 {
+	// type 2.1 conform chapter 5.2.1 from section 5
+	return int32(binary.LittleEndian.Uint32(c[:4]))
+}
+
+// SetCount replaces the reading, signed.
+func (c *Counter) SetCount(v int32) {
+	// type 2.1 conform chapter 5.2.1 from section 5
+	binary.LittleEndian.PutUint32(c[:4], uint32(v))
+}
+
+// SeqNo returns the sequence number in range 0..31.
+func (c Counter) SeqNo() uint { return uint(c[4] & 31) }
+
+// SetSeqNo replaces the sequence number.
+// Bits beyond numeric range 0..31 are ignored.
+func (c *Counter) SetSeqNo(v uint) { c[4] = uint8(v&31) | (c[4] &^ 31) }
+
+// Carry returns the CY flag, i.e., whether a counter overflow occurred in the
+// corresponding integration period.
+func (c Counter) Carry() bool { return c[4]&32 != 0 }
+
+// FlagCarry sets the CY flag.
+func (c *Counter) SetCarry() { c[4] |= 32 }
+
+// Adjusted returns the CA flag, i.e., whether the counter was adjusted since
+// the last reading.
+func (c Counter) Adjusted() bool { return c[4]&64 != 0 }
+
+// FlagAdjusted sets the CA flag.
+func (c *Counter) FlagAdjusted() { c[4] |= 64 }
+
+// Invalid returns the IV flag, i.e., whether the reading was invalid.
+func (c Counter) Invalid() bool { return c[4]&uint8(IV) != 0 }
+
+// FlagInvalid sets the IV flag.
+func (c *Counter) FlagInvalid() { c[4] |= uint8(IV) }
+
 // ProtEquipStart has flags for start events from protection equipment when it
 // detects faults.
 type ProtEquipStart uint8
@@ -632,6 +676,29 @@ func (flags ProtEquipOut) String() string {
 	}
 	return buf.String()[1:]
 }
+
+// InitCause is the cause of initialization conform companion standard 101,
+// subclause 7.2.6.21. The value consists of a 7-bit code with AfterChange flag.
+//
+//	0: local power switch on
+//	1: local manual reset
+//	2: remote reset
+//	3..31: reserved for standard definitions of this companion standard (compatible range)
+//	32..127: reserved for special use (private range)
+type InitCause uint8
+
+// NoChangeInitCause is for initialization with unchanged local parameters.
+func NoChangeInitCause(n uint) InitCause { return InitCause(n & 127) }
+
+// AfterChangeInitCause is for initialization after change of local parameters.
+func AfterChangeInitCause(n uint) InitCause { return InitCause(n | 128) }
+
+// AfterChange returns either false for initialization with unchanged local
+// parameters, or true for initialization after change of local parameters.
+func (c InitCause) AfterChange() bool { return c&128 != 0 }
+
+// FlagAfterChange sets the flag on c.
+func (c *InitCause) FlagAfterChange() { *c |= 128 }
 
 // ParamQual is the qualifier of parameter of measured values conform companion
 // standard 101, subclause 7.2.6.24.
