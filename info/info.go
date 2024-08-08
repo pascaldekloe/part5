@@ -307,7 +307,7 @@ const (
 	// under this condition.
 	Invalid
 
-	// codes from standard
+	// standard codes defined in chapter 6.8 from section 4
 	OV = Overflow
 	EI = ElapsedTimeInvalid
 	BL = Blocked
@@ -315,7 +315,7 @@ const (
 	NT = NotTopical
 	IV = Invalid
 
-	OK Qual = 0 // no remarks
+	OK Qual = 0 // no remarks (is not a standard code)
 )
 
 // String returns the codes from the standard, comma separated, with "[2]" and
@@ -546,7 +546,6 @@ func (c *Counter) FlagInvalid() { c[4] |= uint8(IV) }
 type ProtectStart uint8
 
 // Start Events Of Protection Equipment
-// See companion standard 101, subclause 7.2.6.11.
 const (
 	GenStartFlag   ProtectStart = 1 << iota // GS: general start of operation
 	L1StartFlag                             // SL1: start of operation phase L1
@@ -555,7 +554,7 @@ const (
 	EarthStartFlag                          // SIE: start of operation IE (earth current)
 	RevStartFlag                            // SRD: start of operation in reverse direction
 
-	// codes from standard
+	// standard codes defined in chapter 7.2.6.11 from companin standard 101
 	GS  = GenStartFlag
 	SL1 = L1StartFlag
 	SL2 = L2StartFlag
@@ -618,14 +617,13 @@ func (flags ProtectStart) String() string {
 type ProtectOut uint8
 
 // Output Circuit Information Of Protection Equipment
-// See companion standard 101, subclause 7.2.6.12.
 const (
 	GenOutFlag ProtectOut = 1 << iota // GC: general command to output circuit
 	L1OutFlag                         // CL1: command to output circuit phase L1
 	L2OutFlag                         // CL2: command to output circuit phase L2
 	L3OutFlag                         // CL3: command to output circuit phase L3
 
-	// codes from standard
+	// standard codes defined in chapter 7.2.6.12 from companion standard 101
 	GC  = GenOutFlag
 	CL1 = L1OutFlag
 	CL2 = L2OutFlag
@@ -705,7 +703,6 @@ func (c *InitCause) FlagAfterChange() { *c |= 128 }
 type ParamQual uint8
 
 // Qualifier Of Parameter Of Measured Values
-// See companion standard 101, subclause 7.2.6.24.
 const (
 	_          ParamQual = iota // 0: not used
 	Threashold                  // 1: threshold value
@@ -719,7 +716,7 @@ const (
 	ChangeFlag  ParamQual = 64  // marks local parameter change
 	NotInOpFlag ParamQual = 128 // marks parameter operation
 
-	// codes from standard
+	// standard codes defined in chapter 7.2.6.24 from companion standard 101
 	LPC = ChangeFlag
 	POP = NotInOpFlag
 )
