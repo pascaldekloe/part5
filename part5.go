@@ -1,4 +1,13 @@
 // Package part5 provides the OSI application layer of IEC 60870-5.
+//
+// # Monitor
+//
+// The Monitor interface holds listeners for measured values, i.e., the type
+// codes with an "M_" prefix. Subinterfaces of Monitor organise per information
+// type. Proxies of the subinterfaces abstract notification even further into a
+// single method, regardless of the time tag. Such hyrachical setup allows users
+// to write for the applicable types only. MonitorDelegate can default to a
+// Logger or some equivalent to detect unsupported types.
 package part5
 
 import (
