@@ -642,40 +642,6 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			)
 		}
 
-	case info.M_EP_TA_1: // protection equipment with 3-octet time tag
-		if u.Enc.AddrSeq() {
-			return errors.New("part5: ASDU address sequence with M_EP_TA_1 not allowed")
-		} else {
-			if len(u.Info) != u.Enc.Count()*(len(addr)+6) {
-				return errInfoSize
-			}
-			for i := 0; i+len(addr)+6 <= len(u.Info); i += len(addr) + 6 {
-				mon.ProtEquipAtMinute(u,
-					Obj(u.Info[i:i+len(addr)]),
-					info.DoublePtQual(u.Info[i+len(addr)]),
-					binary.BigEndian.Uint16(u.Info[i+len(addr)+1:i+len(addr)+3]),
-					info.CP24Time2a(u.Info[i+len(addr)+3:i+len(addr)+6]),
-				)
-			}
-		}
-
-	case info.M_EP_TD_1: // protection equipment with 7-octet time tag
-		if u.Enc.AddrSeq() {
-			return errors.New("part5: ASDU address sequence with M_EP_TD_1 not allowed")
-		} else {
-			if len(u.Info) != u.Enc.Count()*(len(addr)+10) {
-				return errInfoSize
-			}
-			for i := 0; i+len(addr)+10 <= len(u.Info); i += len(addr) + 10 {
-				mon.ProtEquipAtMoment(u,
-					Obj(u.Info[i:i+len(addr)]),
-					info.DoublePtQual(u.Info[i+len(addr)]),
-					binary.BigEndian.Uint16(u.Info[i+len(addr)+1:i+len(addr)+3]),
-					info.CP56Time2a(u.Info[i+len(addr)+3:i+len(addr)+10]),
-				)
-			}
-		}
-
 	case info.M_ST_NA_1: // step position
 		if u.Enc.AddrSeq() {
 			addr, err := addrSeqStart(&u, 2)
@@ -1052,6 +1018,112 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				info.Counter(u.Info[i+len(addr):i+len(addr)+5]),
 				info.CP56Time2a(u.Info[i+len(addr)+5:i+len(addr)+12]),
 			)
+		}
+
+	case info.M_EP_TA_1: // protection equipment with 3-octet time tag
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_EP_TA_1 not allowed")
+		} else {
+			if len(u.Info) != u.Enc.Count()*(len(addr)+6) {
+				return errInfoSize
+			}
+			for i := 0; i+len(addr)+6 <= len(u.Info); i += len(addr) + 6 {
+				mon.ProtEquipAtMinute(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.DoublePtQual(u.Info[i+len(addr)]),
+					binary.BigEndian.Uint16(u.Info[i+len(addr)+1:i+len(addr)+3]),
+					info.CP24Time2a(u.Info[i+len(addr)+3:i+len(addr)+6]),
+				)
+			}
+		}
+
+	case info.M_EP_TD_1: // protection equipment with 7-octet time tag
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_EP_TD_1 not allowed")
+		} else {
+			if len(u.Info) != u.Enc.Count()*(len(addr)+10) {
+				return errInfoSize
+			}
+			for i := 0; i+len(addr)+10 <= len(u.Info); i += len(addr) + 10 {
+				mon.ProtEquipAtMoment(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.DoublePtQual(u.Info[i+len(addr)]),
+					binary.BigEndian.Uint16(u.Info[i+len(addr)+1:i+len(addr)+3]),
+					info.CP56Time2a(u.Info[i+len(addr)+3:i+len(addr)+10]),
+				)
+			}
+		}
+
+	case info.M_EP_TB_1: // start of protection equipment with 3-octet time tag
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_EP_TB_1 not allowed")
+		} else {
+			if len(u.Info) != u.Enc.Count()*(len(addr)+7) {
+				return errInfoSize
+			}
+			for i := 0; i+len(addr)+7 <= len(u.Info); i += len(addr) + 7 {
+				mon.ProtEquipStartAtMinute(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.ProtEquipStart(u.Info[i+len(addr)]),
+					info.Qual(u.Info[i+len(addr)+1]),
+					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
+					info.CP24Time2a(u.Info[i+len(addr)+4:i+len(addr)+7]),
+				)
+			}
+		}
+
+	case info.M_EP_TE_1: // start of protection equipment with 7-octet time tag
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_EP_TE_1 not allowed")
+		} else {
+			if len(u.Info) != u.Enc.Count()*(len(addr)+11) {
+				return errInfoSize
+			}
+			for i := 0; i+len(addr)+11 <= len(u.Info); i += len(addr) + 11 {
+				mon.ProtEquipStartAtMoment(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.ProtEquipStart(u.Info[i+len(addr)]),
+					info.Qual(u.Info[i+len(addr)+1]),
+					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
+					info.CP56Time2a(u.Info[i+len(addr)+4:i+len(addr)+11]),
+				)
+			}
+		}
+
+	case info.M_EP_TC_1: // output of protection equipment with 3-octet time tag
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_EP_TC_1 not allowed")
+		} else {
+			if len(u.Info) != u.Enc.Count()*(len(addr)+7) {
+				return errInfoSize
+			}
+			for i := 0; i+len(addr)+7 <= len(u.Info); i += len(addr) + 7 {
+				mon.ProtEquipOutAtMinute(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.ProtEquipOut(u.Info[i+len(addr)]),
+					info.Qual(u.Info[i+len(addr)+1]),
+					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
+					info.CP24Time2a(u.Info[i+len(addr)+4:i+len(addr)+7]),
+				)
+			}
+		}
+
+	case info.M_EP_TF_1: // output of protection equipment with 7-octet time tag
+		if u.Enc.AddrSeq() {
+			return errors.New("part5: ASDU address sequence with M_EP_TF_1 not allowed")
+		} else {
+			if len(u.Info) != u.Enc.Count()*(len(addr)+11) {
+				return errInfoSize
+			}
+			for i := 0; i+len(addr)+11 <= len(u.Info); i += len(addr) + 11 {
+				mon.ProtEquipOutAtMoment(u,
+					Obj(u.Info[i:i+len(addr)]),
+					info.ProtEquipOut(u.Info[i+len(addr)]),
+					info.Qual(u.Info[i+len(addr)+1]),
+					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
+					info.CP56Time2a(u.Info[i+len(addr)+4:i+len(addr)+11]),
+				)
+			}
 		}
 
 	case info.M_EI_NA_1: // end of initialization
