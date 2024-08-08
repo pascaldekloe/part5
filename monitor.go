@@ -21,9 +21,9 @@ type Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	ScaledMonitor[Orig, Com, Obj]
 	FloatMonitor[Orig, Com, Obj]
 	TotalsMonitor[Orig, Com, Obj]
-	ProtEquipMonitor[Orig, Com, Obj]
-	ProtEquipStartMonitor[Orig, Com, Obj]
-	ProtEquipOutMonitor[Orig, Com, Obj]
+	ProtectMonitor[Orig, Com, Obj]
+	ProtectStartMonitor[Orig, Com, Obj]
+	ProtectOutMonitor[Orig, Com, Obj]
 	InitEndMonitor[Orig, Com, Obj]
 }
 
@@ -360,15 +360,15 @@ func (proxy totalsProxy[Orig, Com, Obj]) TotalsAtMoment(u info.DataUnit[Orig, Co
 	proxy.listener(u, addr, c, tag.Within20thCentury(proxy.timeZone))
 }
 
-// ProtEquipMonitor consumes events from protection equipment.
+// ProtectMonitor consumes events from protection equipment.
 // The uint16 with the ellapsed time should contain milliseconds in
 // range 0..60000. See info.EllapsedTimeInvalid in the DoublePtQual
 // before using such value.
-type ProtEquipMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-	// ProtEquipAtMinute gets called for type identifier 17: M_EP_TA_1.
-	ProtEquipAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP24Time2a)
-	// ProtEquipAtMoment gets called for type identifier 38: M_EP_TD_1.
-	ProtEquipAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP56Time2a)
+type ProtectMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// ProtectAtMinute gets called for type identifier 17: M_EP_TA_1.
+	ProtectAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP24Time2a)
+	// ProtectAtMoment gets called for type identifier 38: M_EP_TD_1.
+	ProtectAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, info.CP56Time2a)
 }
 
 type protEquipProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
@@ -377,100 +377,100 @@ type protEquipProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] stru
 	timeLeeway time.Duration
 }
 
-// ProtEquipProxy abstracts the variants from the ProtEquipMonitor
-// interface into one function. Time tags are interpretated within the time-zone
-// argument. Time is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
+// ProtectProxy abstracts the variants from the ProtectMonitor interface into
+// one function. Time tags are interpretated within the time-zone argument. Time
+// is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
 //
 // Time tags are assumed to be recent. See the example of WithinHourBefore from
 // info.CP24Time2a for an explaination of the leeway setting.
 // https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
-func ProtEquipProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
+func ProtectProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
 	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.DoublePtQual, uint16, time.Time),
-	zone *time.Location, leeway time.Duration) ProtEquipMonitor[Orig, Com, Obj] {
+	zone *time.Location, leeway time.Duration) ProtectMonitor[Orig, Com, Obj] {
 	return protEquipProxy[Orig, Com, Obj]{listener, zone, leeway}
 }
 
-func (proxy protEquipProxy[Orig, Com, Obj]) ProtEquipAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, ms uint16, tag info.CP24Time2a) {
+func (proxy protEquipProxy[Orig, Com, Obj]) ProtectAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, ms uint16, tag info.CP24Time2a) {
 	proxy.listener(u, addr, pt, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
 }
 
-func (proxy protEquipProxy[Orig, Com, Obj]) ProtEquipAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, ms uint16, tag info.CP56Time2a) {
+func (proxy protEquipProxy[Orig, Com, Obj]) ProtectAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, pt info.DoublePtQual, ms uint16, tag info.CP56Time2a) {
 	proxy.listener(u, addr, pt, ms, tag.Within20thCentury(proxy.timeZone))
 }
 
-// ProtEquipStartMonitor consumes start events from protection equipment.
+// ProtectStartMonitor consumes start events from protection equipment.
 // The uint16 with the relay duration time should contain milliseconds in
 // range 0..60000. See info.EllapsedTimeInvalid before using such value.
 // Quality descriptor info.Overflow does not apply.
-type ProtEquipStartMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-	// ProtEquipStartAtMinute gets called for type identifier 18: M_EP_TB_1
-	ProtEquipStartAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, info.CP24Time2a)
-	// ProtEquipStartAtMoment for type identifier 39: M_EP_TE_1
-	ProtEquipStartAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, info.CP56Time2a)
+type ProtectStartMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// ProtectStartAtMinute gets called for type identifier 18: M_EP_TB_1
+	ProtectStartAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectStart, info.Qual, uint16, info.CP24Time2a)
+	// ProtectStartAtMoment for type identifier 39: M_EP_TE_1
+	ProtectStartAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectStart, info.Qual, uint16, info.CP56Time2a)
 }
 
 type protEquipStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, time.Time)
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectStart, info.Qual, uint16, time.Time)
 	timeZone   *time.Location
 	timeLeeway time.Duration
 }
 
-// ProtEquipStartProxy abstracts the variants from the ProtEquipStartMonitor
+// ProtectStartProxy abstracts the variants from the ProtectStartMonitor
 // interface into one function. Time tags are interpretated within the time-zone
 // argument. Time is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
 //
 // Time tags are assumed to be recent. See the example of WithinHourBefore from
 // info.CP24Time2a for an explaination of the leeway setting.
 // https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
-func ProtEquipStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
-	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, time.Time),
-	zone *time.Location, leeway time.Duration) ProtEquipStartMonitor[Orig, Com, Obj] {
+func ProtectStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
+	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectStart, info.Qual, uint16, time.Time),
+	zone *time.Location, leeway time.Duration) ProtectStartMonitor[Orig, Com, Obj] {
 	return protEquipStartProxy[Orig, Com, Obj]{listener, zone, leeway}
 }
 
-func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP24Time2a) {
+func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtectStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtectStart, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	proxy.listener(u, addr, start, q, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
 }
 
-func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP56Time2a) {
+func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtectStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtectStart, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	proxy.listener(u, addr, start, q, ms, tag.Within20thCentury(proxy.timeZone))
 }
 
-// ProtEquipOutMonitor consumes output commands form protection equipment.
+// ProtectOutMonitor consumes command output form protection equipment.
 // The uint16 with the relay operating time should contain milliseconds in
 // range 0..60000. See info.EllapsedTimeInvalid before using such value.
 // Quality descriptor info.Overflow does not apply.
-type ProtEquipOutMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
-	// ProtEquipOutAtMinute for type identifier 19: M_EP_TC_1
-	ProtEquipOutAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, info.CP24Time2a)
-	// ProtEquipOutAtMoment for type identifier 40: M_EP_TF_1
-	ProtEquipOutAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, info.CP56Time2a)
+type ProtectOutMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
+	// ProtectOutAtMinute for type identifier 19: M_EP_TC_1
+	ProtectOutAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectOut, info.Qual, uint16, info.CP24Time2a)
+	// ProtectOutAtMoment for type identifier 40: M_EP_TF_1
+	ProtectOutAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectOut, info.Qual, uint16, info.CP56Time2a)
 }
 
 type protEquipOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, time.Time)
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectOut, info.Qual, uint16, time.Time)
 	timeZone   *time.Location
 	timeLeeway time.Duration
 }
 
-// ProtEquipOutProxy abstracts the variants from the ProtEquipOutMonitor
-// interface into one function. Time tags are interpretated within the time-zone
-// argument. Time is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
+// ProtectOutProxy abstracts the variants from the ProtectOutMonitor interface
+// into one function. Time tags are interpretated within the time-zone argument.
+// Time is zero for Invalid() info.CP24Time2a and info.CP56Time2a.
 //
 // Time tags are assumed to be recent. See the example of WithinHourBefore from
 // info.CP24Time2a for an explaination of the leeway setting.
 // https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
-func ProtEquipOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
-	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, time.Time),
-	zone *time.Location, leeway time.Duration) ProtEquipOutMonitor[Orig, Com, Obj] {
+func ProtectOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
+	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtectOut, info.Qual, uint16, time.Time),
+	zone *time.Location, leeway time.Duration) ProtectOutMonitor[Orig, Com, Obj] {
 	return protEquipOutProxy[Orig, Com, Obj]{listener, zone, leeway}
 }
 
-func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP24Time2a) {
+func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtectOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtectOut, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	proxy.listener(u, addr, out, q, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
 }
 
-func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP56Time2a) {
+func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtectOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtectOut, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	proxy.listener(u, addr, out, q, ms, tag.Within20thCentury(proxy.timeZone))
 }
 
@@ -1028,7 +1028,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				return errInfoSize
 			}
 			for i := 0; i+len(addr)+6 <= len(u.Info); i += len(addr) + 6 {
-				mon.ProtEquipAtMinute(u,
+				mon.ProtectAtMinute(u,
 					Obj(u.Info[i:i+len(addr)]),
 					info.DoublePtQual(u.Info[i+len(addr)]),
 					binary.BigEndian.Uint16(u.Info[i+len(addr)+1:i+len(addr)+3]),
@@ -1045,7 +1045,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				return errInfoSize
 			}
 			for i := 0; i+len(addr)+10 <= len(u.Info); i += len(addr) + 10 {
-				mon.ProtEquipAtMoment(u,
+				mon.ProtectAtMoment(u,
 					Obj(u.Info[i:i+len(addr)]),
 					info.DoublePtQual(u.Info[i+len(addr)]),
 					binary.BigEndian.Uint16(u.Info[i+len(addr)+1:i+len(addr)+3]),
@@ -1062,9 +1062,9 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				return errInfoSize
 			}
 			for i := 0; i+len(addr)+7 <= len(u.Info); i += len(addr) + 7 {
-				mon.ProtEquipStartAtMinute(u,
+				mon.ProtectStartAtMinute(u,
 					Obj(u.Info[i:i+len(addr)]),
-					info.ProtEquipStart(u.Info[i+len(addr)]),
+					info.ProtectStart(u.Info[i+len(addr)]),
 					info.Qual(u.Info[i+len(addr)+1]),
 					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
 					info.CP24Time2a(u.Info[i+len(addr)+4:i+len(addr)+7]),
@@ -1080,9 +1080,9 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				return errInfoSize
 			}
 			for i := 0; i+len(addr)+11 <= len(u.Info); i += len(addr) + 11 {
-				mon.ProtEquipStartAtMoment(u,
+				mon.ProtectStartAtMoment(u,
 					Obj(u.Info[i:i+len(addr)]),
-					info.ProtEquipStart(u.Info[i+len(addr)]),
+					info.ProtectStart(u.Info[i+len(addr)]),
 					info.Qual(u.Info[i+len(addr)+1]),
 					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
 					info.CP56Time2a(u.Info[i+len(addr)+4:i+len(addr)+11]),
@@ -1098,9 +1098,9 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				return errInfoSize
 			}
 			for i := 0; i+len(addr)+7 <= len(u.Info); i += len(addr) + 7 {
-				mon.ProtEquipOutAtMinute(u,
+				mon.ProtectOutAtMinute(u,
 					Obj(u.Info[i:i+len(addr)]),
-					info.ProtEquipOut(u.Info[i+len(addr)]),
+					info.ProtectOut(u.Info[i+len(addr)]),
 					info.Qual(u.Info[i+len(addr)+1]),
 					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
 					info.CP24Time2a(u.Info[i+len(addr)+4:i+len(addr)+7]),
@@ -1116,9 +1116,9 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 				return errInfoSize
 			}
 			for i := 0; i+len(addr)+11 <= len(u.Info); i += len(addr) + 11 {
-				mon.ProtEquipOutAtMoment(u,
+				mon.ProtectOutAtMoment(u,
 					Obj(u.Info[i:i+len(addr)]),
-					info.ProtEquipOut(u.Info[i+len(addr)]),
+					info.ProtectOut(u.Info[i+len(addr)]),
 					info.Qual(u.Info[i+len(addr)+1]),
 					binary.BigEndian.Uint16(u.Info[i+len(addr)+2:i+len(addr)+4]),
 					info.CP56Time2a(u.Info[i+len(addr)+4:i+len(addr)+11]),

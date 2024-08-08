@@ -541,19 +541,19 @@ func (c Counter) Invalid() bool { return c[4]&uint8(IV) != 0 }
 // FlagInvalid sets the IV flag.
 func (c *Counter) FlagInvalid() { c[4] |= uint8(IV) }
 
-// ProtEquipStart has flags for start events from protection equipment when it
+// ProtectStart has flags for start events from protection equipment when it
 // detects faults.
-type ProtEquipStart uint8
+type ProtectStart uint8
 
 // Start Events Of Protection Equipment
 // See companion standard 101, subclause 7.2.6.11.
 const (
-	GenStartFlag   ProtEquipStart = 1 << iota // GS: general start of operation
-	L1StartFlag                               // SL1: start of operation phase L1
-	L2StartFlag                               // SL2: start of operation phase L2
-	L3StartFlag                               // SL3: start of operation phase L3
-	EarthStartFlag                            // SIE: start of operation IE (earth current)
-	RevStartFlag                              // SRD: start of operation in reverse direction
+	GenStartFlag   ProtectStart = 1 << iota // GS: general start of operation
+	L1StartFlag                             // SL1: start of operation phase L1
+	L2StartFlag                             // SL2: start of operation phase L2
+	L3StartFlag                             // SL3: start of operation phase L3
+	EarthStartFlag                          // SIE: start of operation IE (earth current)
+	RevStartFlag                            // SRD: start of operation in reverse direction
 
 	// codes from standard
 	GS  = GenStartFlag
@@ -566,7 +566,7 @@ const (
 
 // String returns the codes from the standard, comma separated, with "[7]" and
 // "[8]" for the two reserved bits, and "<>" for none.
-func (flags ProtEquipStart) String() string {
+func (flags ProtectStart) String() string {
 	switch flags {
 	case 0:
 		return "[]"
@@ -613,17 +613,17 @@ func (flags ProtEquipStart) String() string {
 	return buf.String()[1:]
 }
 
-// ProtEquipOut has flags for commands from protection equipment to output the
-// circuit information.
-type ProtEquipOut uint8
+// ProtectOut has flags for command to output circuit information from
+// protection equipment.
+type ProtectOut uint8
 
 // Output Circuit Information Of Protection Equipment
 // See companion standard 101, subclause 7.2.6.12.
 const (
-	GenOutFlag ProtEquipOut = 1 << iota // GC: general command to output circuit
-	L1OutFlag                           // CL1: command to output circuit phase L1
-	L2OutFlag                           // CL2: command to output circuit phase L2
-	L3OutFlag                           // CL3: command to output circuit phase L3
+	GenOutFlag ProtectOut = 1 << iota // GC: general command to output circuit
+	L1OutFlag                         // CL1: command to output circuit phase L1
+	L2OutFlag                         // CL2: command to output circuit phase L2
+	L3OutFlag                         // CL3: command to output circuit phase L3
 
 	// codes from standard
 	GC  = GenOutFlag
@@ -634,7 +634,7 @@ const (
 
 // String returns the codes from the standard, comma separated, with "[5]"
 // "[6]", "[7]" and "[8]" for the four reserved bits, and "[]" for none.
-func (flags ProtEquipOut) String() string {
+func (flags ProtectOut) String() string {
 	switch flags {
 	case 0:
 		return "[]"
