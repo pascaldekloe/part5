@@ -404,13 +404,13 @@ func (proxy protEquipProxy[Orig, Com, Obj]) ProtEquipAtMoment(u info.DataUnit[Or
 // Quality descriptor info.Overflow does not apply.
 type ProtEquipStartMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// ProtEquipStartAtMinute gets called for type identifier 18: M_EP_TB_1
-	ProtEquipStartAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, info.CP24Time2a)
+	ProtEquipStartAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, info.CP24Time2a)
 	// ProtEquipStartAtMoment for type identifier 39: M_EP_TE_1
-	ProtEquipStartAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, info.CP56Time2a)
+	ProtEquipStartAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, info.CP56Time2a)
 }
 
 type protEquipStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, time.Time)
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, time.Time)
 	timeZone   *time.Location
 	timeLeeway time.Duration
 }
@@ -423,16 +423,16 @@ type protEquipStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr]
 // info.CP24Time2a for an explaination of the leeway setting.
 // https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
 func ProtEquipStartProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
-	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, int16, time.Time),
+	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipStart, info.Qual, uint16, time.Time),
 	zone *time.Location, leeway time.Duration) ProtEquipStartMonitor[Orig, Com, Obj] {
 	return protEquipStartProxy[Orig, Com, Obj]{listener, zone, leeway}
 }
 
-func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms int16, tag info.CP24Time2a) {
+func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	proxy.listener(u, addr, start, q, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
 }
 
-func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms int16, tag info.CP56Time2a) {
+func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, start info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	proxy.listener(u, addr, start, q, ms, tag.Within20thCentury(proxy.timeZone))
 }
 
@@ -442,13 +442,13 @@ func (proxy protEquipStartProxy[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.D
 // Quality descriptor info.Overflow does not apply.
 type ProtEquipOutMonitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	// ProtEquipOutAtMinute for type identifier 19: M_EP_TC_1
-	ProtEquipOutAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, info.CP24Time2a)
+	ProtEquipOutAtMinute(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, info.CP24Time2a)
 	// ProtEquipOutAtMoment for type identifier 40: M_EP_TF_1
-	ProtEquipOutAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, info.CP56Time2a)
+	ProtEquipOutAtMoment(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, info.CP56Time2a)
 }
 
 type protEquipOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, time.Time)
+	listener   func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, time.Time)
 	timeZone   *time.Location
 	timeLeeway time.Duration
 }
@@ -461,16 +461,16 @@ type protEquipOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] s
 // info.CP24Time2a for an explaination of the leeway setting.
 // https://pkg.go.dev/github.com/pascaldekloe/part5/info#example-CP24Time2a.WithinHourBefore
 func ProtEquipOutProxy[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](
-	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, int16, time.Time),
+	listener func(info.DataUnit[Orig, Com, Obj], Obj, info.ProtEquipOut, info.Qual, uint16, time.Time),
 	zone *time.Location, leeway time.Duration) ProtEquipOutMonitor[Orig, Com, Obj] {
 	return protEquipOutProxy[Orig, Com, Obj]{listener, zone, leeway}
 }
 
-func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms int16, tag info.CP24Time2a) {
+func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	proxy.listener(u, addr, out, q, ms, tag.WithinHourBefore(time.Now().In(proxy.timeZone).Add(proxy.timeLeeway)))
 }
 
-func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms int16, tag info.CP56Time2a) {
+func (proxy protEquipOutProxy[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, out info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	proxy.listener(u, addr, out, q, ms, tag.Within20thCentury(proxy.timeZone))
 }
 

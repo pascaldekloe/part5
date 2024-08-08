@@ -218,25 +218,25 @@ func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipAtMoment(u info.DataUnit[Or
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP24Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	if del.ProtEquipStartMonitor != nil {
 		del.ProtEquipStartMonitor.ProtEquipStartAtMinute(u, addr, flags, q, ms, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP56Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	if del.ProtEquipStartMonitor != nil {
 		del.ProtEquipStartMonitor.ProtEquipStartAtMoment(u, addr, flags, q, ms, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP24Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	if del.ProtEquipOutMonitor != nil {
 		del.ProtEquipOutMonitor.ProtEquipOutAtMinute(u, addr, flags, q, ms, tag)
 	}
 }
 
-func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP56Time2a) {
+func (del *MonitorDelegate[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	if del.ProtEquipOutMonitor != nil {
 		del.ProtEquipOutMonitor.ProtEquipOutAtMoment(u, addr, flags, q, ms, tag)
 	}
@@ -398,22 +398,22 @@ func (l logger[Orig, Com, Obj]) ProtEquipAtMoment(u info.DataUnit[Orig, Com, Obj
 		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), ms, tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP24Time2a) {
+func (l logger[Orig, Com, Obj]) ProtEquipStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
 		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms int16, tag info.CP56Time2a) {
+func (l logger[Orig, Com, Obj]) ProtEquipStartAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipStart, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
 		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP24Time2a) {
+func (l logger[Orig, Com, Obj]) ProtEquipOutAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
 		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
 }
 
-func (l logger[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms int16, tag info.CP56Time2a) {
+func (l logger[Orig, Com, Obj]) ProtEquipOutAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, flags info.ProtEquipOut, q info.Qual, ms uint16, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
 		u.Type, u.Cause, u.Orig, u.Addr, addr, flags, q, ms, tag)
 }
