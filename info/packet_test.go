@@ -6,7 +6,7 @@ import (
 )
 
 // Wide tests multi-byte addressing.
-var Wide Params[OrigAddr8, ComAddr16, ObjAddr16]
+var Wide System[OrigAddr8, ComAddr16, ObjAddr16]
 
 var goldenDataUnits = []struct {
 	unit DataUnit[OrigAddr8, ComAddr16, ObjAddr16]

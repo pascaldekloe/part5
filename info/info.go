@@ -19,16 +19,17 @@ import (
 	"strings"
 )
 
-// Params define the system-specific parameters. Specifically, the generics set
-// the address width, which can be zero [none] for the originator.
-type Params[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct{}
+// System defines the system-specific parameters with generics. The parameters
+// are the 3 address widths, specifically. Note that the originating address is
+// commonly hidden as a cause-of-transmission size.
+type System[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct{}
 
 // ErrComAddrZero denies the zero value as an address. Use is explicitly
 // prohibited in subsection 7.2.4.
 var errComAddrZero = errors.New("part5: common address <0> is not used")
 
 type (
-	// ComAddr can be instantiated with ComAddrN of Params.
+	// ComAddr can be instantiated with ComAddrN of System.
 	// The “common address” addresses stations. Zero is not used.
 	// All information objects/addresses reside in a common address.
 	// See companion standard 101, subclause 7.2.4.
@@ -52,7 +53,7 @@ type (
 
 // ComAddrN returns either a numeric match, or false when n overflows the
 // address width of Com.
-func (p Params[Orig, Com, Obj]) ComAddrN(n uint) (Com, bool) {
+func (_ System[Orig, Com, Obj]) ComAddrN(n uint) (Com, bool) {
 	var addr Com
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
@@ -62,8 +63,8 @@ func (p Params[Orig, Com, Obj]) ComAddrN(n uint) (Com, bool) {
 }
 
 // MustComAddrN is like ComAddrN, yet it panics on overflow.
-func (p Params[Orig, Com, Obj]) MustComAddrN(n uint) Com {
-	addr, ok := p.ComAddrN(n)
+func (_ System[Orig, Com, Obj]) MustComAddrN(n uint) Com {
+	addr, ok := System[Orig, Com, Obj]{}.ComAddrN(n)
 	if !ok {
 		panic("overflow of common address")
 	}
@@ -97,7 +98,7 @@ func (addr ComAddr16) LowOctet() uint8 { return addr[0] }
 func (addr ComAddr16) HighOctet() uint8 { return addr[1] }
 
 type (
-	// ObjAddr can be instantiated with ObjAddrN of Params.
+	// ObjAddr can be instantiated with ObjAddrN of System.
 	//
 	// “The information object address is used as a destination address in
 	// control direction and a source address in the monitor direction.”
@@ -118,7 +119,7 @@ type (
 
 // ObjAddrN returns either a numeric match, or false when n overflows the
 // address width of Obj.
-func (p Params[Orig, Com, Obj]) ObjAddrN(n uint) (Obj, bool) {
+func (_ System[Orig, Com, Obj]) ObjAddrN(n uint) (Obj, bool) {
 	var addr Obj
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
@@ -128,8 +129,8 @@ func (p Params[Orig, Com, Obj]) ObjAddrN(n uint) (Obj, bool) {
 }
 
 // MustObjAddrN is like ObjAddrN, yet it panics on overflow.
-func (p Params[Orig, Com, Obj]) MustObjAddrN(n uint) Obj {
-	addr, ok := p.ObjAddrN(n)
+func (_ System[Orig, Com, Obj]) MustObjAddrN(n uint) Obj {
+	addr, ok := System[Orig, Com, Obj]{}.ObjAddrN(n)
 	if !ok {
 		panic("overflow of information-object")
 	}

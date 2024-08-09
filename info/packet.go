@@ -23,7 +23,7 @@ func (e Enc) AddrSeq() bool { return e&0x80 != 0 }
 var ErrAddrSeq = errors.New("part5: address sequence [VQL SQ] overflows the addres space for information objects")
 
 type (
-	// OrigAddr can be instantiated with OrigAddrN from Params.
+	// OrigAddr can be instantiated with OrigAddrN from System.
 	// The originator address defaults to zero.
 	// Value 1..255 addresses a specific part of the system.
 	OrigAddr interface {
@@ -40,7 +40,7 @@ type (
 
 // OrigAddrN returns either a numeric match, or false when n overflows the
 // address width of Orig. Note that any non-zero value for OrigAddr0 gets false.
-func (p Params[Orig, Com, Obj]) OrigAddrN(n uint) (Orig, bool) {
+func (_ System[Orig, Com, Obj]) OrigAddrN(n uint) (Orig, bool) {
 	var addr Orig
 	for i := 0; i < len(addr); i++ {
 		addr[i] = uint8(n)
@@ -50,8 +50,8 @@ func (p Params[Orig, Com, Obj]) OrigAddrN(n uint) (Orig, bool) {
 }
 
 // MustOrigAddrN is like OrigAddrN, yet it panics on overflow.
-func (p Params[Orig, Com, Obj]) MustOrigAddrN(n uint) Orig {
-	addr, ok := p.OrigAddrN(n)
+func (_ System[Orig, Com, Obj]) MustOrigAddrN(n uint) Orig {
+	addr, ok := System[Orig, Com, Obj]{}.OrigAddrN(n)
 	if !ok {
 		panic("overflow of originator address")
 	}
@@ -68,8 +68,8 @@ func (addr OrigAddr8) N() uint { return uint(addr[0]) }
 // Service Data Unit. Information objects are encoded conform the TypeID and
 // and Enc values. Encoding is likely to contain one or more Object addresses.
 type DataUnit[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct {
-	// configuration inherited from generics
-	Params[Orig, Com, Obj]
+	// configuration inheritance with generics
+	System[Orig, Com, Obj]
 
 	Type  TypeID // payload class
 	Enc          // payload structure
@@ -84,7 +84,7 @@ type DataUnit[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct {
 }
 
 // NewDataUnit returns a new ASDU.
-func (p Params[Orig, Com, Obj]) NewDataUnit() DataUnit[Orig, Com, Obj] {
+func (_ System[Orig, Com, Obj]) NewDataUnit() DataUnit[Orig, Com, Obj] {
 	var u DataUnit[Orig, Com, Obj]
 	u.Info = u.bootstrap[:0]
 	return u

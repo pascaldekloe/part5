@@ -9,7 +9,7 @@ import (
 
 // Exchange supplies communication with another station.
 type Exchange[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	info.Params[Orig, Com, Obj]
+	info.System[Orig, Com, Obj]
 
 	Orig Orig // originator address, if any
 	Com  Com  // common adress
@@ -17,7 +17,7 @@ type Exchange[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
 
 // NewDataUnit returns a new ASDU without payload; .Info is empty.
 func (x Exchange[Orig, Com, Obj]) NewDataUnit(t info.TypeID, e info.Enc, c info.Cause) info.DataUnit[Orig, Com, Obj] {
-	u := x.Params.NewDataUnit()
+	u := x.System.NewDataUnit()
 	u.Type = t
 	u.Enc = e
 	u.Cause = c

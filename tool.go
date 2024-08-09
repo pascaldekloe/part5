@@ -26,7 +26,7 @@ type MonitorDelegate[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] str
 }
 
 // NewMonitorDelegate returns a new delegate with each sub-interface nil.
-func NewMonitorDelegate[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](_ info.Params[Orig, Com, Obj]) *MonitorDelegate[Orig, Com, Obj] {
+func NewMonitorDelegate[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](_ info.System[Orig, Com, Obj]) *MonitorDelegate[Orig, Com, Obj] {
 	return NewMonitorDelegateDefault[Orig, Com, Obj](nil)
 }
 
@@ -254,7 +254,7 @@ type logger[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
 
 // NewLogger returns a Monitor which writes on each invocation as a text line in
 // a human readable formon.
-func NewLogger[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](_ info.Params[Orig, Com, Obj], w io.Writer) Monitor[Orig, Com, Obj] {
+func NewLogger[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](_ info.System[Orig, Com, Obj], w io.Writer) Monitor[Orig, Com, Obj] {
 	return logger[Orig, Com, Obj]{w}
 }
 

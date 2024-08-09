@@ -9,7 +9,7 @@ import (
 
 // Be resillient against malicious and faulty ASDU.
 func FuzzMonitorWideASDU(f *testing.F) {
-	var sys info.Params[info.OrigAddr8, info.ComAddr16, info.ObjAddr24]
+	var sys info.System[info.OrigAddr8, info.ComAddr16, info.ObjAddr24]
 
 	f.Fuzz(func(t *testing.T, asdu []byte) {
 		var buf bytes.Buffer

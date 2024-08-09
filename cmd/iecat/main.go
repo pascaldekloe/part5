@@ -130,45 +130,43 @@ func mustPacketStream() packetStream {
 		CmdLog.Fatal("width of information-object address is neither 1 nor 2 nor 3 octets")
 
 	case *cOTAddrFlag == 1 && *comAddrFlag == 1 && *objAddrFlag == 1:
-		return system[info.OrigAddr0, info.ComAddr8, info.ObjAddr8]{}
+		return setup[info.OrigAddr0, info.ComAddr8, info.ObjAddr8]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 1 && *objAddrFlag == 2:
-		return system[info.OrigAddr0, info.ComAddr8, info.ObjAddr16]{}
+		return setup[info.OrigAddr0, info.ComAddr8, info.ObjAddr16]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 1 && *objAddrFlag == 3:
-		return system[info.OrigAddr0, info.ComAddr8, info.ObjAddr24]{}
+		return setup[info.OrigAddr0, info.ComAddr8, info.ObjAddr24]{}
 
 	case *cOTAddrFlag == 1 && *comAddrFlag == 2 && *objAddrFlag == 1:
-		return system[info.OrigAddr0, info.ComAddr16, info.ObjAddr8]{}
+		return setup[info.OrigAddr0, info.ComAddr16, info.ObjAddr8]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 2 && *objAddrFlag == 2:
-		return system[info.OrigAddr0, info.ComAddr16, info.ObjAddr16]{}
+		return setup[info.OrigAddr0, info.ComAddr16, info.ObjAddr16]{}
 	case *cOTAddrFlag == 1 && *comAddrFlag == 2 && *objAddrFlag == 3:
-		return system[info.OrigAddr0, info.ComAddr16, info.ObjAddr24]{}
+		return setup[info.OrigAddr0, info.ComAddr16, info.ObjAddr24]{}
 
 	case *cOTAddrFlag == 2 && *comAddrFlag == 1 && *objAddrFlag == 1:
-		return system[info.OrigAddr8, info.ComAddr8, info.ObjAddr8]{}
+		return setup[info.OrigAddr8, info.ComAddr8, info.ObjAddr8]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 1 && *objAddrFlag == 2:
-		return system[info.OrigAddr8, info.ComAddr8, info.ObjAddr16]{}
+		return setup[info.OrigAddr8, info.ComAddr8, info.ObjAddr16]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 1 && *objAddrFlag == 3:
-		return system[info.OrigAddr8, info.ComAddr8, info.ObjAddr24]{}
+		return setup[info.OrigAddr8, info.ComAddr8, info.ObjAddr24]{}
 
 	case *cOTAddrFlag == 2 && *comAddrFlag == 2 && *objAddrFlag == 1:
-		return system[info.OrigAddr8, info.ComAddr16, info.ObjAddr8]{}
+		return setup[info.OrigAddr8, info.ComAddr16, info.ObjAddr8]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 2 && *objAddrFlag == 2:
-		return system[info.OrigAddr8, info.ComAddr16, info.ObjAddr16]{}
+		return setup[info.OrigAddr8, info.ComAddr16, info.ObjAddr16]{}
 	case *cOTAddrFlag == 2 && *comAddrFlag == 2 && *objAddrFlag == 3:
-		return system[info.OrigAddr8, info.ComAddr16, info.ObjAddr24]{}
+		return setup[info.OrigAddr8, info.ComAddr16, info.ObjAddr24]{}
 	}
 
 	panic("unreachable")
 }
 
-// System has a network setup.
-type system[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	info.Params[Orig, Com, Obj]
-}
+type setup[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct { }
 
 // StreamInbound implements the packetStream interface.
-func (sys system[Orig, Com, Obj]) streamInbound(client *session.Station) {
-	mon := part5.NewLogger(sys.Params, os.Stdout)
+func (_ setup[Orig, Com, Obj]) streamInbound(client *session.Station) {
+	var sys info.System[Orig, Com, Obj]
+	mon := part5.NewLogger(sys, os.Stdout)
 
 	u := sys.NewDataUnit() // reusable
 	var n uint64
@@ -205,7 +203,9 @@ func (sys system[Orig, Com, Obj]) streamInbound(client *session.Station) {
 }
 
 // StreamOutbound implements the packetStream interface.
-func (sys system[Orig, Com, Obj]) streamOutbound(client *session.Station) {
+func (_ setup[Orig, Com, Obj]) streamOutbound(client *session.Station) {
+	var sys info.System[Orig, Com, Obj]
+
 	client.Target <- session.Up
 
 	if *inroFlag != "<none>" {

@@ -505,7 +505,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			}
 			for _, b := range u.Info[len(addr):] {
 				mon.SinglePt(u, addr, info.SinglePtQual(b))
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+1) {
@@ -564,7 +564,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 					),
 					info.Qual(u.Info[i+4]),
 				)
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
@@ -591,7 +591,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			}
 			for _, b := range u.Info[len(addr):] {
 				mon.DoublePt(u, addr, info.DoublePtQual(b))
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+1) {
@@ -643,7 +643,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			}
 			for i := len(addr); i+2 <= len(u.Info); i += 2 {
 				mon.Step(u, addr, info.StepQual(u.Info[i:i+2]))
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+2) {
@@ -695,7 +695,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			}
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
 				mon.Bits(u, addr, info.BitsQual(u.Info[i:i+5]))
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
@@ -747,7 +747,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			}
 			for i := len(addr); i+1 < len(u.Info); i += 2 {
 				mon.NormUnqual(u, addr, info.Norm(u.Info[i:i+2]))
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+2) {
@@ -769,7 +769,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			}
 			for i := len(addr); i+3 <= len(u.Info); i += 3 {
 				mon.Norm(u, addr, info.NormQual(u.Info[i:i+3]))
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+3) {
@@ -828,7 +828,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 					),
 					info.Qual(u.Info[i+2]),
 				)
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+3) {
@@ -903,7 +903,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 					),
 					info.Qual(u.Info[i+4]),
 				)
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
@@ -970,7 +970,7 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 			}
 			for i := len(addr); i+5 <= len(u.Info); i += 5 {
 				mon.Totals(u, addr, info.Counter(u.Info[i:i+5]))
-				addr, _ = u.Params.ObjAddrN(addr.N() + 1)
+				addr, _ = u.System.ObjAddrN(addr.N() + 1)
 			}
 		} else {
 			if len(u.Info) != u.Enc.Count()*(len(addr)+5) {
@@ -1117,7 +1117,7 @@ func addrSeqStart[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](u *inf
 
 	// overflow check
 	lastN := addr.N() + uint(u.Enc.Count()) - 1
-	if _, ok := u.Params.ObjAddrN(lastN); !ok {
+	if _, ok := u.System.ObjAddrN(lastN); !ok {
 		return addr, info.ErrAddrSeq
 	}
 	return addr, nil
