@@ -1044,68 +1044,56 @@ func MonitorDataUnit[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](mon
 		}
 
 	case info.M_EP_TB_1: // start of protection equipment with 3-octet time tag
-		if u.Enc.AddrSeq() {
-			return errors.New("part5: ASDU address sequence with M_EP_TB_1 not allowed")
-		} else {
-			if len(u.Info) != u.Enc.Count()*(len(addr)+7) {
-				return errInfoSize
-			}
-			for i := 0; i+len(addr)+7 <= len(u.Info); i += len(addr) + 7 {
-				mon.ProtectStartAtMinute(u,
-					Obj(u.Info[i:i+len(addr)]),
-					info.ProtectStartEvent(u.Info[i+len(addr):i+len(addr)+4]),
-					info.CP24Time2a(u.Info[i+len(addr)+4:i+len(addr)+7]),
-				)
-			}
+		if u.Enc != 1 { // fixed
+			return errors.New("part5: variable structure qualifier of M_EP_TB_1 not 1")
 		}
+		if len(u.Info) != len(addr)+7 {
+			return errInfoSize
+		}
+		mon.ProtectStartAtMinute(u,
+			Obj(u.Info[:len(addr)]),
+			info.ProtectStartEvent(u.Info[len(addr):len(addr)+4]),
+			info.CP24Time2a(u.Info[len(addr)+4:len(addr)+7]),
+		)
 
 	case info.M_EP_TE_1: // start of protection equipment with 7-octet time tag
-		if u.Enc.AddrSeq() {
-			return errors.New("part5: ASDU address sequence with M_EP_TE_1 not allowed")
-		} else {
-			if len(u.Info) != u.Enc.Count()*(len(addr)+11) {
-				return errInfoSize
-			}
-			for i := 0; i+len(addr)+11 <= len(u.Info); i += len(addr) + 11 {
-				mon.ProtectStartAtMoment(u,
-					Obj(u.Info[i:i+len(addr)]),
-					info.ProtectStartEvent(u.Info[i+len(addr):i+len(addr)+4]),
-					info.CP56Time2a(u.Info[i+len(addr)+4:i+len(addr)+11]),
-				)
-			}
+		if u.Enc != 1 { // fixed
+			return errors.New("part5: variable structure qualifier of M_EP_TE_1 not 1")
 		}
+		if len(u.Info) != len(addr)+11 {
+			return errInfoSize
+		}
+		mon.ProtectStartAtMoment(u,
+			Obj(u.Info[:len(addr)]),
+			info.ProtectStartEvent(u.Info[len(addr):len(addr)+4]),
+			info.CP56Time2a(u.Info[len(addr)+4:len(addr)+11]),
+		)
 
 	case info.M_EP_TC_1: // output of protection equipment with 3-octet time tag
-		if u.Enc.AddrSeq() {
-			return errors.New("part5: ASDU address sequence with M_EP_TC_1 not allowed")
-		} else {
-			if len(u.Info) != u.Enc.Count()*(len(addr)+7) {
-				return errInfoSize
-			}
-			for i := 0; i+len(addr)+7 <= len(u.Info); i += len(addr) + 7 {
-				mon.ProtectOutAtMinute(u,
-					Obj(u.Info[i:i+len(addr)]),
-					info.ProtectOutEvent(u.Info[i+len(addr):i+len(addr)+4]),
-					info.CP24Time2a(u.Info[i+len(addr)+4:i+len(addr)+7]),
-				)
-			}
+		if u.Enc != 1 { // fixed
+			return errors.New("part5: variable structure qualifier of M_EP_TC_1 not 1")
 		}
+		if len(u.Info) != len(addr)+7 {
+			return errInfoSize
+		}
+		mon.ProtectOutAtMinute(u,
+			Obj(u.Info[:len(addr)]),
+			info.ProtectOutEvent(u.Info[len(addr):len(addr)+4]),
+			info.CP24Time2a(u.Info[len(addr)+4:len(addr)+7]),
+		)
 
 	case info.M_EP_TF_1: // output of protection equipment with 7-octet time tag
-		if u.Enc.AddrSeq() {
-			return errors.New("part5: ASDU address sequence with M_EP_TF_1 not allowed")
-		} else {
-			if len(u.Info) != u.Enc.Count()*(len(addr)+11) {
-				return errInfoSize
-			}
-			for i := 0; i+len(addr)+11 <= len(u.Info); i += len(addr) + 11 {
-				mon.ProtectOutAtMoment(u,
-					Obj(u.Info[i:i+len(addr)]),
-					info.ProtectOutEvent(u.Info[i+len(addr):i+len(addr)+4]),
-					info.CP56Time2a(u.Info[i+len(addr)+4:i+len(addr)+11]),
-				)
-			}
+		if u.Enc != 1 { // fixed
+			return errors.New("part5: variable structure qualifier of M_EP_TF_1 not 1")
 		}
+		if len(u.Info) != len(addr)+11 {
+			return errInfoSize
+		}
+		mon.ProtectOutAtMoment(u,
+			Obj(u.Info[:len(addr)]),
+			info.ProtectOutEvent(u.Info[len(addr):len(addr)+4]),
+			info.CP56Time2a(u.Info[len(addr)+4:len(addr)+11]),
+		)
 
 	case info.M_EI_NA_1: // end of initialization
 		if len(u.Info) != len(addr)+1 {
