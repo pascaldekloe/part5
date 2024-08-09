@@ -9,8 +9,10 @@ import (
 	"github.com/pascaldekloe/part5/info"
 )
 
-// A Monitor consumes information in monitor direction as listed in table 8
-// from companion standard 101.
+// A Monitor consumes information in monitor direction. No errors; processing is
+// on best-effort basis by design. “ASDUs with undefined values of INFORMATION
+// OBJECT ADDRESS are discarded by controlling stations.” according to chapter
+// 7.2.5 from companion standard 101.
 type Monitor[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] interface {
 	SinglePtMonitor[Orig, Com, Obj]
 	SinglePtChangeMonitor[Orig, Com, Obj]
