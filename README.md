@@ -19,11 +19,7 @@ This is free and unencumbered software released into the
 
 At its essence, part 5 formalizes reliable means to exchange measurements and
 commands. Commands are used by controlling stations to cause a change of state
-in operational equipment. Controlled stations may then optionally either
-[confirm](http://godoc.org/github.com/pascaldekloe/part5/info#Actcon) or
-or [reject](http://godoc.org/github.com/pascaldekloe/part5/info#NegFlag) the
-execution. Controlled stations can also optionally indicate completion with a
-[terminate](http://godoc.org/github.com/pascaldekloe/part5/info#Actterm).
+in operational equipment.
 
 Controlling stations are called *primary* and the controlled stations are called
 *secondary*. With *unbalanced* transmission one station is primary and the other
@@ -32,20 +28,12 @@ both act as primary and as secondory, a.k.a. peer to peer.
 
 Every *information object address* resides in a *common address*. Primaries may
 acquire the information present in a common address with an
-[interrogation command](http://godoc.org/github.com/pascaldekloe/part5/info#C_IC_NA_1).
-E.g., run `iecat -host station1.example.com -inro 42` to aquire a listing of
+[interrogation command](http://godoc.org/github.com/pascaldekloe/part5#Command.Inro).
+I.e., run `iecat -host station1.example.com -inro 42` to aquire a listing of
 common address 42 on the terminal.
 
 
-## To Do
-
-The following is not implement yet.
-
-* file transfer, type identifier F_*
-* parameter of measured value, type identifeir P_*
-
-
-## iecat
+## iecat(1)
 
 Run `go install github.com/pascaldekloe/part5/cmd/iecat@latest` to build the
 command into the bin directory of `go env GOPATH`.
