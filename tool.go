@@ -260,17 +260,17 @@ func NewLogger[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](_ info.Pa
 
 func (l logger[Orig, Com, Obj]) SinglePt(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Pt(), p.Qual())
 }
 
 func (l logger[Orig, Com, Obj]) SinglePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Pt(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) SinglePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.SinglePtQual, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Pt(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) SinglePtChangePack(u info.DataUnit[Orig, Com, Obj], addr Obj, pack info.SinglePtChangePack, q info.Qual) {
@@ -280,32 +280,32 @@ func (l logger[Orig, Com, Obj]) SinglePtChangePack(u info.DataUnit[Orig, Com, Ob
 
 func (l logger[Orig, Com, Obj]) DoublePt(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Pt(), p.Qual())
 }
 
 func (l logger[Orig, Com, Obj]) DoublePtAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Pt(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) DoublePtAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.DoublePtQual, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Pt(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) Step(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual())
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Step(), p.Qual())
 }
 
 func (l logger[Orig, Com, Obj]) StepAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, tag info.CP24Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Step(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) StepAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, p info.StepQual, tag info.CP56Time2a) {
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Value(), p.Qual(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, p.Step(), p.Qual(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) Bits(u info.DataUnit[Orig, Com, Obj], addr Obj, b info.BitsQual) {
@@ -391,13 +391,13 @@ func (l logger[Orig, Com, Obj]) TotalsAtMoment(u info.DataUnit[Orig, Com, Obj], 
 func (l logger[Orig, Com, Obj]) ProtectAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, e info.ProtectEvent, tag info.CP24Time2a) {
 	duration, _ := e.Elapsed()
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, e.State().Value(), e.Qual(), duration.Millis(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, e.State().Pt(), e.Qual(), duration.Millis(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) ProtectAtMoment(u info.DataUnit[Orig, Com, Obj], addr Obj, e info.ProtectEvent, tag info.CP56Time2a) {
 	duration, _ := e.Elapsed()
 	fmt.Fprintf(l.W, "%s %s %x %#x/%#x %s %s %dms %s\n",
-		u.Type, u.Cause, u.Orig, u.Addr, addr, e.State().Value(), e.Qual(), duration.Millis(), tag)
+		u.Type, u.Cause, u.Orig, u.Addr, addr, e.State().Pt(), e.Qual(), duration.Millis(), tag)
 }
 
 func (l logger[Orig, Com, Obj]) ProtectStartAtMinute(u info.DataUnit[Orig, Com, Obj], addr Obj, e info.ProtectStartEvent, tag info.CP24Time2a) {

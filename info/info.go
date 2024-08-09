@@ -197,8 +197,8 @@ func NewSinglePtQual(pt SinglePt, flags Qual) SinglePtQual {
 	return SinglePtQual(pt&1) | SinglePtQual(flags&^1)
 }
 
-// Value loses the quality descriptor. The return is either Off or On.
-func (pt SinglePtQual) Value() SinglePt { return SinglePt(pt & 1) }
+// Pt loses the quality descriptor. The return is either Off or On.
+func (pt SinglePtQual) Pt() SinglePt { return SinglePt(pt & 1) }
 
 // Qual returns the quality descriptor flags. Overflow is always zero and
 // ElapsedTimeInvalid does not apply.
@@ -207,9 +207,9 @@ func (pt SinglePtQual) Qual() Qual { return Qual(pt & 0xfe) }
 // String returns the label, followed by a semicolon with the flags, if any.
 func (pt SinglePtQual) String() string {
 	if pt.Qual() == OK {
-		return pt.Value().String()
+		return pt.Pt().String()
 	}
-	return pt.Value().String() + ";" + pt.Qual().String()
+	return pt.Pt().String() + ";" + pt.Qual().String()
 }
 
 // DoublePt is double-point information (IEV 371-02-08), which should be either
@@ -252,10 +252,10 @@ func NewDoublePtQual(pt DoublePt, flags Qual) DoublePtQual {
 	return DoublePtQual(pt&3) | DoublePtQual(flags&^3)
 }
 
-// Value loses the quality descriptor. The return is either
+// Pt loses the quality descriptor. The return is either
 // IndeterminateOrIntermediate, DeterminatedOff, DeterminatedOn or
 // Indeterminate.
-func (pt DoublePtQual) Value() DoublePt { return DoublePt(pt & 3) }
+func (pt DoublePtQual) Pt() DoublePt { return DoublePt(pt & 3) }
 
 // Qual returns the quality descriptor. Overflow is always zero and
 // ElapsedTimeInvalid does not apply.
@@ -264,9 +264,9 @@ func (pt DoublePtQual) Qual() Qual { return Qual(pt & 0xfc) }
 // String returns the label, followed by a semicolon with the flags, if any.
 func (pt DoublePtQual) String() string {
 	if pt.Qual() == OK {
-		return pt.Value().String()
+		return pt.Pt().String()
 	}
-	return pt.Value().String() + ";" + pt.Qual().String()
+	return pt.Pt().String() + ";" + pt.Qual().String()
 }
 
 // Regul is a regulating-step command (IEV 371-03-13) state, which should be
@@ -438,8 +438,8 @@ func NewTransientStepQual(value int, flags Qual) StepQual {
 	return StepQual{uint8(value | 0x80), uint8(flags)}
 }
 
-// Value loses the quality descriptor.
-func (p StepQual) Value() Step { return Step(p[0]) }
+// Setp loses the quality descriptor.
+func (p StepQual) Step() Step { return Step(p[0]) }
 
 // Qual returns the quality descriptor. ElapsedTimeInvalid does not apply.
 func (p StepQual) Qual() Qual { return Qual(p[1]) }

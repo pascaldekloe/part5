@@ -40,10 +40,10 @@ func TestStringer(t *testing.T) {
 // TestStep tests the full value range.
 func TestStep(t *testing.T) {
 	for value := -64; value <= 63; value++ {
-		if v, tr := NewStepQual(value, NotTopical).Value().Pos(); v != value || tr {
+		if v, tr := NewStepQual(value, NotTopical).Step().Pos(); v != value || tr {
 			t.Errorf("got position and tranient (%d, %t), want (%d, false)", v, tr, value)
 		}
-		if v, tr := NewTransientStepQual(value, OK).Value().Pos(); v != value || !tr {
+		if v, tr := NewTransientStepQual(value, OK).Step().Pos(); v != value || !tr {
 			t.Errorf("got position and tranient (%d, %t), want (%d, true)", v, tr, value)
 		}
 	}
