@@ -473,22 +473,22 @@ const (
 	Init                  // initialized
 	Req                   // request or requested
 	Act                   // activation
-	ActCon                // activation confirmation
+	Actcon                // activation confirmation
 	Deact                 // deactivation
-	DeactCon              // deactivation confirmation
+	Deactcon              // deactivation confirmation
 
-	ActTerm // activation termination
-	RetRem  // return information caused by a remote command
-	RetLoc  // return information caused by a local command
+	Actterm // activation termination
+	Retrem  // return information caused by a remote command
+	Retloc  // return information caused by a local command
 	File    // file transfer
 	Auth    // authentication
-	SesKey  // maintenance of authentication session key
-	UsrKey  // maintenance of user role and update key
+	Seskey  // maintenance of authentication session key
+	Usrkey  // maintenance of user role and update key
 	_       // 17: reserved for further compatible definitions
 	_       // 18: reserved for further compatible definitions
 	_       // 19: reserved for further compatible definitions
 
-	InroGen // interrogated by station interrogation
+	Inrogen // interrogated by station interrogation
 	Inro1   // interrogated by group 1 interrogation
 	Inro2   // interrogated by group 2 interrogation
 	Inro3   // interrogated by group 3 interrogation
@@ -506,12 +506,12 @@ const (
 	Inro14   // interrogated by group 14 interrogation
 	Inro15   // interrogated by group 15 interrogation
 	Inro16   // interrogated by group 16 interrogation
-	ReqCoGen // requested by general counter request
-	ReqCo1   // requested by group 1 counter request
-	ReqCo2   // requested by group 2 counter request
-	ReqCo3   // requested by group 3 counter request
+	Reqcogen // requested by general counter request
+	Reqco1   // requested by group 1 counter request
+	Reqco2   // requested by group 2 counter request
+	Reqco3   // requested by group 3 counter request
 
-	ReqCo4   // requested by group 4 counter request
+	Reqco4   // requested by group 4 counter request
 	_        // 41: reserved for further compatible definitions
 	_        // 42: reserved for further compatible definitions
 	UnkType  // unknown type identification
