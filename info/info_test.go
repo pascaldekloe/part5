@@ -11,9 +11,17 @@ func TestStringer(t *testing.T) {
 		subject fmt.Stringer
 		want    string
 	}{
+		{Qual(0), "[]"},
+		{Qual(Overflow), "OV"},
+		{Qual(0x02), "[2]"},
+		{Qual(0x06), "[2],[3]"},
+		{Qual(Blocked | NotTopical), "BL,NT"},
+		{Qual(ElapsedTimeInvalid | Substituted | Invalid), "EI,SB,IV"},
+
 		{NewSinglePtQual(On, 0), "On"},
 		{NewSinglePtQual(Off, 2), "Off;[2]"},
 		{NewSinglePtQual(Off, 4|8), "Off;[3],EI"},
+
 		{NewDoublePtQual(IndeterminateOrIntermediate, 0), "IndeterminateOrIntermediate"},
 		{NewDoublePtQual(DeterminatedOn, OK), "DeterminatedOn"},
 		{NewDoublePtQual(DeterminatedOff, Substituted), "DeterminatedOff;SB"},
@@ -23,29 +31,9 @@ func TestStringer(t *testing.T) {
 	for _, test := range tests {
 		got := test.subject.String()
 		if got != test.want {
-			t.Errorf("got %q, want %s", got, test.want)
+			t.Errorf("%T %#v got %q, want %s",
+				test.subject, test.subject, got, test.want)
 		}
-	}
-}
-
-func TestQualString(t *testing.T) {
-	if s := Qual(0).String(); s != "[]" {
-		t.Errorf("0 got %q, want []", s)
-	}
-	if s := Qual(Overflow).String(); s != "OV" {
-		t.Errorf("Overflow got %q, want OV", s)
-	}
-	if s := Qual(0x02).String(); s != "[2]" {
-		t.Errorf("0x02 got %q, want [2]", s)
-	}
-	if s := Qual(0x06).String(); s != "[2],[3]" {
-		t.Errorf("0x06 got %q, want [2],[3]", s)
-	}
-	if s := Qual(Blocked | NotTopical).String(); s != "BL,NT" {
-		t.Errorf("Blocked|NotTopical got %q, want BL,NT", s)
-	}
-	if s := Qual(ElapsedTimeInvalid | Substituted | Invalid).String(); s != "EI,SB,IV" {
-		t.Errorf("ElapsedTimeInvalid|Substituted|Invalid got %q, want EI,SB,IV", s)
 	}
 }
 
