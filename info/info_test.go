@@ -1,9 +1,32 @@
 package info
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
+
+func TestStringer(t *testing.T) {
+	tests := []struct {
+		subject fmt.Stringer
+		want    string
+	}{
+		{NewSinglePtQual(On, 0), "On"},
+		{NewSinglePtQual(Off, 2), "Off;[2]"},
+		{NewSinglePtQual(Off, 4|8), "Off;[3],EI"},
+		{NewDoublePtQual(IndeterminateOrIntermediate, 0), "IndeterminateOrIntermediate"},
+		{NewDoublePtQual(DeterminatedOn, OK), "DeterminatedOn"},
+		{NewDoublePtQual(DeterminatedOff, Substituted), "DeterminatedOff;SB"},
+		{NewDoublePtQual(Indeterminate, Invalid|Blocked), "Indeterminate;BL,IV"},
+	}
+
+	for _, test := range tests {
+		got := test.subject.String()
+		if got != test.want {
+			t.Errorf("got %q, want %s", got, test.want)
+		}
+	}
+}
 
 func TestQualString(t *testing.T) {
 	if s := Qual(0).String(); s != "[]" {
