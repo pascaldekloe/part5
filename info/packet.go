@@ -1,10 +1,8 @@
 package info
 
 import (
-	"encoding/binary"
 	"errors"
 	"io"
-	"math"
 )
 
 // Enc is the variable-structure qualifier (VQL), which defines the payload
@@ -151,124 +149,4 @@ func (u DataUnit[Orig, Com, Obj]) Mirrors(o DataUnit[Orig, Com, Obj]) bool {
 		u.Orig == o.Orig &&
 		u.Addr == o.Addr &&
 		string(u.Info) == string(o.Info)
-}
-
-func (u *DataUnit[Orig, Com, Obj]) addAddr(addr Obj) {
-	for i := 0; i < len(addr); i++ {
-		u.Info = append(u.Info, addr[i])
-	}
-}
-
-// SingleCmd returns single command C_SC_NA_1 Act
-// conform companion standard 101, subsection 7.3.2.1.
-func (p Params[Orig, Com, Obj]) SingleCmd(addr Obj, pt SinglePt, q CmdQual) DataUnit[Orig, Com, Obj] {
-	u := p.cmd(addr, byte(pt&1)|byte(q&^3))
-	u.Type = C_SC_NA_1
-	return u
-}
-
-// DoubleCmd returns double command C_DC_NA_1 Act
-// conform companion standard 101, subsection 7.3.2.2.
-func (p Params[Orig, Com, Obj]) DoubleCmd(addr Obj, pt DoublePt, q CmdQual) DataUnit[Orig, Com, Obj] {
-	u := p.cmd(addr, byte(pt&3)|byte(q&^3))
-	u.Type = C_DC_NA_1
-	return u
-}
-
-// RegulCmd returns regulating-step command C_RC_NA_1 Act
-// conform companion standard 101, subsection 7.3.2.3.
-// Regul must be either Lower or Higher. The other two states
-// (0 and 3) are not permitted.
-func (p Params[Orig, Com, Obj]) RegulCmd(addr Obj, r Regul, q CmdQual) DataUnit[Orig, Com, Obj] {
-	u := p.cmd(addr, byte(r&3)|byte(q&^3))
-	u.Type = C_RC_NA_1
-	return u
-}
-
-func (p Params[Orig, Com, Obj]) cmd(addr Obj, c byte) DataUnit[Orig, Com, Obj] {
-	u := p.NewDataUnit()
-	u.Enc = 1     // fixed
-	u.Cause = Act // could Deact
-	u.addAddr(addr)
-	u.Info = append(u.Info, c)
-	return u
-}
-
-// NormSetPt returns set-point command C_SE_NA_1 Act
-// conform companion standard 101, subsection 7.3.2.4.
-func (p Params[Orig, Com, Obj]) NormSetPt(addr Obj, value Norm, q SetPtQual) DataUnit[Orig, Com, Obj] {
-	u := p.NewDataUnit()
-	u.Type = C_SE_NA_1
-	u.Enc = 1     // fixed
-	u.Cause = Act // could Deact
-	u.addAddr(addr)
-	u.Info = append(u.Info, value[0], value[1])
-	u.Info = append(u.Info, byte(q))
-	return u
-}
-
-// ScaledSetPt returns set-point command C_SE_NB_1 Act
-// conform companion standard 101, subsection 7.3.2.5.
-func (p Params[Orig, Com, Obj]) ScaledSetPt(addr Obj, value int16, q SetPtQual) DataUnit[Orig, Com, Obj] {
-	u := p.NewDataUnit()
-	u.Type = C_SE_NB_1
-	u.Enc = 1     // fixed
-	u.Cause = Act // could Deact
-	u.addAddr(addr)
-	u.Info = append(u.Info, byte(value), byte(value>>8))
-	u.Info = append(u.Info, byte(q))
-	return u
-}
-
-// FloatSetPt returns set-point command C_SE_NC_1 Act
-// conform companion standard 101, subsection 7.3.2.6.
-func (p Params[Orig, Com, Obj]) FloatSetPt(addr Obj, value float32, q SetPtQual) DataUnit[Orig, Com, Obj] {
-	u := p.NewDataUnit()
-	u.Type = C_SE_NC_1
-	u.Enc = 1     // fixed
-	u.Cause = Act // could Deact
-	u.addAddr(addr)
-	u.Info = binary.LittleEndian.AppendUint32(u.Info,
-		math.Float32bits(value))
-	u.Info = append(u.Info, byte(q))
-	return u
-}
-
-// Inro returns interrogation command C_IC_NA_1 Act
-// conform companion standard 101, subsection 7.3.4.1.
-func (p Params[Orig, Com, Obj]) Inro() DataUnit[Orig, Com, Obj] {
-	return p.InroGroup(0)
-}
-
-// InroGroup returns interrogation command C_IC_NA_1
-// Act conform companion standard 101, subsection 7.3.4.1.
-// Group can be disabled with 0 for (global) station interrogation.
-// Otherwise, use a group identifier in range [1..16].
-func (p Params[Orig, Com, Obj]) InroGroup(group uint) DataUnit[Orig, Com, Obj] {
-	u := p.NewDataUnit()
-	u.Type = C_IC_NA_1
-	u.Enc = 1     // fixed
-	u.Cause = Act // could Deact
-	var addr Obj  // fixed to zero
-	u.addAddr(addr)
-
-	// qualifier of interrogation is described in
-	// companion standard 101, section 7.2.6.22
-	u.Info = append(u.Info, byte(group+20))
-	return u
-}
-
-// TestCmd returns test command C_TS_NA_1 Act
-// conform companion standard 101, subsection 7.3.4.5.
-func (p Params[Orig, Com, Obj]) TestCmd() DataUnit[Orig, Com, Obj] {
-	u := p.NewDataUnit()
-	u.Type = C_TS_NA_1
-	u.Enc = 1     // fixed
-	u.Cause = Act // fixed
-	var addr Obj  // fixed to zero
-	u.addAddr(addr)
-	// fixed test bit pattern defined in companion
-	// standard 101, subsection 7.2.6.14
-	u.Info = append(u.Info, 0b1010_1010, 0b0101_0101)
-	return u
 }

@@ -133,18 +133,3 @@ func TestDataUnitEncoding(t *testing.T) {
 		}
 	}
 }
-
-func TestDataUnitMirrors(t *testing.T) {
-	var sys Params[OrigAddr0, ComAddr8, ObjAddr24]
-	addr := sys.MustObjAddrN(42)
-	req := sys.SingleCmd(addr, On, 0)
-	req.Cause |= TestFlag
-	res := sys.SingleCmd(addr, On, 0)
-	if res.Mirrors(req) {
-		t.Error("non-test response matches test request")
-	}
-	res.Cause |= TestFlag
-	if !res.Mirrors(req) {
-		t.Error("test response does not match test request")
-	}
-}

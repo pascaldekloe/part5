@@ -210,6 +210,7 @@ func (sys system[Orig, Com, Obj]) streamOutbound(client *session.Station) {
 
 	if *inroFlag != "<none>" {
 		// send interrogation activation
+		// TODO: allow #<n> suffix for an origating address
 		addrN, err := strconv.ParseUint(*inroFlag, 0, 32)
 		if err != nil {
 			CmdLog.Fatal("illegal interrogation address: ", err)
@@ -220,9 +221,9 @@ func (sys system[Orig, Com, Obj]) streamOutbound(client *session.Station) {
 				addrN, len(addr))
 		}
 
-		u := sys.Inro()
-		u.Addr = addr
-		client.Class2 <- session.NewOutbound(u.Append(nil))
+		cmd := part5.Exchange[Orig, Com, Obj]{Com: addr}.Command()
+
+		client.Class2 <- session.NewOutbound(cmd.Inro().Append(nil))
 	}
 
 	// TODO: Read standard input for messages to send.
