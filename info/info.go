@@ -27,11 +27,11 @@ type Params[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct{}
 // prohibited in subsection 7.2.4.
 var errComAddrZero = errors.New("part5: common address <0> is not used")
 
-// The “common address” addresses stations. Zero is not used.
-// All information objects/addresses reside in a common address.
-// See companion standard 101, subclause 7.2.4.
 type (
-	// A ComAddr can be instantiated with ComAddrN of Params.
+	// ComAddr can be instantiated with ComAddrN of Params.
+	// The “common address” addresses stations. Zero is not used.
+	// All information objects/addresses reside in a common address.
+	// See companion standard 101, subclause 7.2.4.
 	ComAddr interface {
 		// The address width is fixed per system.
 		ComAddr8 | ComAddr16
@@ -96,11 +96,12 @@ func (addr ComAddr16) LowOctet() uint8 { return addr[0] }
 // HighOctet provides an alternative to numeric addressing.
 func (addr ComAddr16) HighOctet() uint8 { return addr[1] }
 
-// “The information object address is used as a destination address in
-// control direction and a source address in the monitor direction.”
-// — companion standard 101, subclause 7.2.5.
 type (
-	// An ObjAddr can be instantiated with ObjAddrN of Params.
+	// ObjAddr can be instantiated with ObjAddrN of Params.
+	//
+	// “The information object address is used as a destination address in
+	// control direction and a source address in the monitor direction.”
+	// — companion standard 101, subclause 7.2.5.
 	ObjAddr interface {
 		// The address width is fixed per system.
 		ObjAddr8 | ObjAddr16 | ObjAddr24

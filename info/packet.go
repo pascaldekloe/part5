@@ -24,10 +24,10 @@ func (e Enc) AddrSeq() bool { return e&0x80 != 0 }
 // behaviour with the ObjAddr width.
 var ErrAddrSeq = errors.New("part5: address sequence [VQL SQ] overflows the addres space for information objects")
 
-// The originator address defaults to zero.
-// Value 1..255 addresses a specific part of the system.
 type (
-	// An OrigAddr can be instantiated with OrigAddrN from Params.
+	// OrigAddr can be instantiated with OrigAddrN from Params.
+	// The originator address defaults to zero.
+	// Value 1..255 addresses a specific part of the system.
 	OrigAddr interface {
 		// The presence is fixed per system.
 		OrigAddr0 | OrigAddr8
