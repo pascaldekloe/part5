@@ -25,14 +25,14 @@ import (
 type System[Orig OrigAddr, Com ComAddr, Obj ObjAddr] struct{}
 
 // ErrComAddrZero denies the zero value as an address. Use is explicitly
-// prohibited in subsection 7.2.4.
+// prohibited in chapter 7.2.4 of companion standard 101.
 var errComAddrZero = errors.New("part5: common address <0> is not used")
 
 type (
 	// ComAddr can be instantiated with ComAddrN of System.
 	// The “common address” addresses stations. Zero is not used.
 	// All information objects/addresses reside in a common address.
-	// See companion standard 101, subclause 7.2.4.
+	// See chapter 7.2.4 of companion standard 101.
 	ComAddr interface {
 		// The address width is fixed per system.
 		ComAddr8 | ComAddr16
@@ -102,7 +102,7 @@ type (
 	//
 	// “The information object address is used as a destination address in
 	// control direction and a source address in the monitor direction.”
-	// — companion standard 101, subclause 7.2.5.
+	// — chapter 7.2.5 of companion standard 101
 	ObjAddr interface {
 		// The address width is fixed per system.
 		ObjAddr8 | ObjAddr16 | ObjAddr24
@@ -335,7 +335,7 @@ const (
 	// under this condition.
 	Invalid
 
-	// standard codes defined in chapter 6.8 from section 4
+	// standard codes defined in chapter 6.8 of section 4
 	OV = Overflow
 	EI = ElapsedTimeInvalid
 	BL = Blocked
@@ -396,7 +396,7 @@ func (flags Qual) String() string {
 }
 
 // Step contains a step position, which is a numeric value with transient state
-// indication. See companion standard 101, subclause 7.2.6.5.
+// indication. See chapter 7.2.6.5 of companion standard 101.
 type Step uint8
 
 // NewStep returns a new step position for equipment not in transient state.
@@ -525,20 +525,20 @@ func (norm *NormQual) FlagQual(flags Qual) {
 	norm[2] |= uint8(flags)
 }
 
-// Counter is a binary counter reading conform chapter 7.2.6.9 from companion
+// Counter is a binary counter reading conform chapter 7.2.6.9 of companion
 // standard 101. The zero value has count zero, sequence number zero, and flags
 // Carry, Adjusted and Invalid all false.
 type Counter [5]uint8
 
 // Count returns the reading, signed.
 func (c Counter) Count() int32 {
-	// type 2.1 conform chapter 5.2.1 from section 5
+	// type 2.1 conform chapter 5.2.1 of section 5
 	return int32(binary.LittleEndian.Uint32(c[:4]))
 }
 
 // SetCount replaces the reading, signed.
 func (c *Counter) SetCount(v int32) {
-	// type 2.1 conform chapter 5.2.1 from section 5
+	// type 2.1 conform chapter 5.2.1 of section 5
 	binary.LittleEndian.PutUint32(c[:4], uint32(v))
 }
 
@@ -570,7 +570,7 @@ func (c Counter) Invalid() bool { return c[4]&uint8(IV) != 0 }
 func (c *Counter) FlagInvalid() { c[4] |= uint8(IV) }
 
 // ProtectEvent reports state from protection equipment conform chapter
-// 7.2.6.10 from companion standard 101.
+// 7.2.6.10 of companion standard 101.
 type ProtectEvent [3]uint8
 
 // State IndeterminateOrIntermediate is fixed to Indeterminate, thus leaving On,
@@ -757,8 +757,9 @@ func (flags ProtectOut) String() string {
 	return buf.String()[1:]
 }
 
-// InitCause is the cause of initialization conform companion standard 101,
-// subclause 7.2.6.21. The value consists of a 7-bit code with AfterChange flag.
+// InitCause is the cause of initialization conform chapter 7.2.6.21 of
+// companion standard 101. The value consists of a 7-bit code together with
+// the AfterChange flag.
 //
 //	0: local power switch on
 //	1: local manual reset
@@ -780,8 +781,8 @@ func (c InitCause) AfterChange() bool { return c&128 != 0 }
 // FlagAfterChange sets the flag on c.
 func (c *InitCause) FlagAfterChange() { *c |= 128 }
 
-// ParamQual is the qualifier of parameter of measured values conform companion
-// standard 101, subclause 7.2.6.24.
+// ParamQual is the qualifier of parameter of measured values conform chapter
+// 7.2.6.24 of companion standard 101.
 type ParamQual uint8
 
 // Qualifier Of Parameter Of Measured Values
@@ -803,9 +804,9 @@ const (
 	POP = NotInOpFlag
 )
 
-// CmdQual is the qualifier of command conform companion standard 101, subclause
-// 7.2.6.26. The zero value executes without any additional definition, i.e.,
-// .Select() == false and .Additional() == 0.
+// CmdQual is the qualifier of command conform chapter 7.2.6.26 of companion
+// standard 101. The zero value executes without any additional definition,
+// i.e., .Select() == false and .Additional() == 0.
 type CmdQual uint8
 
 // Additional returns the additional definition in the qualifier of command,
@@ -830,15 +831,15 @@ func (q *CmdQual) SetAdditional(a uint) {
 }
 
 // Select gets the S/E flag, which causes the command to select instead of
-// execute. See “Command transmission” in section 5, subclause 6.8.
+// execute. See chapter 6.8: “Command transmission” of section 5.
 func (q CmdQual) Select() bool { return q&128 != 0 }
 
 // FlagSelect sets the S/E flag, which causes the command to select instead of
-// execute. See “Command transmission” in section 5, subclause 6.8.
+// execute. See chapter 6.8: “Command transmission” of section 5.
 func (q *CmdQual) FlagSelect() { *q |= 128 }
 
-// SetPtQual is the qualifier of set-point command conform companion standard
-// 101, subclause 7.2.6.39. The zero value exectutes the “default”, i.e.,
+// SetPtQual is the qualifier of set-point command conform chapter 7.2.6.39 of
+// companion standard 101. The zero value exectutes the “default”, i.e.,
 // .Select() == false and .N() == 0.
 type SetPtQual uint8
 
@@ -854,11 +855,11 @@ func (q SetPtQual) N() uint { return uint(q & 127) }
 func (q *SetPtQual) SetN(n uint) { *q = *q&128 | SetPtQual(n&127) }
 
 // Select gets the S/E flag, which causes the command to select instead of
-// execute. See “Command transmission” in section 5, subclause 6.8.
+// execute. See chapter 6.8: “Command transmission” of section 5.
 func (q SetPtQual) Select() bool { return q&128 != 0 }
 
 // FlagSelect sets the S/E flag, which causes the command to select instead of
-// execute. See “Command transmission” in section 5, subclause 6.8.
+// execute. See chapter 6.8: “Command transmission” of section 5.
 func (q *SetPtQual) FlagSelect() { *q |= 128 }
 
 // SinglePtChangePack holds 16 single-point values, each including a flag to
@@ -867,8 +868,8 @@ func (q *SetPtQual) FlagSelect() { *q |= 128 }
 // equipment.
 //
 // The compound information element (CP32) is read in big-endian order, conform
-// “Status and status change detection” of companion standard 101, subclause
-// 7.2.6.40.
+// chapter 7.2.6.40: “Status and status change detection” of companion standard
+// 101.
 type SinglePtChangePack uint32
 
 // Element returns the single point together with its change-dected flag by

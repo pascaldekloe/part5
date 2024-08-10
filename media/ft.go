@@ -6,13 +6,13 @@ import "io"
 // Upon detecting an error, a minimum interval of line idle bits is required
 // between packets, depending on the type.
 const (
-	// format class 1.1, section 1, subclause 6.2.4.1, rule R4
+	// format class 1.1 from chapter 6.2.4.1 of section 1, rule R4
 	FT11IdleBits = 22
-	// format class 1.2, section 1, subclause 6.2.4.2.1, rule R4
+	// format class 1.2 from chapter 6.2.4.2.1 of section 1, rule R4
 	FT12IdleBits = 33
-	// format class 2, section 1, subclause 6.2.4.3.1, rule R5
+	// format class 2 from chapter 6.2.4.3.1 of section 1, rule R5
 	FT2IdleBits = 48
-	// format class 3, section 1, subclause 6.2.4.4.1, rule R5
+	// format class 3 from chapter 6.2.4.4.1 of section 1, rule R5
 	FT3IdleBits = 54
 )
 
@@ -35,7 +35,7 @@ var ErrDataFit = errors.New("part5: user data size exceeds packet capacity or sy
 // WARNING! The implementation reuses one data buffer which makes operation
 // efficient. The user data in packets can only be used until the next call.
 //
-// See section 2, subclause 3.2 and companion standard 101, annex 1.2.
+// See chapter 3.2 from section 2 and annex 1.2 from companion standard 101.
 func NewFT12(addrSize, maxSize int, singleChar1, singleChar2 Ctrl) FT {
 	if addrSize < 0 || addrSize > 2 {
 		panic("station address octet size not in [0, 2]")
@@ -107,7 +107,7 @@ func (ft *ft12) Encode(w io.Writer, p Packet) error {
 		}
 	}
 
-	// checksum conform section 1, clause 6.2.4.2.1, rule R5
+	// checksum conform chapter 6.2.4.2.1 of section 1, rule R5
 	var sum byte
 	for _, c := range buf[4:end] {
 		sum += c
@@ -185,7 +185,7 @@ func (ft *ft12) Decode(r io.Reader) (Packet, error) {
 		return Packet{}, ErrCheck
 	}
 
-	// checksum conform section 1, clause 6.2.4.2.1, rule R5
+	// checksum conform chapter 6.2.4.2.1 of section 1, rule R5
 	var sum byte
 	for i := size - 1; i >= 0; i-- {
 		sum += buf[i]

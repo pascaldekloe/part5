@@ -5,9 +5,9 @@ import "time"
 // CP56Time2a, a.k.a. the seven octet “Binary Time 2a”, provides millisecond
 // precission while omitting both the century and the time-zone.
 //
-// Encoding is defined in section 4, chapter 6.8, “COMPOUND INFORMATION ELEMENT
-// (CP)”, and in companion standard 101, chapter 7.2.6.18, “Seven octet binary
-// time”
+// Encoding is defined in chapter 6.8: “COMPOUND INFORMATION ELEMENT (CP)” of
+// section 4, and then again in chapter 7.2.6.18: “Seven octet binary time” of
+// companion standard 101.
 type CP56Time2a [7]uint8
 
 // Invalid returns the IV flag.
@@ -109,7 +109,7 @@ func (t2a *CP56Time2a) ClockAndMillis() (hour, min, secInMilli int) {
 // (genuine time) or the time tag was substituted by intermediate equipment such
 // as concentrator stations or by the controlling station itself (substituted
 // time).”
-// — companion standard 101, subsection 7.2.6.18
+// — chapter 7.2.6.18 of companion standard 101
 func (t2a *CP56Time2a) Reserve1() bool {
 	return t2a[2]&0x40 != 0
 }
@@ -144,9 +144,9 @@ func (t2a *CP56Time2a) FlagReserve3(bits uint) {
 // CP24Time2a, a.k.a. the three octet “Binary Time 2a”, provides millisecond
 // precission while omitting both the hour and the time-zone context.
 //
-// Encoding is defined in section 4, chapter 6.8, “COMPOUND INFORMATION ELEMENT
-// (CP)”, and in companion standard 101, chapter 7.2.6.19, “Three octet binary
-// time”
+// Encoding is defined in chapter 6.8: “COMPOUND INFORMATION ELEMENT (CP)” of
+// section 4, and then again in chapter 7.2.6.19: “Three octet binary time” of
+// companion standard 101.
 type CP24Time2a [3]uint8
 
 // Invalid returns the IV flag.
@@ -218,7 +218,7 @@ func (t2a *CP24Time2a) WithinHourBefore(t time.Time) time.Time {
 // (genuine time) or the time tag was substituted by intermediate equipment such
 // as concentrator stations or by the controlling station itself (substituted
 // time).”
-// — companion standard 101, subsection 7.2.6.18
+// — chapter 7.2.6.18 of companion standard 101
 func (t2a *CP24Time2a) Reserve1() bool {
 	return t2a[2]&0x40 != 0
 }
@@ -235,16 +235,16 @@ type CP16Time2a [2]uint8
 // Millis returns the millisecond count without validation.
 // The value should be in range 0..59999.
 func (t2a CP16Time2a) Millis() uint16 {
-	// UI16 in chapter 7.2.6.20 from companion standard 101
-	// Type 1.1 “Unsigned binary = UIi” in chapter 5.1.1 from section 4
+	// UI16 defined in chapter 7.2.6.20 of companion standard 101.
+	// Type 1.1 “Unsigned binary = UIi” defined in chapter 5.1.1 of section 4.
 	return uint16(t2a[0]) | uint16(t2a[1])<<8
 }
 
 // SetMillis sets the millisecond count without validation.
 // The value should be in range 0..59999.
 func (t2a *CP16Time2a) SetMillis(ms uint16) {
-	// UI16 in chapter 7.2.6.20 from companion standard 101
-	// Type 1.1 “Unsigned binary = UIi” in chapter 5.1.1 from section 4
+	// UI16 defined in chapter 7.2.6.20 of companion standard 101.
+	// Type 1.1 “Unsigned binary = UIi” defined in chapter 5.1.1 of section 4.
 	t2a[0] = uint8(ms)
 	t2a[1] = uint8(ms >> 8)
 }

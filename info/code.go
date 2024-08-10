@@ -5,7 +5,7 @@ import "errors"
 //go:generate stringer -type TypeID -output code_string.go code.go
 
 // ErrTypeZero denies the zero value as type identification. Use is explicitly
-// prohibited in subsection 7.2.1.1 from companion standard 101.
+// prohibited in chapter 7.2.1.1 of companion standard 101.
 var errTypeZero = errors.New("part5: type identification <0> is not used")
 
 // TypeID classifies ASDU with a code.
@@ -16,9 +16,9 @@ type TypeID uint8
 // [136..255] is for “special use”.
 const PrivateTypeFlag TypeID = 128
 
-// The compatible codes are defined in table 8 from companion standard 101.
-// More compatible codes are defined in table 1 from companion standard 104.
-// The security extensions are defined in table 2 from section 7.
+// The compatible codes are defined in table 8 of companion standard 101.
+// More compatible codes are defined in table 1 of companion standard 104.
+// The security extensions are defined in table 2 of section 7.
 // Prefix M_ is for monitored information, C_ is for control information,
 // P_ is for parameter information, F_ is for file transfer, and S_ is for
 // security.
@@ -162,7 +162,7 @@ const (
 	F_AF_NA_1 // ack file, ack section
 	F_SG_NA_1 // segment
 	F_DR_TA_1 // directory
-	F_SC_NB_1 // QueryLog - request archive file (section 104)
+	F_SC_NB_1 // QueryLog - request archive file (companion standard 104)
 )
 
 // String returns the label.

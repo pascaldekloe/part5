@@ -64,21 +64,21 @@ type function uint
 
 const (
 	// bringUp is a data transfer start request.
-	// See companion standard 104, subclause 5.3.
+	// See chapter 5.3 of companion standard 104.
 	bringUp function = 4 << iota
 
 	// bringUpOK is an bringUp confirmation response.
 	bringUpOK
 
 	// bringDown is a data transfer stop request.
-	// See companion standard 104, subclause 5.3.
+	// See chapter 5.3 of companion standard 104.
 	bringDown
 
 	// bringDownOK is a bringDown confirmation response.
 	bringDownOK
 
 	// keepAlive is a keep-alive request.
-	// See companion standard 104, subclause 5.2.
+	// See chapter 5.2 of companion standard 104.
 	keepAlive
 
 	// keepAliveOK is a keepAlive response.
@@ -112,7 +112,7 @@ func (u *apdu) Function() function {
 
 // SendSeqNo returns the 15-bit send sequence number for
 // protection against loss and duplication of messages.
-// See companion standard 104, subclause 5.1.
+// See chapter 5.1 of companion standard 104.
 // Only valid with the I format.
 func (u *apdu) SendSeqNo() uint {
 	var x = uint(u[2]) | uint(u[3])<<8
@@ -121,7 +121,7 @@ func (u *apdu) SendSeqNo() uint {
 
 // RecvSeqNo returns the 15-bit receive sequence number for
 // protection against loss and duplication of messages.
-// See companion standard 104, subclause 5.1.
+// See chapter 5.1 of companion standard 104.
 // Only valid with the I and S format.
 func (u *apdu) RecvSeqNo() uint {
 	var x = uint(u[4]) | uint(u[5])<<8

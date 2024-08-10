@@ -20,33 +20,33 @@ type TCPConfig struct {
 	// Upper limit for the number of I-frames send without reception of a
 	// confiramation. Transmission stops once this number has been reached.
 	// The standard specifies "𝑘" in [1, 32767] with a default of 12.
-	// See IEC 60870-5-104, subclause 5.5.
+	// See chapter 5.5 of companion standard 104.
 	SendUnackMax uint
 
 	// Maximum amount of time for frame reception confirmation. On expiry
 	// the connection is closed immediately. The standard specifies "t₁" in
 	// [1, 255] seconds with a default of 15.
-	// See IEC 60870-5-104, figure 18.
+	// See figure 18 of companion standard 104.
 	SendUnackTimeout time.Duration
 
 	// Upper limit for the number of I-frames received without sending a
 	// receival confirmation. It is recommended that RecvUnackMax should not
 	// exceed two thirds of SendUnackMax. The standard specifies "𝑤" in [1,
 	// 32767] with a default of 8.
-	// See IEC 60870-5-104, subclause 5.5.
+	// See chapter 5.5 of companion standard 104.
 	RecvUnackMax uint
 
 	// Maximum amount of time allowed for sending a receival confirmation.
 	// In practice this framework will send such acknowledgement within a
 	// second. The standard specifies "t₂" in [1, 255] seconds with a
 	// default of 10.
-	// See IEC 60870-5-104, figure 10.
+	// See figure 10 of companion standard 104.
 	RecvUnackTimeout time.Duration
 
 	// Amount of idle time needed to trigger "TESTFR" keep-alives. The
 	// standard recommends "t₃" in [1 second, 48 hours] and the default is
 	// set to 20 seconds.
-	// See IEC 60870-5-104, subclause 5.2.
+	// See chapter 5.2 of companion standard 104.
 	IdleTimeout time.Duration
 }
 

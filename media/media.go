@@ -8,7 +8,7 @@ import (
 )
 
 // Fixed serial configuration parameters defined in section 1.
-// See also companion standard 101, annex 1.1 — UART definition.
+// See annex 1.1: “UART definition” of companion standard 101.
 const (
 	DataSize = 8   // bits in charater
 	StopBits = 1   // character termination
@@ -72,7 +72,7 @@ const FromPrimaryFlag Ctrl = 1 << 6
 const FuncMask Ctrl = 1<<4 - 1
 
 // Protocol-control from primary (initiating) stations.
-// See section 2, clause 5.1.2 & 6.1.2.
+// See chapter 5.1.2 and 6.1.2 of section 2.
 const (
 	// Function codes from section 2, table 1 & 3.
 	Reset     Ctrl = iota // 0: reset of remote link
@@ -99,7 +99,7 @@ const (
 )
 
 // Protocol-control from secondary (responding) stations.
-// See section 2, clause 5.1.2 & 6.1.2.
+// See chapter 5.1.2 and 6.1.2 of section 2.
 // For permissible combinations see companion standard 101, table 3 & 4.
 const (
 	// Function codes from section 2, table 2 & 4.

@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-// TimeoutResolution is seconds according to companion standard 104,
-// subclause 6.9, caption "Definition of time outs". However, thenths
-// of a second make this system much more responsive i.c.w. S-frames.
+// TimeoutResolution is seconds according to chapter 6.9: “Definition of time
+// outs” of companion standard 104. However, thenths of a second make this
+// system much more responsive i.c.w. S-frames.
 const timeoutResolution = 100 * time.Millisecond
 
 // RetryTicker is for temporary connectivity error recovery.
@@ -47,7 +47,7 @@ type tcp struct {
 	// closed when send is no longer read
 	sendQuit chan struct{}
 
-	// see subclause 5.1 — Protection against loss and duplication of messages
+	// see chapter 5.1: “Protection against loss and duplication of messages”
 	seqNoOut uint // sequence number of next outbound I-frame
 	seqNoIn  uint // sequence number of next inbound I-frame
 	ackNoOut uint // outbound sequence number yet to be confirmed

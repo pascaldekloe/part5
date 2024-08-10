@@ -1,4 +1,4 @@
-// Package part5 provides the OSI application layer of IEC 60870-5.
+// Package part5 provides the OSI application-layer of IEC 60870-5.
 //
 // # Monitor
 //
@@ -110,7 +110,7 @@ func ConOf[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr](in, req info.
 	// unit identifier (except the variable structure qualifier) and the
 	// information object address are mirrored by the controlled station
 	// with bit “P/N := <1> negative confirm” …”
-	// — companion standard 101, subsection 7.2.3
+	// — chapter 7.2.3 of companion standard 101
 	case info.UnkType | info.NegFlag,
 		info.UnkCause | info.NegFlag,
 		info.UnkAddr | info.NegFlag,
