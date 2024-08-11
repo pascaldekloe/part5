@@ -161,7 +161,7 @@ func mustPacketStream() packetStream {
 	panic("unreachable")
 }
 
-type setup[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct { }
+type setup[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct{}
 
 // StreamInbound implements the packetStream interface.
 func (_ setup[Orig, Com, Obj]) streamInbound(client *session.Station) {
@@ -198,6 +198,9 @@ func (_ setup[Orig, Com, Obj]) streamInbound(client *session.Station) {
 		if n == *inCapFlag {
 			CmdLog.Printf("reached %d inbound messages", n)
 			client.Target <- session.Exit
+			for range client.In {
+			} // flush
+			break
 		}
 	}
 }
