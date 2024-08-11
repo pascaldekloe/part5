@@ -29,11 +29,14 @@ both act as primary and as secondory, a.k.a. peer to peer.
 Every *information object address* resides in a *common address*. Primaries may
 acquire the information present in a common address with an
 [interrogation command](http://godoc.org/github.com/pascaldekloe/part5#Command.Inro).
-I.e., run `iecat -host station1.example.com -inro 42` to aquire a listing of
-common address 42 on the terminal.
+For example, command `iecat -host station1.example.com -inro 42` interrogates
+the host address on common address 42.
 
 
 ## iecat(1)
+
+The command prints inbound data units on the standard output. It should read
+commands from the standard input for outbound submission, once implemented.
 
 Run `go install github.com/pascaldekloe/part5/cmd/iecat@latest` to build the
 command into the bin directory of `go env GOPATH`.
