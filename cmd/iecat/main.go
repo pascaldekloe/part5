@@ -70,8 +70,9 @@ func main() {
 	signal.Notify(signals, syscall.SIGINT)
 
 	// validated configariton
-	stream := mustPacketStream()
 	config := mustTCPConfig()
+	stream := mustPacketStream()
+	inroCmd, doInro := stream.mustInroAct()
 
 	addr := net.JoinHostPort(*hostFlag, strconv.FormatUint(uint64(*portFlag), 10))
 	conn, err := net.Dial("tcp", addr)
@@ -82,6 +83,11 @@ func main() {
 
 	go stream.streamInbound(client)
 	go stream.streamOutbound(client)
+
+	client.Target <- session.Up
+	if doInro {
+		client.Class2 <- session.NewOutbound(inroCmd)
+	}
 
 	var exitCode int
 	defer os.Exit(exitCode)
@@ -117,6 +123,7 @@ func main() {
 }
 
 type packetStream interface {
+	mustInroAct() ([]byte, bool)
 	streamInbound(*session.Station)
 	streamOutbound(*session.Station)
 }
@@ -208,40 +215,40 @@ func (_ setup[Orig, Com, Obj]) streamInbound(client *session.Station) {
 
 // StreamOutbound implements the packetStream interface.
 func (_ setup[Orig, Com, Obj]) streamOutbound(client *session.Station) {
-	var sys info.System[Orig, Com, Obj]
+	// TODO: Read standard input for messages to send.
+}
 
-	client.Target <- session.Up
+func (setup setup[Orig, Com, Obj]) mustInroAct() ([]byte, bool) {
+	if *inroFlag == "<none>" {
+		return nil, false
+	}
+	addrSpec, origSpec, hasOrig := strings.Cut(*inroFlag, "#")
 
-	if *inroFlag != "<none>" {
-		// send interrogation activation
-		addrSpec, origSpec, hasOrig := strings.Cut(*inroFlag, "#")
-
-		addrN, err := strconv.Atoi(addrSpec)
-		if err != nil {
-			CmdLog.Fatal("illegal common address for interrogation: ", err)
-		}
-		addr, ok := sys.ComAddrN(uint(addrN))
-		if !ok {
-			CmdLog.Fatalf("common address %q for interrogation exceeds %d-octet width of system",
-				addrSpec, len(addr))
-		}
-		x := part5.Exchange[Orig, Com, Obj]{ComAddr: addr}
-
-		if hasOrig {
-			n, err := strconv.Atoi(origSpec)
-			if err != nil {
-				CmdLog.Fatal("illegal originating address for interrogation: ", err)
-			}
-			x.OrigAddr, ok = sys.OrigAddrN(uint(n))
-			if !ok {
-				CmdLog.Fatalf("originator address %q for interrogation needs a 2-octet cause of transmission", origSpec)
-			}
-		}
-
-		client.Class2 <- session.NewOutbound(x.Command().Inro().Append(nil))
+	addrN, err := strconv.ParseUint(addrSpec, 0, 32)
+	if err != nil {
+		CmdLog.Fatal("illegal common address for interrogation: ", err)
 	}
 
-	// TODO: Read standard input for messages to send.
+	var sys info.System[Orig, Com, Obj]
+	addr, ok := sys.ComAddrN(uint(addrN))
+	if !ok {
+		CmdLog.Fatalf("common address %q for interrogation exceeds %d-octet width of system",
+			addrSpec, len(addr))
+	}
+	x := part5.Exchange[Orig, Com, Obj]{ComAddr: addr}
+
+	if hasOrig {
+		n, err := strconv.ParseUint(origSpec, 0, 32)
+		if err != nil {
+			CmdLog.Fatal("illegal originating address for interrogation: ", err)
+		}
+		x.OrigAddr, ok = sys.OrigAddrN(uint(n))
+		if !ok {
+			CmdLog.Fatalf("originator address %q for interrogation needs a 2-octet cause of transmission", origSpec)
+		}
+	}
+
+	return x.Command().Inro().Append(nil), true
 }
 
 // Reads an IEC 104 configuration from flags.
