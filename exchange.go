@@ -9,10 +9,12 @@ import (
 
 // Exchange supplies communication with another station.
 type Exchange[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
-	info.System[Orig, Com, Obj]
+	info.System[Orig, Com, Obj] // parameters
 
-	Orig Orig // originator address, if any
-	Com  Com  // common adress
+	// The originator address is optional, depending on the System.
+	Orig Orig
+	// The common address must be non zero.
+	Com Com
 }
 
 // NewDataUnit returns a new ASDU without payload; .Info is empty.
@@ -45,7 +47,7 @@ func (cmd Command[Orig, Com, Obj]) act(t info.TypeID, addr Obj) info.DataUnit[Or
 	return u
 }
 
-// SingleCmd returns single command C_SC_NA_1 act
+// SingleCmd returns single command: C_SC_NA_1 act(ivation),
 // conform chapter 7.3.2.1 of companion standard 101.
 func (cmd Command[Orig, Com, Obj]) SingleCmd(addr Obj, pt info.SinglePt, q info.CmdQual) info.DataUnit[Orig, Com, Obj] {
 	u := cmd.act(info.C_SC_NA_1, addr)
@@ -53,7 +55,7 @@ func (cmd Command[Orig, Com, Obj]) SingleCmd(addr Obj, pt info.SinglePt, q info.
 	return u
 }
 
-// DoubleCmd returns double command C_DC_NA_1 act
+// DoubleCmd returns double command: C_DC_NA_1 act(ivation),
 // conform chapter 7.3.2.2 of companion standard 101.
 func (cmd Command[Orig, Com, Obj]) DoubleCmd(addr Obj, pt info.DoublePt, q info.CmdQual) info.DataUnit[Orig, Com, Obj] {
 	u := cmd.act(info.C_DC_NA_1, addr)
@@ -61,7 +63,7 @@ func (cmd Command[Orig, Com, Obj]) DoubleCmd(addr Obj, pt info.DoublePt, q info.
 	return u
 }
 
-// RegulCmd returns regulating-step command C_RC_NA_1 act
+// RegulCmd returns regulating-step command: C_RC_NA_1 act(ivation),
 // conform chapter 7.3.2.3 of companion standard 101.
 // Regul must be either Lower or Higher. The other two states
 // (0 and 3) are not permitted.
@@ -71,7 +73,7 @@ func (cmd Command[Orig, Com, Obj]) RegulCmd(addr Obj, r info.Regul, q info.CmdQu
 	return u
 }
 
-// NormSetPt returns set-point command C_SE_NA_1 act
+// NormSetPt returns set-point command: C_SE_NA_1 act(ivation),
 // conform chapter 7.3.2.4 of companion standard 101.
 func (cmd Command[Orig, Com, Obj]) NormSetPt(addr Obj, value info.Norm, q info.SetPtQual) info.DataUnit[Orig, Com, Obj] {
 	u := cmd.act(info.C_SE_NA_1, addr)
@@ -80,7 +82,7 @@ func (cmd Command[Orig, Com, Obj]) NormSetPt(addr Obj, value info.Norm, q info.S
 	return u
 }
 
-// ScaledSetPt returns set-point command C_SE_NB_1 act
+// ScaledSetPt returns set-point command: C_SE_NB_1 act(ivation),
 // conform chapter 7.3.2.5 of companion standard 101.
 func (cmd Command[Orig, Com, Obj]) ScaledSetPt(addr Obj, value int16, q info.SetPtQual) info.DataUnit[Orig, Com, Obj] {
 	u := cmd.act(info.C_SE_NB_1, addr)
@@ -89,7 +91,7 @@ func (cmd Command[Orig, Com, Obj]) ScaledSetPt(addr Obj, value int16, q info.Set
 	return u
 }
 
-// FloatSetPt returns set-point command C_SE_NC_1 act
+// FloatSetPt returns set-point command: C_SE_NC_1 act(ivation),
 // conform chapter 7.3.2.6 of companion standard 101.
 func (cmd Command[Orig, Com, Obj]) FloatSetPt(addr Obj, value float32, q info.SetPtQual) info.DataUnit[Orig, Com, Obj] {
 	u := cmd.act(info.C_SE_NC_1, addr)
@@ -99,13 +101,13 @@ func (cmd Command[Orig, Com, Obj]) FloatSetPt(addr Obj, value float32, q info.Se
 	return u
 }
 
-// Inro returns interrogation command C_IC_NA_1 act
+// Inro returns interrogation command: C_IC_NA_1 act(ivation),
 // conform chapter 7.3.4.1 of companion standard 101.
 func (cmd Command[Orig, Com, Obj]) Inro() info.DataUnit[Orig, Com, Obj] {
 	return cmd.InroGroup(0)
 }
 
-// InroGroup returns interrogation command C_IC_NA_1 act
+// InroGroup returns interrogation command: C_IC_NA_1 act(ivation),
 // conform chapter 7.3.4.1 of companion standard 101.
 // Group can be disabled with 0 for (global) station interrogation.
 // Otherwise, use a group identifier in range [1..16].
@@ -118,7 +120,7 @@ func (cmd Command[Orig, Com, Obj]) InroGroup(group uint) info.DataUnit[Orig, Com
 	return u
 }
 
-// TestCmd returns test command C_TS_NA_1 act
+// TestCmd returns test command: C_TS_NA_1 act(ivation),
 // conform chapter 7.3.4.5 of companion standard 101.
 func (cmd Command[Orig, Com, Obj]) TestCmd() info.DataUnit[Orig, Com, Obj] {
 	var addr Obj // fixed to zero
