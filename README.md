@@ -14,6 +14,8 @@ The project consists of a Go library and a command-line tool called iecat(8).
 This is free and unencumbered software released into the
 [public domain](http://creativecommons.org/publicdomain/zero/1.0).
 
+📢 Call for testing! Help on issue #5 needed. 🚧
+
 
 ## Definitions
 
