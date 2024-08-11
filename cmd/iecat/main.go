@@ -57,7 +57,8 @@ var (
 	inCapFlag = flag.Uint64("in-cap", 0, "Terminate the connection after receiving the `number` of ASDU"+
 		"\nwith zero for unbound.")
 	inroFlag = flag.String("inro", "<none>", "Send an interrogation activation request to the common `address`."+
-		"\nUse the 0x prefix for a hexadecimal interpretation.")
+		"\nUse the 0x prefix for a hexadecimal interpretation. Use '#' as a"+
+		"\nsepparator when adding an originator address.")
 )
 
 func main() {
@@ -213,20 +214,31 @@ func (_ setup[Orig, Com, Obj]) streamOutbound(client *session.Station) {
 
 	if *inroFlag != "<none>" {
 		// send interrogation activation
-		// TODO: allow #<n> suffix for an origating address
-		addrN, err := strconv.ParseUint(*inroFlag, 0, 32)
+		addrSpec, origSpec, hasOrig := strings.Cut(*inroFlag, "#")
+
+		addrN, err := strconv.Atoi(addrSpec)
 		if err != nil {
-			CmdLog.Fatal("illegal interrogation address: ", err)
+			CmdLog.Fatal("illegal common address for interrogation: ", err)
 		}
 		addr, ok := sys.ComAddrN(uint(addrN))
 		if !ok {
-			CmdLog.Fatalf("common address %d for interrogation exceeds %d-octet width of system",
-				addrN, len(addr))
+			CmdLog.Fatalf("common address %q for interrogation exceeds %d-octet width of system",
+				addrSpec, len(addr))
+		}
+		x := part5.Exchange[Orig, Com, Obj]{ComAddr: addr}
+
+		if hasOrig {
+			n, err := strconv.Atoi(origSpec)
+			if err != nil {
+				CmdLog.Fatal("illegal originating address for interrogation: ", err)
+			}
+			x.OrigAddr, ok = sys.OrigAddrN(uint(n))
+			if !ok {
+				CmdLog.Fatalf("originator address %q for interrogation needs a 2-octet cause of transmission", origSpec)
+			}
 		}
 
-		cmd := part5.Exchange[Orig, Com, Obj]{ComAddr: addr}.Command()
-
-		client.Class2 <- session.NewOutbound(cmd.Inro().Append(nil))
+		client.Class2 <- session.NewOutbound(x.Command().Inro().Append(nil))
 	}
 
 	// TODO: Read standard input for messages to send.
