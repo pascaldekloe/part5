@@ -224,7 +224,7 @@ func (_ setup[Orig, Com, Obj]) streamOutbound(client *session.Station) {
 				addrN, len(addr))
 		}
 
-		cmd := part5.Exchange[Orig, Com, Obj]{Com: addr}.Command()
+		cmd := part5.Exchange[Orig, Com, Obj]{ComAddr: addr}.Command()
 
 		client.Class2 <- session.NewOutbound(cmd.Inro().Append(nil))
 	}

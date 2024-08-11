@@ -12,9 +12,9 @@ type Exchange[Orig info.OrigAddr, Com info.ComAddr, Obj info.ObjAddr] struct {
 	info.System[Orig, Com, Obj] // parameters
 
 	// The originator address is optional, depending on the System.
-	Orig Orig
+	OrigAddr Orig
 	// The common address must be non zero.
-	Com Com
+	ComAddr Com
 }
 
 // NewDataUnit returns a new ASDU without payload; .Info is empty.
@@ -23,8 +23,8 @@ func (x Exchange[Orig, Com, Obj]) NewDataUnit(t info.TypeID, e info.Enc, c info.
 	u.Type = t
 	u.Enc = e
 	u.Cause = c
-	u.Orig = x.Orig
-	u.Addr = x.Com
+	u.Orig = x.OrigAddr
+	u.Addr = x.ComAddr
 	return u
 }
 
