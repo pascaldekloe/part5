@@ -162,6 +162,13 @@ func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 	}
 	fmt.Fprintf(f, format, u.Type, u.Cause, u.Orig, u.Addr)
 
+	// 2-byte header and 4-byte control code
+	const maxFromAPDU = 255 - 1 - 1 - 4
+	// type ID + VSQ + CoT + common address
+	const minDUISize = 4
+	// size limit for memory protection
+	const infoPrintMax = maxFromAPDU - minDUISize
+
 	var addr Obj
 
 	n := u.Enc.Count()
@@ -191,9 +198,8 @@ func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 			break // orphan address allowed
 		}
 
-		// size protection
-		if len(p) > 250 {
-			fmt.Fprintf(f, " %#x... (%d B) ~%d ?", p[:80], len(p), n)
+		if len(p) > infoPrintMax {
+			fmt.Fprintf(f, " %#x... (%d B) ~%d ?", p[:infoPrintMax], len(p), n)
 			return
 		}
 
@@ -226,8 +232,8 @@ func (u DataUnit[Orig, Com, Obj]) Format(f fmt.State, verb rune) {
 			break // not explicitly prohibited
 		}
 		// size protection
-		if len(u.Info) > 250 {
-			fmt.Fprintf(f, " %#x... (%d B) ~%d ?", u.Info[:80], len(u.Info), n)
+		if len(u.Info) > infoPrintMax {
+			fmt.Fprintf(f, " %#x... (%d B) ~%d ?", u.Info[:infoPrintMax], len(u.Info), n)
 			return
 		}
 		size := len(u.Info) / n
