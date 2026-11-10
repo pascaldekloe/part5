@@ -250,6 +250,77 @@ func TestUnackThreashold(t *testing.T) {
 	wg.Wait()
 }
 
+// TestSendUnackMax verifies that no more than k (SendUnackMax) I-frames are
+// pending acknowledgement. The remote end confirms STARTDT, and it never
+// acknowledges any of the I-frames.
+func TestSendUnackMax(t *testing.T) {
+	const k = 2
+
+	connA, connB := net.Pipe()
+	a := TCP(TCPConfig{SendUnackMax: k, RecvUnackMax: 1}, connA)
+	defer func() {
+		connB.Close()
+		for range a.Level {
+		}
+	}()
+	go func() {
+		for range a.In {
+		}
+	}()
+	go func() {
+		for range a.Err {
+		}
+	}()
+
+	// count I-frames on the remote end
+	iFrames := make(chan uint, 99)
+	go func() {
+		var datagram apdu
+		for {
+			if _, err := datagram.Unmarshal(connB, 0); err != nil {
+				return
+			}
+			switch {
+			case datagram.Format() == iFrame:
+				iFrames <- datagram.SendSeqNo()
+			case datagram.Format() == uFrame && datagram.Function() == bringUp:
+				ok := newFunc(bringUpOK)
+				if _, err := ok.Marshal(connB, 0); err != nil {
+					return
+				}
+			}
+		}
+	}()
+
+	if l := <-a.Level; l != Down {
+		t.Fatalf("got initial level %s, want %s", l, Down)
+	}
+	a.Target <- Up
+	if l := <-a.Level; l != Up {
+		t.Fatalf("got level %s after STARTDT, want %s", l, Up)
+	}
+
+	for i := 0; i < k; i++ {
+		select {
+		case a.Class2 <- NewOutbound([]byte("arbitrary")):
+			break
+		case <-time.After(100 * time.Millisecond):
+			t.Fatalf("outbound #%d blocked with %d pending", i, i)
+		}
+	}
+	select {
+	case a.Class2 <- NewOutbound([]byte("arbitrary")):
+		t.Errorf("outbound #%d accepted with %d I-frames pending", k, k)
+	case <-time.After(100 * time.Millisecond):
+		break // OK: window full
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	if n := len(iFrames); n != k {
+		t.Errorf("remote got %d I-frames without acknowledge, want %d", n, k)
+	}
+}
+
 func TestFastAckOnIdle(t *testing.T) {
 	t.Parallel()
 
