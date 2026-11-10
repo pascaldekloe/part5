@@ -254,7 +254,7 @@ func (t *tcp) run() {
 		// nil channel blocks (for SendUnackMax and Down case)
 		var class1, class2 <-chan *Outbound
 
-		if level >= Up && seqNoCount(t.ackNoOut, t.seqNoOut) <= t.SendUnackMax {
+		if level >= Up && seqNoCount(t.ackNoOut, t.seqNoOut) < t.SendUnackMax {
 			// may send; unblock
 			class1, class2 = t.class1, t.class2
 
